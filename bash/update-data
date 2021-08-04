@@ -1,0 +1,136 @@
+#!/bin/bash
+
+DEBUG=OFF
+
+# Color for output
+
+red=`tput setaf 1`
+green=`tput setaf 2`
+blue=`tput setaf 4`
+reset=`tput sgr0`
+
+# Folders and files
+
+SPATH=$(dirname "$0")
+if [ "$SPATH" = "." ] 
+then
+  GIT=$(dirname "$PWD")
+else
+  GIT=$(dirname "$SPATH")
+fi
+echo G=$GIT 
+
+SEDDIR="bash/sed"
+echo S=$SEDDIR
+AWKDIR="bash/awk"
+echo S=$AWKDIR
+
+AKTUELL="Infektionen/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
+
+[ "$DEBUG" = "ON" ] && TEMP="/tmp/rki" || TEMP="/tmp/rki-$(date '+%F')"
+[ ! -d  "${TEMP}" ] && mkdir "${TEMP}"
+
+SQL="$TEMP/fallzahlen.sql"
+
+# List of download URL
+
+echo -e "\n\n${blue}+---------"
+echo -e "| ${red}Tempoary file in: $TEMP"
+echo -e "${blue}+---------${reset}\n\n"
+
+function git_pull {
+
+    echo -e "\n\n${blue}+---------"
+    echo -e "| ${red}Holen der aktuellen Daten des RKI von giuthub.com"
+    echo -e "${blue}+---------${reset}\n\n"
+    pushd Infektionen
+        git pull
+    popd
+}
+
+function update_db {
+
+# Importieren der Zahlen aus der Tabelle für das RKI Dashboard
+
+    echo -e "\n\n${blue}+---------"
+    echo -e "| ${red}Importieren der Daten aus dem GIT in die Datenbank"
+    echo -e "${blue}+---------${reset}\n\n" 
+
+awk -f "${AWKDIR}/fallzahlen.awk" -F ';' "${AKTUELL}" > "${TEMP}/Aktuell.csv"
+
+( cat <<EOF
+USE RKI;
+
+DROP TABLE IF EXISTS Faelle;
+
+CREATE TABLE IF NOT EXISTS Faelle (
+      ObjectId INT
+    , IdLandkreis INT
+    , Altersgruppe CHAR(7)
+    , Geschlecht CHAR(1)
+    , Meldedatum DATE
+    , Refdatum DATE
+    , IstErkrankungsbeginn INT
+    , NeuerFall INT 
+    , NeuerTodesfall INT 
+    , NeuGenesen INT
+    , AnzahlFall INT
+    , AnzahlTodesfall INT
+    , AnzahlGenesen INT 
+    , PRIMARY KEY(ObjectId)
+    , INDEX(IdLandkreis)
+    , INDEX(Meldedatum)
+    , INDEX(RefDatum)
+    , INDEX(Geschlecht)
+    , INDEX(Altersgruppe)
+    , INDEX(Geschlecht)
+    , INDEX(Altersgruppe));
+
+LOAD DATA LOCAL INFILE '${TEMP}/Aktuell.csv' 
+    INTO TABLE Faelle 
+    FIELDS TERMINATED BY ',' 
+    IGNORE 0 ROWS;
+
+SELECT max(Meldedatum) FROM Faelle;  
+
+drop table FallzahlenLandkreise;
+call UpdateFallzahlenLandkreise();
+
+call UpdateYesterday();
+
+
+EOF
+) >> "$SQL"
+
+}
+
+
+function run_r {
+
+  pushd R
+  for r in *.r
+    do
+        echo -e "\n\n${blue}+---------"
+        echo -e "| ${red}${r}"
+        echo -e "${blue}+---------${reset}\n\n"
+        Rscript $r 2>/dev/null
+    done
+  popd
+
+}
+
+rm "$SQL"
+touch "$SQL"
+
+pushd $GIT
+
+    git_pull
+    update_db
+
+    mysql --user=rscript --password=rscript < "$SQL"
+
+    run_r
+
+popd
+
+echo -e "$reset"

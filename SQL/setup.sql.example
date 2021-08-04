@@ -1,0 +1,7 @@
+-- Setup database COVID19
+
+CREATE DATABASE IF NOT EXISTS COVID19;
+
+GRANT ALL PRIVILEGES ON COVID19.* TO 'rki'@'localhost' IDENTIFIED BY '<ReplaceThisWithYourSecrecPassword>';
+
+FLUSH PRIVILEGES;

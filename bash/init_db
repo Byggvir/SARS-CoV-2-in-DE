@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Folders and files
+
+SPATH=$(dirname "$0")
+if [ "$SPATH" = "." ] 
+then
+  GIT=$(dirname "$PWD")
+else
+  GIT=$(dirname "$SPATH")
+fi
+
+LKDEST="$GIT/Infektionen/2020-06-30_Deutschland_Landkreise_GeoDemo.csv"
+
+cat <<EOF | mysql --user=rscript --password=rscript
+USE RKI;
+
+DROP TABLE IF EXISTS Landkreis;
+
+CREATE TABLE Landkreis ( 
+    IdLandkreis INT PRIMARY KEY
+    , Landkreis CHAR(64)
+    , Flaeche FLOAT
+    , EW_insgesamt BIGINT
+    , EW_maennlich BIGINT
+    , EW_weiblich BIGINT
+    , INDEX (Landkreis)
+    , INDEX (Flaeche)
+    , INDEX (EW_insgesamt));
+    
+LOAD DATA LOCAL INFILE '$LKDEST' 
+    INTO TABLE Landkreis 
+    FIELDS TERMINATED BY ',' 
+    IGNORE 1 ROWS;
+
+EOF
