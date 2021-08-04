@@ -6,7 +6,7 @@ Die bisher vier auf github.com vom RKI als Repo bereitgestellten Daten
 
 * Infektionen
 * Nowcasting und R-Schätzung
-* Testungen
+* Impfungen
 * Sequenzdaten
 
 sind als Submodule eingebunden.
