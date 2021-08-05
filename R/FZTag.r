@@ -61,7 +61,7 @@ diagram <- function (
 
   # Holen der Daten aus der Datenbank
   
-  daily <- sqlGetRKI(SQL = SQL, prepare = 'set @i:=0;')
+  daily <- RunSQL(SQL = SQL, prepare = 'set @i:=0;')
 
   m <- length(daily[,1])
 

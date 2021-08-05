@@ -55,7 +55,7 @@ LEFT JOIN (SELECT Meldedatum, sum(AnzahlFall) AS Infizierte
 FROM Faelle as C WHERE NeuerFall <> 0 GROUP BY Meldedatum) AS B
 ON A.Meldedatum=B.Meldedatum where A.Meldedatum > "' , as.character(today-15), '";' , sep = "" )
 
-NeueFaelle <-sqlGetRKI(SQL = SQL)
+NeueFaelle <-RunSQL(SQL = SQL)
 NeueFaelle[is.na(NeueFaelle[,3]),3] <- 0
 
 # NeueFaelle[is.na(NeueFaelle[,3]),3] <- 0
@@ -106,7 +106,7 @@ SQL <- paste('SELECT distinct A.Refdatum, dayofweek(A.Refdatum),B.Infizierte
     , '";'
     , sep = "")
 
-NeueFaelle <-sqlGetRKI(SQL = SQL)
+NeueFaelle <-RunSQL(SQL = SQL)
 NeueFaelle[is.na(NeueFaelle[,3]),3] <- 0
 
 # par ( new = TRUE)

@@ -63,7 +63,7 @@ SQL <- paste(
   GROUP BY IdLandkreis ) as B GROUP BY Meldedatum;'
     , sep = "")
 
-LetzteMeldung <-sqlGetRKI(SQL = SQL)
+LetzteMeldung <- RunSQL(SQL = SQL)
 
 # par ( new = TRUE)
 

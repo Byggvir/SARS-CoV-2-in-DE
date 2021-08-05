@@ -53,7 +53,7 @@ options(
   )
 SQL = 'call CasesPerWeek()'
 
-weekly <- sqlGetRKI(SQL = SQL)
+weekly <- RunSQL(SQL = SQL)
 m <- length(weekly[,1])
 reported <- weekly$Kw[m]
 

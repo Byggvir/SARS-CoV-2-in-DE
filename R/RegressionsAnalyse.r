@@ -108,7 +108,7 @@ group by WTag;'
   )
 
 
-Kor <- sqlGetRKI(SQLWTag)
+Kor <- RunSQL(SQLWTag)
 print(Kor)
 
 # Function execute a regression analysis 
@@ -144,7 +144,7 @@ where
   , sep=''
   )
   
-  data <- sqlGetRKI( SQL=SQL, prepare = "set @i:=-1;" )
+  data <- RunSQL( SQL=SQL, prepare = "set @i:=-1;" )
   
   FromTo <- data$Day[data$Day <= DaysBack]
   

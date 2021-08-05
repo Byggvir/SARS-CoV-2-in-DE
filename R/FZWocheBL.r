@@ -46,7 +46,7 @@ options(
   )
 
 SQL <- 'select * from Bundesland order by IdBundesland;'
-BL <- sqlGetRKI(SQL = SQL)
+BL <- RunSQL(SQL = SQL)
 
 colors <-c( "red", "yellow", "green", "blue", "black" )
 
@@ -64,7 +64,7 @@ for (i in BL[,1]) {
   
   SQL = paste ('call CasesPerWeekBL(',i,' );', sep ="")
 
-  weekly <- sqlGetRKI(SQL = SQL)
+  weekly <- RunSQL(SQL = SQL)
   m <- length(weekly[,1])
   
   labs <- weekly$Kw
