@@ -62,7 +62,7 @@ print(data)
 png( paste( 
   "png/"
   ,  heute
-  , "CFR-Std-1.png"
+  , "-CFR-Std-1.png"
   , sep = ""
 )
 , width = 1920
@@ -130,7 +130,7 @@ ggsave( plot = gg,
         file = paste( 
           "png/"
           ,  heute
-          , "CFR-Std"
+          , "-CFR-Std"
           , "-2.png"
           , sep = ""
         )

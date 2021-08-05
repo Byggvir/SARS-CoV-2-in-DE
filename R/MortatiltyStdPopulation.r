@@ -62,7 +62,7 @@ print(data)
 png( paste( 
       "png/"
     ,  heute
-    , "Mortality-1.png"
+    , "-Mortality-1.png"
     , sep = ""
 )
 , width = 1920
@@ -131,7 +131,7 @@ ggsave( plot = gg,
         file = paste( 
           "png/"
           ,  heute
-          , "Mortality-2.png"
+          , "-Mortality-2.png"
           , sep = ""
         )
        , type = "cairo-png",  bg = "white"

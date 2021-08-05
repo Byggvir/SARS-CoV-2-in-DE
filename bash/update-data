@@ -43,9 +43,13 @@ function git_pull {
     echo -e "\n\n${blue}+---------"
     echo -e "| ${red}Holen der aktuellen Daten des RKI von giuthub.com"
     echo -e "${blue}+---------${reset}\n\n"
-    pushd Infektionen
-        git pull
-    popd
+
+    for D in Infektionen Impfungen Nowcasting Sequenzdaten
+    do
+        pushd $D
+            git pull
+        popd
+    done
 }
 
 function update_db {
