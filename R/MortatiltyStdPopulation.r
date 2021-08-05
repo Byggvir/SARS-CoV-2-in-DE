@@ -14,6 +14,7 @@ options(OutDec=',')
 MyScriptName <- "MortalityStdPopulation"
 
 require(data.table)
+library(tidyverse)
 library(REST)
 library(grid)
 library(gridExtra)
@@ -27,10 +28,26 @@ library(Cairo)
 library(extrafont)
 extrafont::loadfonts()
 
-setwd("~/git/R/RKI-Dashboard/R/")
+# Set Working directory to git root
 
-source("lib/copyright.r")
-source("lib/sql.r")
+if (rstudioapi::isAvailable()){
+  
+  # When called in RStudio
+  SD <- unlist(str_split(dirname(rstudioapi::getSourceEditorContext()$path),'/'))
+  
+} else {
+  
+  #  When called from command line 
+  SD = (function() return( if(length(sys.parents())==1) getwd() else dirname(sys.frame(1)$ofile) ))()
+  SD <- unlist(str_split(SD,'/'))
+  
+}
+
+WD <- paste(SD[1:(length(SD)-1)],collapse='/')
+setwd(WD)
+
+source("R/lib/copyright.r")
+source("R/lib/sql.r")
 
 today <- Sys.Date()
 heute <- format(today, "%Y%m%d")
@@ -43,7 +60,7 @@ data[,3] <- round(data[,3],2)
 print(data)
 
 png( paste( 
-      "output/"
+      "png/"
     ,  heute
     , "Mortality-1.png"
     , sep = ""
@@ -112,7 +129,7 @@ plot(gg)
 
 ggsave( plot = gg, 
         file = paste( 
-          "output/"
+          "png/"
           ,  heute
           , "Mortality-2.png"
           , sep = ""
