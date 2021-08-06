@@ -49,6 +49,7 @@ order by
 end
 //
 
+
 drop procedure if exists LandkreisTag //
 
 create procedure LandkreisTag ( Kreis CHAR(64), AbTag DATE )
@@ -74,6 +75,25 @@ order by
     , A.Meldedatum
     ;
 
+end
+//
+
+drop procedure if exists LandkreisWoche //
+
+create procedure LandkreisWoche ( IdLK INT )
+begin
+
+
+    select 
+        ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) as Kw
+        , sum(AnzahlFall) as Anzahl 
+    from Faelle
+    where 
+        IdLandkreis = IdLK
+    group by 
+          Kw
+
+;
 end
 //
 
