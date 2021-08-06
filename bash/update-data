@@ -46,9 +46,12 @@ function git_pull {
 
     for D in Infektionen Impfungen Nowcasting Sequenzdaten
     do
-        pushd $D
-            git pull
-        popd
+        echo -e "\n\n${blue}+---------"
+        echo -e "| ${red}$D "
+        echo -e "${blue}+---------${reset}\n\n"
+        pushd $D 2>/dev/null
+            git pull 2>/dev/null
+        popd 2>/dev/null
     done
 }
 
