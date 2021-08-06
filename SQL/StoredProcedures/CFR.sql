@@ -18,7 +18,7 @@ begin
                 week(Refdatum,3) as Kw
                 , sum(AnzahlTodesfall) as Tote
                 , sum(AnzahlFall) as Faelle
-            from RKIFaelle
+            from Faelle
             group by week(Refdatum,3)) as CFR
     ;
 end

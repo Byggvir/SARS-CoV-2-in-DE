@@ -172,6 +172,9 @@ group by
 
 end //
 
+
+drop procedure if exists GetRegion //
+
 create procedure GetRegion (CC INT)
 begin
 

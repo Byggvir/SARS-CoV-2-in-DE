@@ -31,7 +31,7 @@ begin
         ( Datum DATE primary key)
     select distinct
             Meldedatum as Datum
-    from RKIFaelle
+    from Faelle
     ;
    
     create temporary table rki_meldedatum 
@@ -39,7 +39,7 @@ begin
     select 
             t1.Meldedatum as Date
             , sum(AnzahlFall) as Cases
-        from RKIFaelle as t1
+        from Faelle as t1
         where NeuerFall > -1
         group by t1.Meldedatum
     ;
@@ -49,7 +49,7 @@ begin
     select 
             t1.Refdatum as Date
             , sum(AnzahlFall) as Cases
-        from RKIFaelle as t1 
+        from Faelle as t1 
         where NeuerFall > -1 and IstErkrankungsbeginn = 1
         group by t1.Refdatum
     ;

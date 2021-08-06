@@ -25,7 +25,7 @@ begin
             select 
                 Meldedatum
                 , sum(AnzahlFall) as cases21
-            from RKIFaelle 
+            from Faelle 
             group by Meldedatum ) as R21 ) as R2
     on R1.date = R2.Date2
     join
@@ -36,7 +36,7 @@ begin
             select 
                 Refdatum
                 , sum(AnzahlFall) as cases31
-            from RKIFaelle 
+            from Faelle 
             group by Refdatum ) as R31 ) as R3
     on R1.date = R3.Date3
     join

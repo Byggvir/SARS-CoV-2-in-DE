@@ -54,7 +54,7 @@ begin
       Refdatum as Date
     , sum(AnzahlFall) as Cases
     , sum(AnzahlTodesfall) as Deaths
-  from RKIFaelle
+  from Faelle
   where Altersgruppe = 'A80+' -- or Altersgruppe = 'A60-A79'
   group by Refdatum
   order by Refdatum
@@ -82,7 +82,7 @@ BEGIN
     , Meldedatum AS Kw
     , sum(AnzahlFall) AS Cases
     , sum(AnzahlTodesfall) AS Deaths
-    FROM RKIFaelle
+    FROM Faelle
     WHERE IdLandkreis DIV 1000 = IdBL
     GROUP BY IdBL, Meldedatum ;
 end

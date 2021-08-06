@@ -85,7 +85,7 @@ DROP PROCEDURE IF EXISTS UpdateFallzahlenLandkreise //
 CREATE PROCEDURE UpdateFallzahlenLandkreise ()
 BEGIN
     
-    create table if not exists FallzahlenLandkreise
+    create table if not exists FallzahlenLandkreis
     ( 
         IdLandkreis INT
         , Jahr INT
@@ -103,7 +103,7 @@ BEGIN
         , 0 as AnzahlTodesfall
     from Landkreis, Kalenderwochen;
     
-    replace into FallzahlenLandkreise
+    replace into FallzahlenLandkreis
     select
         IdLandkreis as IdLandkreis
         , ( case when week(Meldedatum,3) = 53 then 2020 else year(Meldedatum) end ) as Jahr
@@ -156,7 +156,7 @@ BEGIN
             , Kw
             , sKw
             , count(IdLandkreis) as Lk
-        from FallzahlenLandkreise
+        from FallzahlenLandkreis
         where Anzahlfall=0
         group by 
             sKw
@@ -177,8 +177,8 @@ BEGIN
         , L1.sKw as sKw
         , count(L1.IdLandkreis) as Anzahl
         , 'LEQ' as Tendenz
-    from FallzahlenLandkreise as L1
-    join FallzahlenLandkreise as L2
+    from FallzahlenLandkreis as L1
+    join FallzahlenLandkreis as L2
     on L1.IdLandkreis = L2.IdLandkreis
     and L1.sKw = L2.sKw + 1
     where 
@@ -196,8 +196,8 @@ BEGIN
         , L1.sKw as sKw
         , count(L1.IdLandkreis) as Anzahl
         , 'GT' as Tendenz
-    from FallzahlenLandkreise as L1
-    join FallzahlenLandkreise as L2
+    from FallzahlenLandkreis as L1
+    join FallzahlenLandkreis as L2
     on L1.IdLandkreis = L2.IdLandkreis
     and L1.sKw = L2.sKw + 1
     where L1.AnzahlFall > L2.AnzahlFall
