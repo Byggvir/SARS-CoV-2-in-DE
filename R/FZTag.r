@@ -81,11 +81,12 @@ diagram <- function (
   reported <- daily$Date[m]
 
 
-  barplot( as.numeric(daily$AnzahlFall[1:m]) # [fromto]
+  barplot(
+           as.numeric(daily$AnzahlFall[1:m]) # [fromto]
          , ylim= limbounds(daily$AnzahlFall[1:m])
          , main = "" 
          , sub = ""
-         , xlab=""
+         , xlab = "Datum"
          , col=c(rep("lightblue",6),"red")
          , ylab="Anzahl"
          #, names.arg = Tage # [fromto]
@@ -140,6 +141,6 @@ diagram <- function (
 }
 
 daily <- diagram( 
-  SQL = 'select Meldedatum as Date,sum(AnzahlFall) as AnzahlFall, sum(AnzahlTodesfall) as AnzahlTodesfall from Faelle where Meldedatum >="2020-02-24" group by Meldedatum;'
+  SQL = 'select Meldedatum as Meldedatum, sum(AnzahlFall) as AnzahlFall, sum(AnzahlTodesfall) as AnzahlTodesfall from Faelle where Meldedatum >="2020-02-24" group by Meldedatum;'
   , main = "CoViD-19 DE: Tägliche beim Gesundheitsamt gemeldete"
   , N = "B" )

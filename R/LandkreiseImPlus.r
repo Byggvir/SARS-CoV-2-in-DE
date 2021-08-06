@@ -14,7 +14,7 @@
 
 options(OutDec=',')
 
-MyScriptName <- "RKI_Landkreis.r"
+MyScriptName <- "LandkreiseImPlus.r"
 
 require(data.table)
 library(REST)
