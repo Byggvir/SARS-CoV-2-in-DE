@@ -306,7 +306,7 @@ where
            , lwd = 2
            , cex = 2
            , inset = 0.05
-           , lty = c(1,1,4,3,3,3)
+           , lty = c(1,1,4,1,1,1)
   )
   
   legend(
@@ -333,8 +333,8 @@ where
 
 # Wann <- as.Date("2020-04-01")
 
-for (j in c(14)) {
-for (i in c(20,27,34)) {
+for (j in c(21)) {
+for (i in c(20,27,34,41)) {
     
   ra <- regression_analysis (
       ThisDate = ThisDay
