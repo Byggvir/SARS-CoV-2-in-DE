@@ -46,8 +46,9 @@ png( paste( "png/", MyScriptName, heute, ".png", sep = "")
     , width = 1920
     , height = 1080)
 par ( mar = c(10,10,10,10)
-      , mfcol = c(2,1)
+      , mfcol = c(3,1)
 )
+
 SQL <- paste( '
 SELECT distinct A.Meldedatum, dayofweek(A.Meldedatum),B.Infizierte
 FROM Faelle as A
@@ -142,6 +143,54 @@ text( bp2
     
 )
 
+
+SQL <- paste( '
+SELECT distinct A.Meldedatum, dayofweek(A.Meldedatum),B.Todesfaelle
+FROM Faelle as A
+LEFT JOIN (SELECT Meldedatum, sum(AnzahlTodesfall) AS Todesfaelle
+FROM Faelle as C WHERE NeuerTodesfall <> 0 GROUP BY Meldedatum) AS B
+ON A.Meldedatum=B.Meldedatum where A.Meldedatum > "' , as.character(today-45), '";' , sep = "" )
+
+NeueFaelle <-RunSQL(SQL = SQL)
+NeueFaelle[is.na(NeueFaelle[,3]),3] <- 0
+
+# NeueFaelle[is.na(NeueFaelle[,3]),3] <- 0
+
+mytags <- as.character(NeueFaelle[,1])
+
+mytags[NeueFaelle[,2] != 2 ] <- ""
+
+bp1 <- barplot(NeueFaelle[,3]
+               , main = "Neue Todesfälle des letzten Tages nach Meldedatum GA"
+               , cex.main = 4
+               , cex.axis = 2
+               , cex.names = 2
+               , sub = ""
+               , names.arg = mytags
+               , col = "cyan"
+               , las = 1
+               , xlab = ""
+               , ylab = ""
+               , ylim = limbounds(NeueFaelle[,3]*1.2)
+)
+
+s <- sum(NeueFaelle[,3], na.rm = TRUE)
+
+title ( sub = paste( "Summe =", s, "(ohne Fälle außerhalb des Zeitraums)")
+        , cex.sub = 2
+)
+
+text( bp1
+      , NeueFaelle[,3] 
+      , paste(round(NeueFaelle[,3]/s *100, 2), "%", sep = "")
+      , cex = 2
+      , adj = 0.5
+      , pos = 3
+      , offset = 0.2
+      
+)
+
+grid()
 mtext( paste("Datenbestand", as.character(today))
       , side = 4
       , outer = FALSE
