@@ -98,6 +98,6 @@ ggsave(plot = gg, file = paste('png/Landkreise-', From_Kw,"-",To_Kw,".png", sep=
 
 # Main program
 
-kw <- isoweek(Sys.Date()) + 52
+kw <- isoweek(Sys.Date()) + 53
   
 LandkreisePlus(9,kw)
