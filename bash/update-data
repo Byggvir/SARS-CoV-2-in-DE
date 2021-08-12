@@ -120,7 +120,7 @@ function run_r {
         echo -e "\n\n${blue}+---------"
         echo -e "| ${red}${r}"
         echo -e "${blue}+---------${reset}\n\n"
-        Rscript $r 2>/dev/null
+        Rscript $r # 2>/dev/null
     done
   popd
 
