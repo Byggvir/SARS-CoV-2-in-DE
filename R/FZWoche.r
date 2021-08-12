@@ -83,7 +83,7 @@ labs[j21] <- paste(labs[j21],21,sep='/')
 
 bp1 <- barplot( y # [fromto]
          , ylim = limbounds(y)*1.1
-         , main = paste("Wöchentliche Fälle von Kalenderwoche", weekly$Kw[1], "bis", reported) 
+         , main = paste("Wöchentliche Fälle von Pandemiewoche", weekly$Kw[1], "bis", reported) 
          , sub = ""
          , xlab = ""
          , col = "lightblue"
@@ -92,7 +92,7 @@ bp1 <- barplot( y # [fromto]
          , las = 2
 )
 
-title ( sub = paste("Source: rki.de; Created:", heute ), line = 3)
+title ( sub = paste("Created:", heute ), line = 4, cex.sub = 1)
 
 text( bp1
       , y
@@ -112,7 +112,7 @@ grid()
 y <- as.numeric(weekly$AnzahlTodesfall[1:m])
 bp2 <- barplot( y # [fromto]
          , ylim = limbounds(y)*1.1
-         , main = paste("Wöchentliche Todesfälle DE von Kalenderwoche", weekly$Kw[1], "bis", reported) 
+         , main = paste("Wöchentliche Todesfälle DE von Pandemiewoche", weekly$Kw[1], "bis", reported) 
          , sub = ""
          , xlab = ""
          , col = "lightblue" 
@@ -124,7 +124,7 @@ bp2 <- barplot( y # [fromto]
 abline(h=y[m-1] , col = 'red' , lty = 3)
 abline(h=max(y) , col = 'red' , lty = 3)
 
-title ( sub = paste("Source: rki.de; Created:", heute ), line = 3)
+title ( sub = paste("Created:", heute ), line = 4, cex.sub = 1)
 
 text( bp2
       , y 
