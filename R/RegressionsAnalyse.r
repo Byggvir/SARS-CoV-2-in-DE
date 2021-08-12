@@ -109,7 +109,7 @@ group by WTag;'
 
 
 Kor <- RunSQL(SQLWTag)
-print(Kor)
+# print(Kor)
 
 # Function execute a regression analysis 
 
@@ -154,6 +154,8 @@ where
   a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
   b <-  c( ci[2,1], ra$coefficients[2] , ci[2,2])
   
+  print(round(exp(7*b),2))
+  
   xlim <- c(0,DaysBack+DaysAhead)
   ylim <- c(  0
               , ( max(
@@ -181,7 +183,7 @@ where
     , upper = round(exp(a[3] + b[3] * sTage) * Kor[wday(Tage, week_start = 1),3])
   )
   
-  print(PrognoseTab)
+  # print(PrognoseTab)
   
   png( paste( "png/Prognose"
               , "_"
@@ -340,7 +342,8 @@ for (i in c(20,27,34,41)) {
       ThisDate = ThisDay
     , DaysBack = i
     , DaysAhead = j
-)
-
+   
+  )
+  
 } # End for i
 } # End for j

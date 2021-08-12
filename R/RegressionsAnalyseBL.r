@@ -68,8 +68,19 @@ options(
 SQL <- 'select * from Bundesland order by IdBundesland;'
 BL <- RunSQL(SQL = SQL)
 
-SQLWTag <- 
-  paste('
+# Function execute a regression analysis 
+
+CI <- 0.95
+
+regression_analysis <- function (
+  ThisDate
+  , DaysBack
+  , DaysAhead
+  , IdBundesland
+) {
+
+  SQLWTag <- 
+    paste('
 select 
  WTag
  , avg(AnteilAnWoche) as AnteilAnWoche
@@ -87,44 +98,33 @@ join (
     , sum(AnzahlFall) as FallWoche
   from Faelle 
   where Meldedatum >'
-        , '"2020-05-03"'
-        , 'and Meldedatum < adddate("'
-        , ThisDay
-        , '",-weekday("'
-        , ThisDay
-        , '"))
+          , '"2020-05-03"'
+          , 'and Meldedatum < adddate("'
+          , ThisDate
+          , '",-weekday("'
+          , ThisDate
+          , '"))
   group by Kw 
   ) as W 
 on 
   week(F.Meldedatum,3) = W.Kw
 where Meldedatum >'
-        , '"2020-05-03"'
-        , 'and Meldedatum < adddate("'
-        , ThisDay
-        , '",-weekday("'
-        , ThisDay
-        , '"))
+          , '"2020-05-03"'
+          , 'and Meldedatum < adddate("'
+          , ThisDate
+          , '",-weekday("'
+          , ThisDate
+          , '"))
 group by F.Meldedatum
 ) as T 
 group by WTag;'
-        , sep= ' '
-  )
-
-Kor <- RunSQL(SQLWTag)
-print(Kor)
-
-# Function execute a regression analysis 
-
-CI <- 0.95
-
-regression_analysis <- function (
-  ThisDate
-  , DaysBack
-  , DaysAhead
-  , IdBundesland
-) {
-
-  SQL <- paste (
+          , sep= ' '
+    )
+  
+  Kor <- RunSQL(SQLWTag)
+  # print(Kor)
+  
+SQL <- paste (
   'select 
       Meldedatum as Meldedatum
       , (@i:=@i+1) as Day
@@ -166,8 +166,8 @@ where
     ) 
   )
   
-  FromDay <- ThisDay-days(DaysBack)
-  ToDay <- ThisDay+days(DaysAhead)
+  FromDay <- ThisDate-days(DaysBack)
+  ToDay <- ThisDate+days(DaysAhead)
   
   Tage <- as.Date.numeric(FromDay:ToDay,"1970-01-01")
   
@@ -184,17 +184,17 @@ where
     , upper = round(exp(a[3] + b[3] * sTage) * Kor[wday(Tage, week_start = 1),3])
   )
   
-  print(PrognoseTab)
+  # print(PrognoseTab)
   
   png( paste( "png/Prognose"
+              , "_"
+              , BL[IdBundesland,2]
               , "_"
               , as.character(ThisDate)
               , "_"
               , DaysBack
               , "_"
               , DaysAhead
-              , "_"
-              , BL[IdBundesland,2]
               , ".png"
               , sep = ""
   )
@@ -327,16 +327,40 @@ where
 }
 
 # Wann <- as.Date("2020-04-01")
-
-for (j in c(1)) {
+FerienEnde <- c(
+  
+    "2021-07-31" # "2020-08-08"
+  , "2021-08-04" # "2020-08-05"
+  , "2020-08-26"
+  , "2020-08-26"
+  , "2020-08-11"
+  , "2020-08-14"
+  , "2020-08-14"
+  , "2020-09-12"
+  , "2020-09-07"
+  , "2020-08-14"
+  , "2020-08-07"
+  , "2020-08-08"
+  , "2021-07-31" # "2020-08-01"
+  , "2020-08-28"
+  , "2020-08-26"
+  , "2020-08-29"
+  
+)
+options( 
+  digits=3
+)
+for (j in c(14)) {
   for (i in c(41)) {
     for (b in 1:16) { 
       ra <- regression_analysis (
-          ThisDate = ThisDay
+          ThisDate = ThisDay 
+        #  ThisDate = as.Date(FerienEnde[b])
         , DaysBack = i
         , DaysAhead = j
         , IdBundesland = b
       )
+      print(round((exp(7*ra$coefficients[2])),2))
     } # End for b
   } # End for i
 } # End for j
