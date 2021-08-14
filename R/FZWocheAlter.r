@@ -8,7 +8,7 @@
 # E-Mail: thomas@arend-rhb.de
 #
 
-MyScriptName <-"FZWoche"
+MyScriptName <-"FZWocheAlter"
 
 library(REST)
 library(tidyverse)
@@ -32,7 +32,7 @@ WD <- paste(SD[1:(length(SD)-1)],collapse='/')
 
 setwd(WD)
 
-fPNG <- "png/Fallzahlen_Wo_Bund.png"
+fPrefix <- "Fallzahlen_Wo_"
 
 # Reads the cumulative cases and death from rki.de
 # The Excel file is in a very poor format. Therefore we have to adjust the data.
@@ -51,28 +51,40 @@ options(
   , Outdec = "."
   , max.print = 3000
   )
-SQL = 'call CasesPerWeek()'
 
+SQL <- 'select distinct Altersgruppe from Faelle;'
+Altersgruppen <- RunSQL(SQL)
+
+
+for (AG in Altersgruppen[,1]) {
+
+SQL <- paste('call CasesPerWeekAgeGroup("' , AG , '")', sep='')
 weekly <- RunSQL(SQL = SQL)
-write.csv(weekly,file="data/Fallzahlen_Wo_Bund.csv")
+
+write.csv(weekly,file= paste('data/', fPrefix, AG,".csv", sep=""))
 
 m <- length(weekly[,1])
 reported <- weekly$Kw[m]
 
 
-png(  fPNG
+png(  paste('png/', fPrefix, AG ,".png", sep="")
     , width = 1920
     , height = 1080
     )
 
-par(mfcol = c(2,1))
+par(
+   mar = c(10,10,10,10)
+  , mfcol = c(1,1)
+  )
 
 colors <-c( "red", "yellow", "green", "blue", "black" )
 
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
-y <- as.numeric(weekly$AnzahlFall[1:m])
+max_f <- max(weekly$AnzahlFall[1:m])
+sum_f <- sum(weekly$AnzahlFall[1:m])
+y <- as.numeric(weekly$AnzahlFall[1:m])/max_f*100
 
 labs <- weekly$Kw
 j20 <- weekly$Kw < 54
@@ -83,60 +95,55 @@ labs[j20] <- paste(labs[j20],20,sep='/')
 labs[j21] <- paste(labs[j21],21,sep='/')
 
 
-bp1 <- barplot( y # [fromto]
-         , ylim = limbounds(y)*1.1
-         , main = paste("Wöchentliche Fälle von Pandemiewoche", weekly$Kw[1], "bis", reported) 
+bp1 <- plot( weekly$Kw
+          , y
+          , type = 'l'
+         , ylim = c(0,110)
+         , main = "" 
          , sub = ""
-         , xlab = ""
-         , col = "lightblue"
+         , xlab = "Pandemiewoche"
+         , col = "blue"
          , ylab = "Anzahl"
-         , names.arg = labs
+#        , names.arg = labs
          , las = 2
+         , lwd = 4
 )
 
-title ( sub = paste("Created:", heute ), line = 4, cex.sub = 1)
+max_t <- max(weekly$AnzahlTodesfall[1:m])
+sum_t <- sum(weekly$AnzahlTodesfall[1:m])
 
-text( bp1
+y <- as.numeric(weekly$AnzahlTodesfall[1:m])/max_t*100
+
+lines( weekly$Kw
       , y
-      , round(y)
-      , cex = 1
-      , pos = 3
-      , offset = 3
-      , srt = 90
+      , type = 'l'
+      , ylim = c(0,110)
+      , col = "red"
+      , lwd = 4
 )
+ 
+title( main = paste("Index der wöchentliche Fälle DEU von Pandemiewoche", weekly$Kw[1], "bis", reported) 
+       , line = 2
+       , cex.main = 3)
 
-abline(h=y[m-1] , col = 'red')
+title( sub = paste( "Altersgruppe", AG)
+       , line = 6
+       , cex.sub = 2)
 
-abline(h=max(y) , col = 'red')
-
+legend ( 
+  "topleft"
+  , title = "Index Fallzahlen pro Woche "
+  , legend = c(paste("Fälle, max =", max_f, ", ∑ =", sum_f)
+               , paste("Todesfälle, max =", max_t, ", ∑ =", sum_t))
+  , col = c("blue","red")
+  , lwd = 4
+  , cex = 2
+  , inset = 0.05
+)
 grid()
-
-y <- as.numeric(weekly$AnzahlTodesfall[1:m])
-bp2 <- barplot( y # [fromto]
-         , ylim = limbounds(y)*1.1
-         , main = paste("Wöchentliche Todesfälle DE von Pandemiewoche", weekly$Kw[1], "bis", reported) 
-         , sub = ""
-         , xlab = ""
-         , col = "lightblue" 
-         , ylab = "Anzahl"
-         , names.arg = labs
-         , las = 2
-)
-
-abline(h=y[m-1] , col = 'red' , lty = 3)
-abline(h=max(y) , col = 'red' , lty = 3)
-
-title ( sub = paste("Created:", heute ), line = 4, cex.sub = 1)
-
-text( bp2
-      , y 
-      , round(y)
-      , cex = 1
-      , pos = 3
-      , offset = 1
-      , srt = 90
-)
 
 copyright()
 
 dev.off()
+
+}

@@ -65,6 +65,8 @@ for (i in BL[,1]) {
   SQL = paste ('call CasesPerWeekBL(',i,' );', sep ="")
 
   weekly <- RunSQL(SQL = SQL)
+  write.csv(weekly,file=paste("data/Fallzahlen_Wo_", BL[i,2],".csv", sep=""))
+  
   m <- length(weekly[,1])
   
   labs <- weekly$Kw
