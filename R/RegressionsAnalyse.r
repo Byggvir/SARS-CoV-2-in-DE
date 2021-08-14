@@ -35,6 +35,7 @@ setwd(WD)
 MyScriptName <- "RegressionsAnalyse"
 
 source("R/lib/copyright.r")
+source("R/lib/myfunctions.r")
 source("R/lib/ta_regressionanalysis.r")
 source("R/lib/sql.r")
 
@@ -107,13 +108,21 @@ group by WTag;'
         , sep= ' '
   )
 
-
 Kor <- RunSQL(SQLWTag)
-# print(Kor)
 
 # Function execute a regression analysis 
 
 CI <- 0.95
+
+#---
+# 
+# Regressionsanalyse über
+#
+#   * bis zum angegebenen Datum
+#   * die vergangenen Tage
+#   * und Prognose
+#
+#---
 
 regression_analysis <- function (
   ThisDate
@@ -124,7 +133,6 @@ regression_analysis <- function (
   SQL <- paste (
   'select 
       Meldedatum as Meldedatum
-      , (@i:=@i+1) as Day
       , week(Meldedatum,3) as Kw
       , dayofweek(Meldedatum) as WTag
       , sum(AnzahlFall) as AnzahlFall
@@ -139,16 +147,17 @@ where
   ,'",'
   , DaysAhead
   , ') 
-  group by Meldedatum;
+  group by Meldedatum
+  order by Meldedatum;
 '
   , sep=''
   )
   
   data <- RunSQL( SQL=SQL, prepare = "set @i:=-1;" )
   
-  FromTo <- data$Day[data$Day <= DaysBack]
+  FromTo <- 0:(DaysBack)
   
-  ra <- lm(log(data$AnzahlFall[data$Day<=DaysBack]) ~ FromTo)
+  ra <- lm(log(as.numeric(data$AnzahlFall[FromTo + 1])) ~ FromTo)
   ci <- confint(ra,level = CI)
   
   a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
@@ -156,17 +165,8 @@ where
   
   print(round(exp(7*b),2))
   
-  xlim <- c(0,DaysBack+DaysAhead)
-  ylim <- c(  0
-              , ( max(
-                c(   exp(a)
-                     , exp(a+b*as.numeric(DaysBack+DaysAhead))
-                )
-              ) %/% 1000 + 1 ) * 1000
-  )
-  
-  FromDay <- ThisDay-days(DaysBack)
-  ToDay <- ThisDay+days(DaysAhead)
+  FromDay <- ThisDate-days(DaysBack)
+  ToDay <- ThisDate+days(DaysAhead)
   
   Tage <- as.Date.numeric(FromDay:ToDay,"1970-01-01")
   
@@ -201,10 +201,17 @@ where
 
   par (   mar = c(10,5,10,5) 
           , bg = "white")
-  zr <- data$Day <= DaysBack
-  xlim = c(data$Meldedatum[1],data$Meldedatum[1]+1+DaysBack+DaysAhead)
   
-  plot(data$Meldedatum[zr]
+  zr <- data$Meldedatum <= ThisDate
+  
+  xlim = c(data$Meldedatum[1],data$Meldedatum[1]+days(1+DaysBack+DaysAhead))
+  ylim <- limbounds(
+    c( exp(a)
+       , exp(a+b*as.numeric(DaysBack+DaysAhead))
+    )
+  )
+  print(ylim)
+  plot(  data$Meldedatum[zr]
        , data$AnzahlFall[zr]
        , main = ""
        , sub = paste("Vom", ThisDate - DaysBack, "bis", ThisDate )
@@ -224,14 +231,6 @@ where
     , cex.main = 4
   )
   copyright(c("RKI","TA"))
-  
-  zr <- data$Day <= DaysBack
-  
-  lines ( data$Meldedatum[zr]
-          , data$AnzahlFall[zr]
-          , col = "black"
-          , lwd = 3
-  )
   
   lines ( PrognoseTab$Date
           , PrognoseTab$assumed
@@ -292,7 +291,7 @@ where
            , legend = c( 
              "Fallzahl innerhalb des Intervalls der RA"
              , "Fallzahl außerhalb "
-             , "model Fallzahl"
+             , "Model Fallzahl"
              , paste("Obere Grenze des CI ",  CI * 100, "%", sep="")
              , "Mittelwert"
              , paste("Untere Grenze des CI ",  CI * 100, "%", sep="")
@@ -338,7 +337,7 @@ where
 for (j in c(21)) {
 for (i in c(20,27,34,41)) {
     
-  ra <- regression_analysis (
+  ra2 <- regression_analysis (
       ThisDate = ThisDay
     , DaysBack = i
     , DaysAhead = j

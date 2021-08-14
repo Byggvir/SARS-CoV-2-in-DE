@@ -72,6 +72,16 @@ BL <- RunSQL(SQL = SQL)
 
 CI <- 0.95
 
+#---
+# 
+# Regressionsanalyse über
+#
+#   * bis zum angegebenen Datum
+#   * die vergangenen Tage
+#   * und Prognose
+#
+#---
+
 regression_analysis <- function (
   ThisDate
   , DaysBack
@@ -127,7 +137,6 @@ group by WTag;'
 SQL <- paste (
   'select 
       Meldedatum as Meldedatum
-      , (@i:=@i+1) as Day
       , week(Meldedatum,3) as Kw
       , dayofweek(Meldedatum) as WTag
       , sum(AnzahlFall) as AnzahlFall
@@ -150,9 +159,9 @@ where
   
   data <- RunSQL( SQL=SQL, prepare = "set @i:=-1;" )
   
-  FromTo <- data$Day[data$Day <= DaysBack]
+  FromTo <- 0:DaysBack
   
-  ra <- lm(log(data$AnzahlFall[data$Day<=DaysBack]) ~ FromTo)
+  ra <- lm(log(data$AnzahlFall[FromTo+1]) ~ FromTo)
   ci <- confint(ra,level = CI)
   
   a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
@@ -204,8 +213,9 @@ where
 
   par (   mar = c(10,5,10,5) 
           , bg = "white")
-  zr <- data$Day <= DaysBack
-  
+
+  zr <- data$Meldedatum <= ThisDate
+
   xlim = c(data$Meldedatum[1],data$Meldedatum[1]+1+DaysBack+DaysAhead)
   
   plot(  data$Meldedatum[zr]
@@ -234,14 +244,6 @@ where
   )
 
   copyright(c("RKI","TA"))
-  
-  zr <- data$Day <= DaysBack
-  
-  lines ( data$Meldedatum[zr]
-          , data$AnzahlFall[zr]
-          , col = "black"
-          , lwd = 3
-  )
   
   lines ( PrognoseTab$Date
           , PrognoseTab$assumed
