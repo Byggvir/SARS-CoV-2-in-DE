@@ -3,6 +3,7 @@
 SQL/rki.cnf
 SQL/setup.sql
 Rplots.pdf
+data/*.csv
 
 # History files
 .Rhistory
