@@ -64,6 +64,22 @@ BEGIN
 end
 //
 
+DROP PROCEDURE IF EXISTS CasesPerWeekAgeGroupBL //
+
+CREATE PROCEDURE CasesPerWeekAgeGroupBL (AgeGroup CHAR(8), IdBL INT)
+BEGIN
+
+   SELECT 
+      ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) AS Kw
+    , sum(AnzahlFall) AS AnzahlFall
+    , sum(AnzahlTodesfall) AS AnzahlTodesfall
+    FROM Faelle
+    WHERE ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) > 8
+    and Altersgruppe = AgeGroup
+    and IdLandkreis div 1000 = IdBL
+    GROUP BY Kw ;
+end
+//
 
 DROP PROCEDURE IF EXISTS CasesPerWeekBL //
 
