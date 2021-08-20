@@ -34,15 +34,14 @@ setwd(WD)
 
 MyScriptName <- "RegressionsAnalyse"
 
-source("R/lib/copyright.r")
 source("R/lib/myfunctions.r")
+source("R/lib/copyright.r")
 source("R/lib/ta_regressionanalysis.r")
 source("R/lib/sql.r")
 
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
-Wochentage <- c("Mo","Di","Mi","Do","Fr","Sa","So")
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -163,7 +162,7 @@ where
   a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
   b <-  c( ci[2,1], ra$coefficients[2] , ci[2,2])
   
-  print(round(exp(7*b),2))
+  print(RZahl(b))
   
   FromDay <- ThisDate-days(DaysBack)
   ToDay <- ThisDate+days(DaysAhead)
@@ -210,7 +209,7 @@ where
        , exp(a+b*as.numeric(DaysBack+DaysAhead))
     )
   )
-  print(ylim)
+
   plot(  data$Meldedatum[zr]
        , data$AnzahlFall[zr]
        , main = ""
@@ -315,9 +314,10 @@ where
     , inset = 0.02
     , title = paste( "Tägliche Steigerung CI  ",  CI * 100, "%", sep="")
     , legend = c( 
-          paste(round((exp(ci[2,1])-1)*100,2),"% / R =",round((exp(7*ci[2,1])),2))
-        , paste(round((exp(ra$coefficients[2])-1)*100,2),"% / R =", round((exp(7*ra$coefficients[2])),2))
-        , paste(round((exp(ci[2,2])-1)*100,2),"% / R =",round((exp(7*ci[2,2])),2)))
+      paste(round((exp(ci[2,1])-1)*100,2),"% / R =", RZahl(ci[2,1]), ", 2x in", round(log(2)/ci[2,1],1), "Tagen")
+      , paste(round((exp(ra$coefficients[2])-1)*100,2),"% / R =", RZahl(ra$coefficients[2]), ", 2x in", round(log(2)/ra$coefficients[2],1), "Tagen")
+      , paste(round((exp(ci[2,2])-1)*100,2),"% / R =",RZahl(ci[2,2]), ", 2x in", round(log(2)/ci[2,2],1), "Tagen")
+    )
     , col = c(
         "green"
       , "orange"
@@ -325,7 +325,7 @@ where
     )
     , lty = 3 
     , lwd = 3
-    , cex = 3)
+    , cex = 2)
 
   dev.off()
   return(ra)

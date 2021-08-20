@@ -34,15 +34,14 @@ setwd(WD)
 
 MyScriptName <- "RegressionsAnalyse"
 
+source("R/lib/myfunctions.r")
 source("R/lib/copyright.r")
 source("R/lib/ta_regressionanalysis.r")
 source("R/lib/sql.r")
-source("R/lib/myfunctions.r")
+
 
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
-
-Wochentage <- c("Mo","Di","Mi","Do","Fr","Sa","So")
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -59,13 +58,13 @@ if (length(args) == 0) {
 print(ThisDay)
 
 options( 
-  digits=7
-  , scipen=7
+  digits=5
+  , scipen=5
   , Outdec="."
   , max.print = 3000
 )
 
-SQL <- 'select distinct Altersgruppe from Faelle where Altersgruppe<>"unbekan";'
+SQL <- 'select distinct Altersgruppe, 0 as R from Faelle where Altersgruppe<>"unbekan";'
 Altersgruppen <- RunSQL(SQL)
 
 # Function execute a regression analysis 
@@ -87,8 +86,9 @@ regression_analysis <- function (
   , DaysBack
   , DaysAhead
   , Altersgruppe
-) {
-
+)
+{
+  
 # Berechnen des durchschnittlichen Anteils eines Wochentages an den Meldungen
   
   SQLWTag <- 
@@ -143,6 +143,7 @@ group by WTag;'
       , week(Meldedatum,3) as Kw
       , dayofweek(Meldedatum) as WTag
       , sum(AnzahlFall) as AnzahlFall
+      , sum(AnzahlTodesfall) as AnzahlTodesfall
   from Faelle
 where 
   Meldedatum >= adddate("'
@@ -161,16 +162,31 @@ where
   )
 
   data <- RunSQL( SQL=SQL, prepare = "set @i:=-1;" )
-
-  FromTo <- 0:DaysBack
   
-  ra <- lm(log(data$AnzahlFall[FromTo+1]) ~ FromTo)
+  write.csv(data,
+            file = paste(
+              'data/Prognose_'
+              , Altersgruppe
+              , '_'
+              , ThisDate
+              , '_'
+              , DaysBack
+              , '_'
+              , DaysAhead
+              , '.csv'
+              , sep=''
+            )
+  )
+  
+  FromTo <- 0:DaysBack 
+  y <- data$AnzahlFall[FromTo+1]
+  s <- y > 0
+
+  ra <- lm(log(y[s]) ~ FromTo[s])
   ci <- confint(ra,level = CI)
 
   a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
   b <-  c( ci[2,1], ra$coefficients[2] , ci[2,2])
-  
-  print(c(b,exp(7*b)))
   
   xlim <- c(0,DaysBack+DaysAhead)
   
@@ -234,7 +250,7 @@ where
        , lwd = 3
        , xlim = xlim
        , col = "black"
-       , cex.sub = 3
+       , cex.axis = 1.5
 
   )
 
@@ -322,11 +338,12 @@ where
   legend(
     lr
     , inset = 0.02
-    , title = paste( "Tägliche Steigerung CI  ",  CI * 100, "%", sep="")
+    , title = paste( "Tägliche Steigerung CI  ",  CI * 100, "%", sep="" )
     , legend = c( 
-          paste(round((exp(ci[2,1])-1)*100,2),"% / R =",round((exp(7*ci[2,1])),2))
-        , paste(round((exp(ra$coefficients[2])-1)*100,2),"% / R =", round((exp(7*ra$coefficients[2])),2))
-        , paste(round((exp(ci[2,2])-1)*100,2),"% / R =",round((exp(7*ci[2,2])),2)))
+      paste(round((exp(ci[2,1])-1)*100,2),"% / R =", RZahl(ci[2,1]), ", 2x in", round(log(2)/ci[2,1],1), "Tagen")
+      , paste(round((exp(ra$coefficients[2])-1)*100,2),"% / R =", RZahl(ra$coefficients[2]), ", 2x in", round(log(2)/ra$coefficients[2],1), "Tagen")
+      , paste(round((exp(ci[2,2])-1)*100,2),"% / R =",RZahl(ci[2,2]), ", 2x in", round(log(2)/ci[2,2],1), "Tagen")
+    )
     , col = c(
         "green"
       , "orange"
@@ -334,20 +351,18 @@ where
     )
     , lty = 1 
     , lwd = 3
-    , cex = 1.5)
-
+    , cex = 1
+    )
+  
   par(new=FALSE)
   return(ra)
   
 } # End Regressionsanalyse
 
-options( 
-  digits=3
-)
 
-for (j in c(0,14)) {
+for (j in c(0)) {
   
-  for (i in c(27,41)) {
+  for (i in c(41)) {
   
     png( paste( "png/Prognose"
                 , "_Alter_"
@@ -370,18 +385,22 @@ for (j in c(0,14)) {
     
     for (AG in Altersgruppen[,1]) {
       
-      ra <- regression_analysis (
+      R <- regression_analysis (
           ThisDate = ThisDay 
         , DaysBack = i
         , DaysAhead = j
         , Altersgruppe = AG
       )
+      
+      Altersgruppen[Altersgruppen[,1]==AG,2] <- RZahl(R$coefficients[2])
       par (new=FALSE)
       
-      print(round((exp(7*ra$coefficients[2])),2))
     } # End for AG
-    
+    print(Altersgruppen)
     dev.off()
 
     } # End for i
 } # End for j
+
+print((1-Altersgruppen[,2]/Altersgruppen[1,2])/0.82)
+

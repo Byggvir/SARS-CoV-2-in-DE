@@ -34,15 +34,14 @@ setwd(WD)
 
 MyScriptName <- "RegressionsAnalyse"
 
+source("R/lib/myfunctions.r")
 source("R/lib/copyright.r")
 source("R/lib/ta_regressionanalysis.r")
 source("R/lib/sql.r")
-source("R/lib/myfunctions.r")
+
 
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
-
-Wochentage <- c("Mo","Di","Mi","Do","Fr","Sa","So")
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -170,7 +169,7 @@ where
   a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
   b <-  c( ci[2,1], ra$coefficients[2] , ci[2,2])
   
-  print(c(b,exp(7*b)))
+  # print(c(b,RZahl(b)))
   
   xlim <- c(0,DaysBack+DaysAhead)
   
@@ -324,9 +323,10 @@ where
     , inset = 0.02
     , title = paste( "Tägliche Steigerung CI  ",  CI * 100, "%", sep="")
     , legend = c( 
-          paste(round((exp(ci[2,1])-1)*100,2),"% / R =",round((exp(7*ci[2,1])),2))
-        , paste(round((exp(ra$coefficients[2])-1)*100,2),"% / R =", round((exp(7*ra$coefficients[2])),2))
-        , paste(round((exp(ci[2,2])-1)*100,2),"% / R =",round((exp(7*ci[2,2])),2)))
+      paste(round((exp(ci[2,1])-1)*100,2),"% / R =", RZahl(ci[2,1]))
+      , paste(round((exp(ra$coefficients[2])-1)*100,2),"% / R =", RZahl(ra$coefficients[2]))
+      , paste(round((exp(ci[2,2])-1)*100,2),"% / R =",RZahl(ci[2,2]))
+    )
     , col = c(
         "green"
       , "orange"
@@ -342,7 +342,7 @@ where
 } # End Regressionsanalyse
 
 options( 
-  digits=3
+  digits=4
 )
 
 for (j in c(0,14)) {
@@ -378,7 +378,8 @@ for (j in c(0,14)) {
       )
       par (new=FALSE)
       
-      print(round((exp(7*ra$coefficients[2])),2))
+      print(RZahl(ra$coefficients[2]))
+      
     } # End for AG
     
     dev.off()

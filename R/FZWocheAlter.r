@@ -55,10 +55,9 @@ options(
 SQL <- 'select distinct Altersgruppe from Faelle;'
 Altersgruppen <- RunSQL(SQL)
 
-
 for (AG in Altersgruppen[,1]) {
 
-SQL <- paste('call CasesPerWeekAgeGroup("' , AG , '")', sep='')
+SQL <- paste('call CasesPerWeekAgeGroup("' , AG , '");', sep='')
 weekly <- RunSQL(SQL = SQL)
 
 write.csv(weekly,file= paste('data/', fPrefix, AG,".csv", sep=""))
@@ -74,7 +73,6 @@ png(  paste('png/', fPrefix, AG ,".png", sep="")
 
 par(
    mar = c(10,10,10,10)
-  , mfcol = c(1,1)
   )
 
 colors <-c( "red", "yellow", "green", "blue", "black" )
@@ -84,7 +82,12 @@ heute <- format(today, "%d %b %Y")
 
 max_f <- max(weekly$AnzahlFall[1:m])
 sum_f <- sum(weekly$AnzahlFall[1:m])
-y <- as.numeric(weekly$AnzahlFall[1:m])/max_f*100
+
+max_t <- max(weekly$AnzahlTodesfall[1:m])
+sum_t <- sum(weekly$AnzahlTodesfall[1:m])
+
+yf <- as.numeric(weekly$AnzahlFall[1:m])/max_f*100
+yt <- as.numeric(weekly$AnzahlTodesfall[1:m])/max_t*100
 
 labs <- weekly$Kw
 j20 <- weekly$Kw < 54
@@ -96,7 +99,7 @@ labs[j21] <- paste(labs[j21],21,sep='/')
 
 
 bp1 <- plot( weekly$Kw
-          , y
+          , yf
           , type = 'l'
          , ylim = c(0,110)
          , main = "" 
@@ -109,13 +112,8 @@ bp1 <- plot( weekly$Kw
          , lwd = 4
 )
 
-max_t <- max(weekly$AnzahlTodesfall[1:m])
-sum_t <- sum(weekly$AnzahlTodesfall[1:m])
-
-y <- as.numeric(weekly$AnzahlTodesfall[1:m])/max_t*100
-
 lines( weekly$Kw
-      , y
+      , yt
       , type = 'l'
       , ylim = c(0,110)
       , col = "red"
@@ -140,6 +138,7 @@ legend (
   , cex = 2
   , inset = 0.05
 )
+
 grid()
 
 copyright()

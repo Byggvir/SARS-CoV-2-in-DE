@@ -34,15 +34,14 @@ setwd(WD)
 
 MyScriptName <- "RegressionsAnalyse"
 
+source("R/lib/myfunctions.r")
 source("R/lib/copyright.r")
 source("R/lib/ta_regressionanalysis.r")
 source("R/lib/sql.r")
-source("R/lib/myfunctions.r")
+
 
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
-
-Wochentage <- c("Mo","Di","Mi","Do","Fr","Sa","So")
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -229,7 +228,7 @@ where
        , lwd = 3
        , xlim = xlim
        , col = "black"
-       , cex.sub = 3
+       , cex.axis = 1.5
 
   )
 
@@ -311,9 +310,11 @@ where
     , inset = 0.02
     , title = paste( "Tägliche Steigerung CI  ",  CI * 100, "%", sep="")
     , legend = c( 
-          paste(round((exp(ci[2,1])-1)*100,2),"% / R =",round((exp(7*ci[2,1])),2))
-        , paste(round((exp(ra$coefficients[2])-1)*100,2),"% / R =", round((exp(7*ra$coefficients[2])),2))
-        , paste(round((exp(ci[2,2])-1)*100,2),"% / R =",round((exp(7*ci[2,2])),2)))
+      paste(round((exp(ci[2,1])-1)*100,2),"% / R =", RZahl(ci[2,1]), ", 2x in", round(log(2)/ci[2,1],1), "Tagen")
+      , paste(round((exp(ra$coefficients[2])-1)*100,2),"% / R =", RZahl(ra$coefficients[2]), ", 2x in", round(log(2)/ra$coefficients[2],1), "Tagen")
+      , paste(round((exp(ci[2,2])-1)*100,2),"% / R =",RZahl(ci[2,2]), ", 2x in", round(log(2)/ci[2,2],1), "Tagen")
+    )
+    
     , col = c(
         "green"
       , "orange"
@@ -321,7 +322,7 @@ where
     )
     , lty = 3 
     , lwd = 3
-    , cex = 3)
+    , cex = 2)
 
   dev.off()
   return(ra)
@@ -350,11 +351,12 @@ FerienEnde <- c(
   
 )
 options( 
-  digits=3
+  digits=4
 )
 for (j in c(14)) {
   for (i in c(41)) {
     for (b in 1:16) { 
+      
       ra <- regression_analysis (
           ThisDate = ThisDay 
         #  ThisDate = as.Date(FerienEnde[b])
@@ -362,7 +364,8 @@ for (j in c(14)) {
         , DaysAhead = j
         , IdBundesland = b
       )
-      print(round((exp(7*ra$coefficients[2])),2))
+      print(RZahl(ra$coefficients[2]))
+      
     } # End for b
   } # End for i
 } # End for j

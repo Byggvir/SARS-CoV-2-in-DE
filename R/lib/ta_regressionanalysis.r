@@ -2,6 +2,8 @@
 # ---- Zeichnen des Ergebnisses einer exponentiellen Regressionsanalyse auf einem Plot
 #
 
+Wochentage <- c("Mo","Di","Mi","Do","Fr","Sa","So")
+
 f_exp <- function (x,a,b) {
   
   return(exp(a+b*x))

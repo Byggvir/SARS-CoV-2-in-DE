@@ -1,3 +1,10 @@
+Wochentage <- c("Mo","Di","Mi","Do","Fr","Sa","So")
+
+RZahl <- function (b, SeriellesIntervall = 4) {
+  
+  return (round(exp(SeriellesIntervall*b),3))
+  
+}
 
 limbounds <- function (x, zeromin=TRUE ) {
   
