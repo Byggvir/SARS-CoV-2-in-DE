@@ -26,6 +26,7 @@ AWKDIR="bash/awk"
 echo S=$AWKDIR
 
 AKTUELL="Infektionen/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
+IMPFUNGEN="Impfungen/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv"
 
 [ "$DEBUG" = "ON" ] && TEMP="/tmp/rki" || TEMP="/tmp/rki-$(date '+%F')"
 [ ! -d  "${TEMP}" ] && mkdir "${TEMP}"
@@ -64,6 +65,7 @@ function update_db {
     echo -e "${blue}+---------${reset}\n\n" 
 
 awk -f "${AWKDIR}/fallzahlen.awk" -F ';' "${AKTUELL}" > "${TEMP}/Aktuell.csv"
+awk -f "${AWKDIR}/impfungen.awk" -F ';' "${IMPFUNGEN}" | sed -f "${SEDDIR}/impfungen.sed"> "${TEMP}/Impfungen.csv"
 
 ( cat <<EOF
 USE RKI;
@@ -100,11 +102,31 @@ LOAD DATA LOCAL INFILE '${TEMP}/Aktuell.csv'
 
 SELECT max(Meldedatum) FROM Faelle;  
 
-drop table FallzahlenLandkreise;
-call UpdateFallzahlenLandkreise();
+DROP TABLE IF EXISTS FallzahlenLandkreise;
+CALL UpdateFallzahlenLandkreise();
 
-call UpdateYesterday();
+DROP TABLE IF EXISTS Impfungen;
 
+CREATE TABLE IF NOT EXISTS Impfungen (
+      ObjectId INT
+    , Impfdatum DATE
+    , IdLandkreis INT
+    , AlterVon INT
+    , AlterBis INT
+    , Impfschutz INT
+    , Anzahl INT 
+    , PRIMARY KEY(ObjectId)
+    , INDEX(IdLandkreis)
+    , INDEX(Impfdatum)
+    , INDEX(AlterVon)
+    , INDEX(AlterBis)
+    , INDEX(Impfschutz)
+);
+
+LOAD DATA LOCAL INFILE '${TEMP}/Impfungen.csv' 
+    INTO TABLE Impfungen 
+    FIELDS TERMINATED BY ',' 
+    IGNORE 0 ROWS;
 
 EOF
 ) >> "$SQL"
