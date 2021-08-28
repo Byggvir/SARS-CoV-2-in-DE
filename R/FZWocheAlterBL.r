@@ -59,6 +59,20 @@ SQL <- 'select * from Bundesland order by IdBundesland;'
 Bundesland <- RunSQL(SQL = SQL)
 
 for (BL in Bundesland[,1] ) {
+
+  
+  
+  png(  paste('png/', fPrefix, Bundesland[BL,2],'_Alter', '.png', sep="")
+        , width = 3840
+       , height = 2160
+  )
+  
+  par(
+    mar = c(10,10,10,10)
+    , mfrow = c(2,3)
+  )
+  
+  
 for (AG in Altersgruppen[,1]) {
 
 SQL <- paste('call CasesPerWeekAgeGroupBL("' , AG , '",', BL, ');', sep='')
@@ -68,16 +82,6 @@ write.csv(weekly,file= paste('data/', fPrefix, Bundesland[BL,2], AG,".csv", sep=
 
 m <- length(weekly[,1])
 reported <- weekly$Kw[m]
-
-
-png(  paste('png/', fPrefix, Bundesland[BL,2], AG ,".png", sep="")
-    , width = 1920
-    , height = 1080
-    )
-
-par(
-   mar = c(10,10,10,10)
-  )
 
 colors <-c( "red", "yellow", "green", "blue", "black" )
 
@@ -124,13 +128,13 @@ lines( weekly$Kw
       , lwd = 4
 )
  
-title( main = paste("Index der wöchentliche Fälle", Bundesland[BL,2], "von Pandemiewoche", weekly$Kw[1], "bis", reported) 
+title( main = paste("Fälle pro Woche", Bundesland[BL,2], "\nPandemiewoche", weekly$Kw[1], "bis", reported) 
        , line = 2
-       , cex.main = 3)
+       , cex.main = 4.5)
 
 title( sub = paste( "Altersgruppe", AG)
        , line = 6
-       , cex.sub = 2)
+       , cex.sub = 3)
 
 legend ( 
   "topleft"
@@ -144,10 +148,11 @@ legend (
 )
 
 grid()
-
+} # End Altersgruppe
+  
 copyright()
 
 dev.off()
 
-} # End Altersgruppe
+
 } # End Bundesland

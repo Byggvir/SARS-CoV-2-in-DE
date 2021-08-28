@@ -52,8 +52,18 @@ options(
   , max.print = 3000
   )
 
-SQL <- 'select distinct Altersgruppe from Faelle;'
+SQL <- 'select distinct Altersgruppe from Faelle where Altersgruppe <> "unbekan";'
 Altersgruppen <- RunSQL(SQL)
+
+png(  paste( 'png/',fPrefix, "Bund_Alter.png", sep="")
+      , width = 3840
+      , height = 2160
+)
+
+par(
+  mar = c(10,10,10,10)
+  , mfrow = c(2,3)
+)
 
 for (AG in Altersgruppen[,1]) {
 
@@ -66,28 +76,21 @@ m <- length(weekly[,1])
 reported <- weekly$Kw[m]
 
 
-png(  paste('png/', fPrefix, AG ,".png", sep="")
-    , width = 1920
-    , height = 1080
-    )
-
-par(
-   mar = c(10,10,10,10)
-  )
-
 colors <-c( "red", "yellow", "green", "blue", "black" )
 
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
-max_f <- max(weekly$AnzahlFall[1:m])
-sum_f <- sum(weekly$AnzahlFall[1:m])
+Zeitraum <- 1:m
 
-max_t <- max(weekly$AnzahlTodesfall[1:m])
-sum_t <- sum(weekly$AnzahlTodesfall[1:m])
+max_f <- max(weekly$AnzahlFall[Zeitraum])
+sum_f <- sum(weekly$AnzahlFall[Zeitraum])
 
-yf <- as.numeric(weekly$AnzahlFall[1:m])/max_f*100
-yt <- as.numeric(weekly$AnzahlTodesfall[1:m])/max_t*100
+max_t <- max(weekly$AnzahlTodesfall[Zeitraum])
+sum_t <- sum(weekly$AnzahlTodesfall[Zeitraum])
+
+yf <- as.numeric(weekly$AnzahlFall)/max_f*100
+yt <- as.numeric(weekly$AnzahlTodesfall)/max_t*100
 
 labs <- weekly$Kw
 j20 <- weekly$Kw < 54
@@ -98,8 +101,8 @@ labs[j20] <- paste(labs[j20],20,sep='/')
 labs[j21] <- paste(labs[j21],21,sep='/')
 
 
-bp1 <- plot( weekly$Kw
-          , yf
+bp1 <- plot( weekly$Kw[Zeitraum]
+          , yf[Zeitraum]
           , type = 'l'
          , ylim = c(0,110)
          , main = "" 
@@ -112,21 +115,21 @@ bp1 <- plot( weekly$Kw
          , lwd = 4
 )
 
-lines( weekly$Kw
-      , yt
+lines( weekly$Kw[Zeitraum]
+      , yt[Zeitraum]
       , type = 'l'
       , ylim = c(0,110)
       , col = "red"
       , lwd = 4
 )
  
-title( main = paste("Index der wöchentliche Fälle DEU von Pandemiewoche", weekly$Kw[1], "bis", reported) 
+title( main = paste("Fälle pro Woche DEU\nvon Pandemiewoche", Zeitraum[1], "bis", reported) 
        , line = 2
-       , cex.main = 3)
+       , cex.main = 4.5)
 
 title( sub = paste( "Altersgruppe", AG)
        , line = 6
-       , cex.sub = 2)
+       , cex.sub = 3)
 
 legend ( 
   "topleft"
@@ -141,8 +144,8 @@ legend (
 
 grid()
 
+}
+
 copyright()
 
 dev.off()
-
-}

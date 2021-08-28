@@ -58,14 +58,17 @@ if (length(args) == 0) {
 print(ThisDay)
 
 options( 
-  digits=5
-  , scipen=5
+  digits=7
+  , scipen=7
   , Outdec="."
   , max.print = 3000
 )
 
-SQL <- 'select distinct Altersgruppe, 0 as R from Faelle where Altersgruppe<>"unbekan";'
+SQL <- 'select distinct Altersgruppe from Faelle where Altersgruppe <> "unbekan";'
 Altersgruppen <- RunSQL(SQL)
+
+SQL <- 'select * from Bundesland order by IdBundesland;'
+Bundesland <- RunSQL(SQL = SQL)
 
 # Function execute a regression analysis 
 
@@ -85,12 +88,10 @@ regression_analysis <- function (
   ThisDate
   , DaysBack
   , DaysAhead
+  , IdBundesland
   , Altersgruppe
-)
-{
-  
-# Berechnen des durchschnittlichen Anteils eines Wochentages an den Meldungen
-  
+) {
+
   SQLWTag <- 
     paste('
 select 
@@ -136,14 +137,12 @@ group by WTag;'
   Kor <- RunSQL(SQLWTag)
   # print(Kor)
   
-  SQL <- paste (
+SQL <- paste (
   'select 
       Meldedatum as Meldedatum
-      , (@i:=@i+1) as Day
       , week(Meldedatum,3) as Kw
       , dayofweek(Meldedatum) as WTag
       , sum(AnzahlFall) as AnzahlFall
-      , sum(AnzahlTodesfall) as AnzahlTodesfall
   from Faelle
 where 
   Meldedatum >= adddate("'
@@ -154,37 +153,34 @@ where
   , ThisDate
   ,'",'
   , DaysAhead
-  , ') and Altersgruppe = "'
-  , Altersgruppe 
+  , ') and IdLandkreis div 1000 = '
+  , IdBundesland 
+  , ' and Altersgruppe = "'
+  , Altersgruppe
   , '" group by Meldedatum;
 '
   , sep=''
   )
-
+  
   data <- RunSQL( SQL=SQL, prepare = "set @i:=-1;" )
-  
-  write.csv(data,
-            file = paste(
-              'data/Prognose_'
-              , Altersgruppe
-              , '_'
-              , ThisDate
-              , '_'
-              , DaysBack
-              , '_'
-              , DaysAhead
-              , '.csv'
-              , sep=''
-            )
-  )
-  
-  FromTo <- 0:DaysBack 
-  y <- data$AnzahlFall[FromTo+1]
-  s <- y > 0
 
-  ra <- lm(log(y[s]) ~ FromTo[s])
+  FromTo <- 0:DaysBack
+  print(data)
+  NotNull <- data$AnzahlFall[FromTo+1] > 0
+  
+  print(NotNull)
+  x <- FromTo[NotNull]
+  y <- data$AnzahlFall[FromTo[NotNull+1]]
+
+  
+  print(x)
+  print(y)
+  
+  #ra <- lm(log(data$AnzahlFall[(FromTo+1)) ~ FromTo)
+  ra <- lm(log(y) ~ x)
+  
   ci <- confint(ra,level = CI)
-
+  
   a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
   b <-  c( ci[2,1], ra$coefficients[2] , ci[2,2])
   
@@ -192,7 +188,7 @@ where
   
   ylim <- limbounds(
     c( exp(a)
-     , exp(a+log(1.5)/7*sign(b)*(DaysBack+DaysAhead))
+     , exp(a+b*as.numeric(DaysBack+DaysAhead))
     ) 
   )
   
@@ -215,28 +211,8 @@ where
   )
   
   # print(PrognoseTab)
-  
-  # png( paste( "png/Prognose"
-  #             , "_"
-  #             , Altersgruppe
-  #             , "_"
-  #             , as.character(ThisDate)
-  #             , "_"
-  #             , DaysBack
-  #             , "_"
-  #             , DaysAhead
-  #             , ".png"
-  #             , sep = ""
-  # )
-  # , width = 1920
-  # , height = 1080
-  # )
-  # 
-  # par (   mar = c(10,5,10,5) 
-  #         , bg = "white")
-
   zr <- data$Meldedatum <= ThisDate
-  
+
   xlim = c(data$Meldedatum[1],data$Meldedatum[1]+1+DaysBack+DaysAhead)
   
   plot(  data$Meldedatum[zr]
@@ -255,25 +231,16 @@ where
   )
 
   t <- title ( 
-      main = paste("R-Zahl", ThisDate)
+    main = "Bestimmung der R-Zahl mittels Regressionsanalyse" 
     , cex.main = 4
   )
+  
   t <- title ( 
-    sub = paste("Altersgruppe", Altersgruppe)
+    sub = paste(Bundesland[IdBundesland,2], Altersgruppe)
     , cex.sub = 3
     , line = 6
   )
 
-  zr <- data$Meldedatum <= ThisDate
-  
-  
-  # lines ( data$Meldedatum[zr]
-  #         , data$AnzahlFall[zr]
-  #         , col = "black"
-  #         , lwd = 3
-  # )
-  # 
-  
   lines ( PrognoseTab$Date
           , PrognoseTab$assumed
           , col = "blue"
@@ -297,10 +264,10 @@ where
   )
   
   text ( ThisDate - 1
-         , 0
+         , ylim[2]/2
          , as.character(ThisDate)
          , adj = 1
-         , cex = 2
+         , cex = 3 
          , col = "blue"
          , las = 3
 
@@ -308,11 +275,11 @@ where
 
   grid()
   
-  plotregression(a, b, xlim= c(0, DaysBack + DaysAhead + 1), ylim = ylim )
+  plotregression(a, b, xlim= c(0, DaysBack + DaysAhead +1 ), ylim = ylim )
   
-  lr <- ifelse (b[2] > 0 ,"left", "right")
+  lr <- ifelse (b[2] > 0 ,"topleft", "topright")
   
-  legend ( paste("top",lr,sep='')
+  legend ( lr
            , legend = c( 
              "Fallzahl innerhalb des Intervalls der RA"
              , "Fallzahl außerhalb "
@@ -330,79 +297,100 @@ where
              , "green"
            )
            , lwd = 2
-           , cex = 2
+           , cex = 1
            , inset = 0.05
            , lty = c(1,1,4,1,1,1)
   )
   
   legend(
-    lr
+    "top"
     , inset = 0.02
-    , title = paste( "Tägliche Steigerung CI  ",  CI * 100, "%", sep="" )
+    , title = paste( "Tägliche Steigerung CI  ",  CI * 100, "%", sep="")
     , legend = c( 
       paste(round((exp(ci[2,1])-1)*100,2),"% / R =", RZahl(ci[2,1]), ", 2x in", round(log(2)/ci[2,1],1), "Tagen")
       , paste(round((exp(ra$coefficients[2])-1)*100,2),"% / R =", RZahl(ra$coefficients[2]), ", 2x in", round(log(2)/ra$coefficients[2],1), "Tagen")
       , paste(round((exp(ci[2,2])-1)*100,2),"% / R =",RZahl(ci[2,2]), ", 2x in", round(log(2)/ci[2,2],1), "Tagen")
     )
+    
     , col = c(
         "green"
       , "orange"
       , "red"
     )
-    , lty = 1 
+    , lty = 3 
     , lwd = 3
-    , cex = 3
-    )
-  
-  par(new=FALSE)
+    , cex = 4)
+
   return(ra)
   
-} # End Regressionsanalyse
+}
 
-
-for (j in c(0)) {
+# Wann <- as.Date("2020-04-01")
+FerienEnde <- c(
   
-  for (i in c(41)) {
+    "2021-07-31" # "2020-08-08"
+  , "2021-08-04" # "2020-08-05"
+  , "2020-08-26"
+  , "2020-08-26"
+  , "2020-08-11"
+  , "2020-08-14"
+  , "2020-08-14"
+  , "2020-09-12"
+  , "2020-09-07"
+  , "2020-08-14"
+  , "2020-08-07"
+  , "2020-08-08"
+  , "2021-07-31" # "2020-08-01"
+  , "2020-08-28"
+  , "2020-08-26"
+  , "2020-08-29"
   
-    png( paste( "png/Prognose"
-                , "_Alter_"
-                , as.character(ThisDay)
-                , "_"
-                , j
-                , "_"
-                , i
-                , ".png"
-                , sep = ""
-    )
-    , width = 3840
-    , height = 2160
-    )
-    
-    par (   mar = c(10,5,10,5) 
-            , bg = "white"
-            , mfrow = c(2,3)
-        )
-    
-    for (AG in Altersgruppen[,1]) {
+)
+options( 
+  digits=4
+)
+for (j in c(7)) {
+  for (i in c(20)) {
+    for (b in Bundesland[,1]) { 
       
-      R <- regression_analysis (
-          ThisDate = ThisDay 
-        , DaysBack = i
-        , DaysAhead = j
-        , Altersgruppe = AG
+      png( paste( "png/Prognose"
+                  , "_Alter_"
+                  , Bundesland[b,2]
+                  , "_"
+                  , as.character(ThisDay)
+                  , "_"
+                  , i
+                  , "_"
+                  , j
+                  , ".png"
+                  , sep = ""
+      )
+      , width = 3840
+      , height = 2160
       )
       
-      Altersgruppen[Altersgruppen[,1]==AG,2] <- RZahl(R$coefficients[2])
-      par (new=FALSE)
+      par (   mar = c(10,5,10,5)
+              , mfrow = c(2,3)
+              , bg = "white")
+
+      for (a in Altersgruppen[,1]) {
       
-    } # End for AG
-    copyright()
-    dev.off()
-    
-    print(Altersgruppen)
-    
-    } # End for i
+      ra <- regression_analysis (
+          ThisDate = ThisDay 
+        #  ThisDate = as.Date(FerienEnde[b])
+        , DaysBack = i
+        , DaysAhead = j
+        , IdBundesland = b
+        , Altersgruppe = a
+      )
+      print(RZahl(ra$coefficients[2]))
+      
+      } # End a
+      
+      copyright(c("RKI","TA"))
+      
+      dev.off()
+      
+    } # End for b
+  } # End for i
 } # End for j
-
-print((1-Altersgruppen[,2]/Altersgruppen[1,2])/0.50)
-

@@ -194,8 +194,8 @@ where
               , ".png"
               , sep = ""
   )
-  , width = 1920
-  , height = 1080
+  , width = 3840
+  , height = 2160
   )
 
   par (   mar = c(10,5,10,5) 
@@ -325,7 +325,8 @@ where
     )
     , lty = 3 
     , lwd = 3
-    , cex = 2)
+    , cex = 2.5
+  )
 
   dev.off()
   return(ra)
