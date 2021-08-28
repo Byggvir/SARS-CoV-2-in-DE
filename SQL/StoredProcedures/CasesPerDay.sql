@@ -88,5 +88,23 @@ BEGIN
 end
 //
 
+DROP PROCEDURE IF EXISTS CasesPerDayAgeGroupBL //
+
+CREATE PROCEDURE CasesPerDayAgeGroupBL (AG CHAR(8),IdBL INT)
+BEGIN
+
+   SELECT 
+      IdLandkreis div 1000 AS BL
+    , Meldedatum AS Kw
+    , Altersgruppe AS Altersgruppe
+    , sum(AnzahlFall) AS Cases
+    , sum(AnzahlTodesfall) AS Deaths
+    FROM Faelle
+    WHERE IdLandkreis DIV 1000 = IdBL
+    and Altersgruppe = AG
+    GROUP BY IdBL, Meldedatum, Altersgruppe;
+end
+//
+
 delimiter ;
  
