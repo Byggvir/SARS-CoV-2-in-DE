@@ -1,0 +1,38 @@
+#!/bin/bash
+
+for ((i=0;i<17;i++))
+do
+ ( cat << EOF
+    select Bundesland from Bundesland where IdBundesland=$i;
+    select 
+        Altersgruppe
+        , concat(max(Wo3)," [" ,max(Wo3Rlow)," - ", max(Wo3Rhigh), "]" ) as '3 Wochen'
+        , concat(max(Wo6)," [" ,max(Wo6Rlow)," - ", max(Wo6Rhigh), "]" ) as '6 Wochen'
+    from (
+        select 
+            Altersgruppe
+            , case when Zeitraum = 20 then max(R) else 0 end as Wo3
+            , case when Zeitraum = 41 then max(R) else 0 end as Wo6
+            , case when Zeitraum = 20 then max(Rlow) else 0 end as Wo3Rlow
+            , case when Zeitraum = 41 then max(Rlow) else 0 end as Wo6Rlow
+            , case when Zeitraum = 20 then max(Rhigh) else 0 end as Wo3Rhigh
+            , case when Zeitraum = 41 then max(Rhigh) else 0 end as Wo6Rhigh
+        from (
+            select 
+                Altersgruppe
+                , Zeitraum
+                , round(R,3) as R
+                , round(Rlow,3) as Rlow
+                , round(Rhigh,3) as Rhigh
+            from RZahl where IdBundesland=$i ) as B 
+            group by 
+                Altersgruppe
+                , Zeitraum
+            ) as A
+
+        group by Altersgruppe;
+EOF
+) | mysql --user=rki --password=eelaeZuK4ohGoh7Z RKI \
+| sed '/Bundesland/ {N ; s#^#</tablebody></table>\n<h2>#; s#$#\n</h2>\n<table><tablebody>\n# }; /Altersgruppe/ {s#\t#</th><th>#g; s#^#<tr><th>#;s#$#</th><tr>#}; /\t/ {s#\t#</td><td>#g; s#^#<tr><td>#;s#$#</td><tr>#} ; s#\.#,#g'
+ 
+done
