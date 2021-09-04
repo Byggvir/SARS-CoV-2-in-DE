@@ -132,6 +132,7 @@ regression_analysis <- function (
   SQL <- paste (
   'select 
       Meldedatum as Meldedatum
+      , datediff(Meldedatum,"', ThisDate, '") + ', DaysBack, ' as Day 
       , week(Meldedatum,3) as Kw
       , dayofweek(Meldedatum) as WTag
       , sum(AnzahlFall) as AnzahlFall
@@ -154,15 +155,42 @@ where
   
   data <- RunSQL( SQL=SQL, prepare = "set @i:=-1;" )
   
-  FromTo <- 0:(DaysBack)
+  FromTo <- data$Day[data$Meldedatum <= ThisDate]
   
-  ra <- lm(log(as.numeric(data$AnzahlFall[FromTo + 1])) ~ FromTo)
+  y <- data$AnzahlFall[data$Meldedatum <= ThisDate]
+  s <- y > 0
+  
+  ra <- lm(log(y[s]) ~ FromTo[s])
   ci <- confint(ra,level = CI)
   
   a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
   b <-  c( ci[2,1], ra$coefficients[2] , ci[2,2])
   
-  print(RZahl(b))
+  report <- data.frame (
+     Datum = ThisDate
+     , Zeitraum = DaysBack
+     , R = 2
+  )
+  
+  UpdateSQL <- paste ('insert into RZahl values (0,"A0+","'
+                      , ThisDate
+                      , '",'
+                      , DaysBack 
+                      , ','
+                      , exp(4*b[2])
+                      , ','
+                      , exp(4*b[1])
+                      , ','
+                      , exp(4*b[3])
+                      , ') ON DUPLICATE KEY UPDATE R = '
+                      , exp(4*b[2])
+                      , ', Rlow = '
+                      , exp(4*b[1])
+                      , ', Rhigh ='
+                      , exp(4*b[3])
+                      , ' ;' 
+                      )
+  ExecSQL(UpdateSQL)
   
   FromDay <- ThisDate-days(DaysBack)
   ToDay <- ThisDate+days(DaysAhead)
@@ -335,8 +363,10 @@ where
 
 # Wann <- as.Date("2020-04-01")
 
-for (j in c(21)) {
-for (i in c(20,27,34,41)) {
+for ( j in c(21) ) {
+  # for ( i in c(10, 13) )
+ for (i in c(20,27,34,41)) 
+{
     
   ra2 <- regression_analysis (
       ThisDate = ThisDay
@@ -344,6 +374,5 @@ for (i in c(20,27,34,41)) {
     , DaysAhead = j
    
   )
-  
 } # End for i
 } # End for j

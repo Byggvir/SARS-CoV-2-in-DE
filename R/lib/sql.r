@@ -28,3 +28,26 @@ RunSQL <- function (
   
   return(dbRows)
 }
+
+ExecSQL <- function (
+  SQL 
+) {
+  
+  rmariadb.settingsfile <- "/data/git/SARS-CoV-2-in-DE/SQL/rki.cnf"
+  
+  rmariadb.db <- "RKI"
+  
+  DB <- dbConnect(
+    RMariaDB::MariaDB()
+    , default.file=rmariadb.settingsfile
+    , group=rmariadb.db
+    , bigint="numeric"
+  )
+  
+  count <- dbExecute(DB, SQL)
+
+  dbDisconnect(DB)
+  
+  return (count)
+  
+}

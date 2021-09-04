@@ -138,7 +138,7 @@ group by WTag;'
   SQL <- paste (
   'select 
       Meldedatum as Meldedatum
-      , (@i:=@i+1) as Day
+      , datediff(Meldedatum,"', ThisDate, '") + ', DaysBack, ' as Day 
       , week(Meldedatum,3) as Kw
       , dayofweek(Meldedatum) as WTag
       , sum(AnzahlFall) as AnzahlFall
@@ -161,9 +161,13 @@ where
 
   data <- RunSQL( SQL=SQL, prepare = "set @i:=-1;" )
 
-  FromTo <- 0:DaysBack
   
-  ra <- lm(log(data$AnzahlFall[FromTo+1]) ~ FromTo)
+  FromTo <- data$Day[ data$Meldedatum <= ThisDate ]
+  
+  y <- data$AnzahlFall[data$Meldedatum <= ThisDate]
+  s <- y > 0
+  
+  ra <- lm(log(y[s]) ~ FromTo[s])
   ci <- confint(ra,level = CI)
 
   a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])

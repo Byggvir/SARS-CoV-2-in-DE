@@ -74,6 +74,51 @@ Bundesland <- RunSQL(SQL = SQL)
 
 CI <- 0.95
 
+SQLWTag <- 
+  paste('
+select 
+ WTag
+ , avg(AnteilAnWoche) as AnteilAnWoche
+ , avg(AnteilAnWoche) * 7 as KorFaktor
+ , stddev(AnteilAnWoche) as StdAbweichung
+ from (
+select 
+  F.Meldedatum
+  , weekday(F.Meldedatum) as WTag
+  , sum(F.AnzahlFall) / W.FallWoche as AnteilAnWoche
+from Faelle F 
+join ( 
+  select 
+    week(Meldedatum,3) as Kw
+    , sum(AnzahlFall) as FallWoche
+  from Faelle 
+  where Meldedatum >'
+        , '"2020-05-03"'
+        , 'and Meldedatum < adddate("'
+        , ThisDay
+        , '",-weekday("'
+        , ThisDay
+        , '"))
+  group by Kw 
+  ) as W 
+on 
+  week(F.Meldedatum,3) = W.Kw
+where Meldedatum >'
+        , '"2020-05-03"'
+        , 'and Meldedatum < adddate("'
+        , ThisDay
+        , '",-weekday("'
+        , ThisDay
+        , '"))
+group by F.Meldedatum
+) as T 
+group by WTag;'
+        , sep= ' '
+  )
+
+Kor <- RunSQL(SQLWTag)
+# print(Kor)
+
 #---
 # 
 # Regressionsanalyse über
@@ -92,54 +137,11 @@ regression_analysis <- function (
   , Altersgruppe
 ) {
 
-  SQLWTag <- 
-    paste('
-select 
- WTag
- , avg(AnteilAnWoche) as AnteilAnWoche
- , avg(AnteilAnWoche) * 7 as KorFaktor
- , stddev(AnteilAnWoche) as StdAbweichung
- from (
-select 
-  F.Meldedatum
-  , weekday(F.Meldedatum) as WTag
-  , sum(F.AnzahlFall) / W.FallWoche as AnteilAnWoche
-from Faelle F 
-join ( 
-  select 
-    week(Meldedatum,3) as Kw
-    , sum(AnzahlFall) as FallWoche
-  from Faelle 
-  where Meldedatum >'
-          , '"2020-05-03"'
-          , 'and Meldedatum < adddate("'
-          , ThisDate
-          , '",-weekday("'
-          , ThisDate
-          , '"))
-  group by Kw 
-  ) as W 
-on 
-  week(F.Meldedatum,3) = W.Kw
-where Meldedatum >'
-          , '"2020-05-03"'
-          , 'and Meldedatum < adddate("'
-          , ThisDate
-          , '",-weekday("'
-          , ThisDate
-          , '"))
-group by F.Meldedatum
-) as T 
-group by WTag;'
-          , sep= ' '
-    )
-  
-  Kor <- RunSQL(SQLWTag)
-  # print(Kor)
   
 SQL <- paste (
   'select 
       Meldedatum as Meldedatum
+      , datediff(Meldedatum,"', ThisDate, '") + ', DaysBack, ' as Day 
       , week(Meldedatum,3) as Kw
       , dayofweek(Meldedatum) as WTag
       , sum(AnzahlFall) as AnzahlFall
@@ -163,26 +165,42 @@ where
   )
   
   data <- RunSQL( SQL=SQL, prepare = "set @i:=-1;" )
-
-  FromTo <- 0:DaysBack
-  print(data)
-  NotNull <- data$AnzahlFall[FromTo+1] > 0
   
-  print(NotNull)
-  x <- FromTo[NotNull]
-  y <- data$AnzahlFall[FromTo[NotNull+1]]
-
+  FromTo <- data$Day[ data$Meldedatum <= ThisDate ]
   
-  print(x)
-  print(y)
+  y <- data$AnzahlFall[data$Meldedatum <= ThisDate]
+  s <- y > 0
   
-  #ra <- lm(log(data$AnzahlFall[(FromTo+1)) ~ FromTo)
-  ra <- lm(log(y) ~ x)
-  
+  ra <- lm(log(y[s]) ~ FromTo[s])
   ci <- confint(ra,level = CI)
   
   a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
   b <-  c( ci[2,1], ra$coefficients[2] , ci[2,2])
+  UpdateSQL <- paste ('insert into RZahl values ('
+                      , IdBundesland
+                      ,',"'
+                      , Altersgruppe
+                      , '","'
+                      , ThisDate
+                      , '",'
+                      , DaysBack 
+                      , ','
+                      , exp(4*b[2])
+                      , ','
+                      , exp(4*b[1])
+                      , ','
+                      , exp(4*b[3])
+                      , ') ON DUPLICATE KEY UPDATE R = '
+                      , exp(4*b[2])
+                      , ', Rlow = '
+                      , exp(4*b[1])
+                      , ', Rhigh ='
+                      , exp(4*b[3])
+                      , ' ;' 
+                      , sep=''
+  )
+  
+  ExecSQL(UpdateSQL)
   
   xlim <- c(0,DaysBack+DaysAhead)
   
@@ -350,7 +368,7 @@ options(
   digits=4
 )
 for (j in c(7)) {
-  for (i in c(20)) {
+  for (i in c(20,41)) {
     for (b in Bundesland[,1]) { 
       
       png( paste( "png/Prognose"

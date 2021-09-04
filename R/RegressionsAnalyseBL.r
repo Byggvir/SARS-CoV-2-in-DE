@@ -80,16 +80,8 @@ CI <- 0.95
 #   * und Prognose
 #
 #---
-
-regression_analysis <- function (
-  ThisDate
-  , DaysBack
-  , DaysAhead
-  , IdBundesland
-) {
-
-  SQLWTag <- 
-    paste('
+SQLWTag <- 
+  paste('
 select 
  WTag
  , avg(AnteilAnWoche) as AnteilAnWoche
@@ -107,35 +99,44 @@ join (
     , sum(AnzahlFall) as FallWoche
   from Faelle 
   where Meldedatum >'
-          , '"2020-05-03"'
-          , 'and Meldedatum < adddate("'
-          , ThisDate
-          , '",-weekday("'
-          , ThisDate
-          , '"))
+        , '"2020-05-03"'
+        , 'and Meldedatum < adddate("'
+        , ThisDay
+        , '",-weekday("'
+        , ThisDay
+        , '"))
   group by Kw 
   ) as W 
 on 
   week(F.Meldedatum,3) = W.Kw
 where Meldedatum >'
-          , '"2020-05-03"'
-          , 'and Meldedatum < adddate("'
-          , ThisDate
-          , '",-weekday("'
-          , ThisDate
-          , '"))
+        , '"2020-05-03"'
+        , 'and Meldedatum < adddate("'
+        , ThisDay
+        , '",-weekday("'
+        , ThisDay
+        , '"))
 group by F.Meldedatum
 ) as T 
 group by WTag;'
-          , sep= ' '
-    )
-  
-  Kor <- RunSQL(SQLWTag)
+        , sep= ' '
+  )
+
+Kor <- RunSQL(SQLWTag)
+
+regression_analysis <- function (
+  ThisDate
+  , DaysBack
+  , DaysAhead
+  , IdBundesland
+) {
+
   # print(Kor)
   
 SQL <- paste (
   'select 
       Meldedatum as Meldedatum
+      , datediff(Meldedatum,"', ThisDate, '") + ', DaysBack, ' as Day 
       , week(Meldedatum,3) as Kw
       , dayofweek(Meldedatum) as WTag
       , sum(AnzahlFall) as AnzahlFall
@@ -158,13 +159,42 @@ where
   
   data <- RunSQL( SQL=SQL, prepare = "set @i:=-1;" )
   
-  FromTo <- 0:DaysBack
+  FromTo <- data$Day[ data$Meldedatum <= ThisDate ]
   
-  ra <- lm(log(data$AnzahlFall[FromTo+1]) ~ FromTo)
+  y <- data$AnzahlFall[data$Meldedatum <= ThisDate]
+  s <- y > 0
+  
+  ra <- lm(log(y[s]) ~ FromTo[s])
   ci <- confint(ra,level = CI)
   
   a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
   b <-  c( ci[2,1], ra$coefficients[2] , ci[2,2])
+
+  UpdateSQL <- paste ('insert into RZahl values ('
+                      , IdBundesland
+                      ,',"'
+                      , 'A0+'
+                      , '","'
+                      , ThisDate
+                      , '",'
+                      , DaysBack 
+                      , ','
+                      , exp(4*b[2])
+                      , ','
+                      , exp(4*b[1])
+                      , ','
+                      , exp(4*b[3])
+                      , ') ON DUPLICATE KEY UPDATE R = '
+                      , exp(4*b[2])
+                      , ', Rlow = '
+                      , exp(4*b[1])
+                      , ', Rhigh ='
+                      , exp(4*b[3])
+                      , ' ;' 
+                      , sep=''
+  )
+  
+  ExecSQL(UpdateSQL)
   
   xlim <- c(0,DaysBack+DaysAhead)
   
@@ -354,7 +384,7 @@ options(
   digits=4
 )
 for (j in c(14)) {
-  for (i in c(41)) {
+  for (i in c(20,41)) {
     for (b in 1:16) { 
       
       ra <- regression_analysis (

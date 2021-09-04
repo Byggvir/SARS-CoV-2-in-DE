@@ -14,7 +14,7 @@ copyrights <- data.table (
     " CDC; https://covid.cdc.gov/covid-data-tracker/"
     , "Daten: JHU CSSE COVID-19 Data https://github.com/CSSEGISandData/COVID-19"
     , "Robert Koch-Institut (RKI), dl-de/by-2-0"
-    , "(c) 2020 by Thomas Arend, Rheinbach"
+    , "(c) 2021 by Thomas Arend, Rheinbach"
   )
 )
 

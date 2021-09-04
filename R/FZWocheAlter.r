@@ -109,10 +109,11 @@ bp1 <- plot( weekly$Kw[Zeitraum]
          , sub = ""
          , xlab = "Pandemiewoche"
          , col = "blue"
-         , ylab = "Anzahl"
+         , ylab = "Index (Maximum = 100)"
 #        , names.arg = labs
          , las = 2
          , lwd = 4
+         , cex.axis = 4
 )
 
 lines( weekly$Kw[Zeitraum]
@@ -138,7 +139,7 @@ legend (
                , paste("Todesfälle, max =", max_t, ", ∑ =", sum_t))
   , col = c("blue","red")
   , lwd = 4
-  , cex = 2
+  , cex = 3
   , inset = 0.05
 )
 

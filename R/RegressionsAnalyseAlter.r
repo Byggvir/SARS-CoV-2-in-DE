@@ -71,6 +71,52 @@ Altersgruppen <- RunSQL(SQL)
 
 CI <- 0.95
 
+# Berechnen des durchschnittlichen Anteils eines Wochentages an den Meldungen
+
+SQLWTag <- 
+  paste('
+select 
+ WTag
+ , avg(AnteilAnWoche) as AnteilAnWoche
+ , avg(AnteilAnWoche) * 7 as KorFaktor
+ , stddev(AnteilAnWoche) as StdAbweichung
+ from (
+select 
+  F.Meldedatum
+  , weekday(F.Meldedatum) as WTag
+  , sum(F.AnzahlFall) / W.FallWoche as AnteilAnWoche
+from Faelle F 
+join ( 
+  select 
+    week(Meldedatum,3) as Kw
+    , sum(AnzahlFall) as FallWoche
+  from Faelle 
+  where Meldedatum >'
+        , '"2020-05-03"'
+        , 'and Meldedatum < adddate("'
+        , ThisDay
+        , '",-weekday("'
+        , ThisDay
+        , '"))
+  group by Kw 
+  ) as W 
+on 
+  week(F.Meldedatum,3) = W.Kw
+where Meldedatum >'
+        , '"2020-05-03"'
+        , 'and Meldedatum < adddate("'
+        , ThisDay
+        , '",-weekday("'
+        , ThisDay
+        , '"))
+group by F.Meldedatum
+) as T 
+group by WTag;'
+        , sep= ' '
+  )
+
+Kor <- RunSQL(SQLWTag)
+# print(Kor
 #---
 # 
 # Regressionsanalyse über
@@ -89,57 +135,10 @@ regression_analysis <- function (
 )
 {
   
-# Berechnen des durchschnittlichen Anteils eines Wochentages an den Meldungen
-  
-  SQLWTag <- 
-    paste('
-select 
- WTag
- , avg(AnteilAnWoche) as AnteilAnWoche
- , avg(AnteilAnWoche) * 7 as KorFaktor
- , stddev(AnteilAnWoche) as StdAbweichung
- from (
-select 
-  F.Meldedatum
-  , weekday(F.Meldedatum) as WTag
-  , sum(F.AnzahlFall) / W.FallWoche as AnteilAnWoche
-from Faelle F 
-join ( 
-  select 
-    week(Meldedatum,3) as Kw
-    , sum(AnzahlFall) as FallWoche
-  from Faelle 
-  where Meldedatum >'
-          , '"2020-05-03"'
-          , 'and Meldedatum < adddate("'
-          , ThisDate
-          , '",-weekday("'
-          , ThisDate
-          , '"))
-  group by Kw 
-  ) as W 
-on 
-  week(F.Meldedatum,3) = W.Kw
-where Meldedatum >'
-          , '"2020-05-03"'
-          , 'and Meldedatum < adddate("'
-          , ThisDate
-          , '",-weekday("'
-          , ThisDate
-          , '"))
-group by F.Meldedatum
-) as T 
-group by WTag;'
-          , sep= ' '
-    )
-  
-  Kor <- RunSQL(SQLWTag)
-  # print(Kor)
-  
   SQL <- paste (
   'select 
       Meldedatum as Meldedatum
-      , (@i:=@i+1) as Day
+      , datediff(Meldedatum,"', ThisDate, '") + ', DaysBack, ' as Day 
       , week(Meldedatum,3) as Kw
       , dayofweek(Meldedatum) as WTag
       , sum(AnzahlFall) as AnzahlFall
@@ -178,15 +177,40 @@ where
             )
   )
   
-  FromTo <- 0:DaysBack 
-  y <- data$AnzahlFall[FromTo+1]
+  FromTo <- data$Day[ data$Meldedatum <= ThisDate ]
+  
+  y <- data$AnzahlFall[data$Meldedatum <= ThisDate]
   s <- y > 0
-
+  
   ra <- lm(log(y[s]) ~ FromTo[s])
   ci <- confint(ra,level = CI)
 
   a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
   b <-  c( ci[2,1], ra$coefficients[2] , ci[2,2])
+
+  UpdateSQL <- paste ('insert into RZahl values (0,"'
+                      , Altersgruppe
+                      , '","'
+                      , ThisDate
+                      , '",'
+                      , DaysBack 
+                      , ','
+                      , exp(4*b[2])
+                      , ','
+                      , exp(4*b[1])
+                      , ','
+                      , exp(4*b[3])
+                      , ') ON DUPLICATE KEY UPDATE R = '
+                      , exp(4*b[2])
+                      , ', Rlow = '
+                      , exp(4*b[1])
+                      , ', Rhigh ='
+                      , exp(4*b[3])
+                      , ' ;' 
+                      , sep=''
+  )
+
+  ExecSQL(UpdateSQL)
   
   xlim <- c(0,DaysBack+DaysAhead)
   
@@ -362,7 +386,7 @@ where
 
 for (j in c(0)) {
   
-  for (i in c(41)) {
+  for (i in c(20,41)) {
   
     png( paste( "png/Prognose"
                 , "_Alter_"
@@ -392,17 +416,11 @@ for (j in c(0)) {
         , Altersgruppe = AG
       )
       
-      Altersgruppen[Altersgruppen[,1]==AG,2] <- RZahl(R$coefficients[2])
       par (new=FALSE)
       
     } # End for AG
     copyright()
     dev.off()
     
-    print(Altersgruppen)
-    
     } # End for i
 } # End for j
-
-print((1-Altersgruppen[,2]/Altersgruppen[1,2])/0.50)
-

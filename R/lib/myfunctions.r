@@ -6,7 +6,7 @@ RZahl <- function (b, SeriellesIntervall = 4) {
   
 }
 
-limbounds <- function (x, zeromin=TRUE ) {
+limbounds <- function (x, zeromin=TRUE) {
   
   if (zeromin == TRUE) {
     range <- c(0,max(x,na.rm = TRUE))

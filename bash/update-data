@@ -9,6 +9,29 @@ green=`tput setaf 2`
 blue=`tput setaf 4`
 reset=`tput sgr0`
 
+RUN=1
+PULL=1
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+  key="$1"
+
+  case $key in
+    -r|--norun)
+      RUN=0
+      shift # past argument
+      ;;
+    -p|--nopull)
+      PULL=0
+      shift # past argument
+      ;;
+    *)    # unknown option
+      POSITIONAL+=("$1") # save it in an array for later
+      shift # past argument
+      ;;
+  esac
+done
+
 # Folders and files
 
 SPATH=$(dirname "$0")
@@ -21,9 +44,9 @@ fi
 echo G=$GIT 
 
 SEDDIR="bash/sed"
-echo S=$SEDDIR
+echo SEDDIR=$SEDDIR
 AWKDIR="bash/awk"
-echo S=$AWKDIR
+echo AWKDIR=$AWKDIR
 
 AKTUELL="Infektionen/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
 IMPFUNGEN="Impfungen/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv"
@@ -153,12 +176,9 @@ touch "$SQL"
 
 pushd $GIT
 
-    git_pull
-    update_db
+    [ "$PULL" -eq 1 ] && ( git_pull; update_db ; mysql --user=rscript --password=rscript < "$SQL" )
 
-    mysql --user=rscript --password=rscript < "$SQL"
-
-    run_r
+    [ "$RUN"  -eq 1 ] && run_r
 
 popd
 

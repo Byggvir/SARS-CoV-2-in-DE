@@ -51,10 +51,10 @@ options(
   , Outdec = "."
   , max.print = 3000
   )
-SQL <- 'select sum(Insgesamt) as Anzahl from Bevoelkerung.DEU where Stichtag ="2019-12-31" and Age >= 60;'
+SQL <- 'select sum(Insgesamt) as Anzahl from Bevoelkerung.DEU where Stichtag ="2019-12-31" and Age >= 12 and Age < 18;'
 Bev <- RunSQL( SQL = SQL)
 
-SQL <- 'call ImpfungenAlter(60,100)'
+SQL <- 'call ImpfungenAlter(12,17)'
 ipw <- RunSQL(SQL = SQL)
 
 write.csv(ipw,file="data/Impfungen_Wo_Bund.csv")
@@ -112,5 +112,5 @@ copyright()
 
 dev.off()
 
-SQL <- 'call CasesPerWeekAgeGroup("A80+");'
-cpw <- RunSQL(SQL = SQL)
+# SQL <- 'call CasesPerWeekAgeGroup("A60-A79");'
+# cpw <- RunSQL(SQL = SQL)

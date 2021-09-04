@@ -70,6 +70,52 @@ Altersgruppen <- RunSQL(SQL)
 # Function execute a regression analysis 
 
 CI <- 0.95
+# Berechnen des durchschnittlichen Anteils eines Wochentages an den Meldungen
+
+SQLWTag <- 
+  paste('
+select 
+ WTag
+ , avg(AnteilAnWoche) as AnteilAnWoche
+ , avg(AnteilAnWoche) * 7 as KorFaktor
+ , stddev(AnteilAnWoche) as StdAbweichung
+ from (
+select 
+  F.Meldedatum
+  , weekday(F.Meldedatum) as WTag
+  , sum(F.AnzahlFall) / W.FallWoche as AnteilAnWoche
+from Faelle F 
+join ( 
+  select 
+    week(Meldedatum,3) as Kw
+    , sum(AnzahlFall) as FallWoche
+  from Faelle 
+  where Meldedatum >'
+        , '"2020-05-03"'
+        , 'and Meldedatum < adddate("'
+        , ThisDay
+        , '",-weekday("'
+        , ThisDay
+        , '"))
+  group by Kw 
+  ) as W 
+on 
+  week(F.Meldedatum,3) = W.Kw
+where Meldedatum >'
+        , '"2020-05-03"'
+        , 'and Meldedatum < adddate("'
+        , ThisDay
+        , '",-weekday("'
+        , ThisDay
+        , '"))
+group by F.Meldedatum
+) as T 
+group by WTag;'
+        , sep= ' '
+  )
+
+Kor <- RunSQL(SQLWTag)
+# print(Kor)
 
 #---
 # 
@@ -88,57 +134,12 @@ regression_analysis <- function (
   , Altersgruppe
 ) {
 
-# Berechnen des durchschnittlichen Anteils eines Wochentages an den Meldungen
-  
-  SQLWTag <- 
-    paste('
-select 
- WTag
- , avg(AnteilAnWoche) as AnteilAnWoche
- , avg(AnteilAnWoche) * 7 as KorFaktor
- , stddev(AnteilAnWoche) as StdAbweichung
- from (
-select 
-  F.Meldedatum
-  , weekday(F.Meldedatum) as WTag
-  , sum(F.AnzahlFall) / W.FallWoche as AnteilAnWoche
-from Faelle F 
-join ( 
-  select 
-    week(Meldedatum,3) as Kw
-    , sum(AnzahlFall) as FallWoche
-  from Faelle 
-  where Meldedatum >'
-          , '"2020-05-03"'
-          , 'and Meldedatum < adddate("'
-          , ThisDate
-          , '",-weekday("'
-          , ThisDate
-          , '"))
-  group by Kw 
-  ) as W 
-on 
-  week(F.Meldedatum,3) = W.Kw
-where Meldedatum >'
-          , '"2020-05-03"'
-          , 'and Meldedatum < adddate("'
-          , ThisDate
-          , '",-weekday("'
-          , ThisDate
-          , '"))
-group by F.Meldedatum
-) as T 
-group by WTag;'
-          , sep= ' '
-    )
-  
-  Kor <- RunSQL(SQLWTag)
-  # print(Kor)
   
   SQL <- paste (
   'select 
       Meldedatum as Meldedatum
-      # , week(Meldedatum,3) as Kw
+      , datediff(Meldedatum,"', ThisDate, '") + ', DaysBack, ' as Day 
+      , week(Meldedatum,3) as Kw
       , dayofweek(Meldedatum) as WTag
       , sum(AnzahlFall) as AnzahlFall
       , sum(AnzahlTodesfall) as AnzahlTodesfall
@@ -160,7 +161,7 @@ where
   )
 
   data <- RunSQL( SQL=SQL, prepare = "set @i:=-1;" )
-  
+
   write.csv(data,
             file = paste(
               'data/Prognose_'
@@ -175,9 +176,10 @@ where
               , sep=''
               )
             )
-  FromTo <- 0:DaysBack
+  
+  FromTo <- data$Day[ data$Meldedatum <= ThisDate ]
 
-  y <- data$AnzahlTodesfall[FromTo+1]
+  y <- data$AnzahlTodesfall[data$Meldedatum <= ThisDate]
   s <- y > 0
 
   ra <- lm(log(y[s]) ~ FromTo[s])
@@ -380,7 +382,7 @@ for (j in c(14)) {
     
     par (   mar = c(10,5,10,5) 
             , bg = "white"
-            , mfrow = c(2,3)
+            , mfrow = c(1,3)
         )
     
     for (AG in Altersgruppen[4:6,1]) {
