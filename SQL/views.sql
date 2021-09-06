@@ -146,12 +146,12 @@ view ImpfQuote as
 -- Ende
 
 create or replace
-view avgImpfQuote (AG) as
+view avgImpfQuote as
     select 
         I.ImpfDatum as ImpfDatum
         , I.AlterVon as AlterVon
         , I.AlterBis as AlterBis
-        , (select avg(Kumulativ) from ImpfSummary as A where A.AlterVon = I.AlterVon and A.Impfdatum <= I.Impfdatum and adddate(A.Impfdatum,"AG") >= I.ImpfDatum) / B.Anzahl as Quote
+        , (select avg(Kumulativ) from ImpfSummary as A where A.AlterVon = I.AlterVon and A.Impfdatum <= I.Impfdatum and adddate(A.Impfdatum,41) >= I.ImpfDatum) / B.Anzahl as Quote
     from ImpfSummary as I 
     join ImpfBev as B 
     on 
@@ -276,4 +276,47 @@ create or replace view CFR as
         , (AnzahlTodesfallKum/AnzahlFallKum) as CFR
         , sqrt(AnzahlTodesfallKum/AnzahlFallKum * (1-AnzahlTodesfallKum/AnzahlFallKum) / AnzahlFallKum) as Sigma
     from FaelleBL
+;
+
+create or replace view ImpfOverview as
+select 
+    AlterVon
+    , AlterBis
+    , sum(Teilgeimpft) as Teilweise
+    , sum(Vollgeimpft) as Vollgeimpft
+    , sum(Booster) as Booster 
+from ( 
+    select
+        AlterVon 
+        , AlterBis
+        , ( case when ImpfSchutz = 1 then sum(Anzahl) else 0 end ) as Teilgeimpft
+        , ( case when ImpfSchutz = 2 then sum(Anzahl) else 0 end ) as Vollgeimpft
+        , ( case when ImpfSchutz = 3 then sum(Anzahl) else 0 end ) as Booster 
+    from Impfungen 
+    group by
+        Impfschutz
+        , AlterVon
+    ) as A 
+group by 
+    AlterVon 
+;
+
+create or replace view FaelleProWoche as
+    select     
+        ( case when week(Meldedatum,3) = 53 then 2020 else year(Meldedatum) end ) as Jahr
+        , week(Meldedatum,3) as Kw
+        , sum(AnzahlFall) as AnzahlFallProWoche 
+    from Faelle  
+    group by 
+        Jahr
+        , Kw  
+;
+
+create or replace view FaelleProTag as
+    select     
+        Meldedatum
+        , sum(AnzahlFall) as AnzahlFallProTag
+    from Faelle  
+    group by 
+        Meldedatum  
 ;

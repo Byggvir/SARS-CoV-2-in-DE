@@ -18,7 +18,7 @@ FROM Impfungen
 WHERE
     AlterVon >= Von
     and AlterBis <= Bis
-    and Impfschutz = 2
+    and Impfschutz >=2
 GROUP BY
     Jahr
     , Kw
