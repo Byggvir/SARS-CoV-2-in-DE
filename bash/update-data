@@ -9,20 +9,25 @@ green=`tput setaf 2`
 blue=`tput setaf 4`
 reset=`tput sgr0`
 
-RUN=1
-PULL=1
+RUN=0
+PULL=0
+UPDATE=0
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
   key="$1"
 
   case $key in
-    -r|--norun)
-      RUN=0
+    -p|--pull)
+      PULL=1
       shift # past argument
       ;;
-    -p|--nopull)
-      PULL=0
+    -r|--run)
+      RUN=1
+      shift # past argument
+      ;;
+    -u|--update)
+      UPDATE=1
       shift # past argument
       ;;
     *)    # unknown option
@@ -88,7 +93,7 @@ function update_db {
     echo -e "${blue}+---------${reset}\n\n" 
 
 awk -f "${AWKDIR}/fallzahlen.awk" -F ';' "${AKTUELL}" > "${TEMP}/Aktuell.csv"
-awk -f "${AWKDIR}/impfungen.awk" -F ';' "${IMPFUNGEN}" | sed -f "${SEDDIR}/impfungen.sed"> "${TEMP}/Impfungen.csv"
+awk -f "${AWKDIR}/impfungen.awk" -F ';' "${IMPFUNGEN}" | sed -f "${SEDDIR}/impfungen.sed" > "${TEMP}/Impfungen.csv"
 
 ( cat <<EOF
 USE RKI;
@@ -176,8 +181,8 @@ touch "$SQL"
 
 pushd $GIT
 
-    [ "$PULL" -eq 1 ] && ( git_pull; update_db ; mysql --user=rscript --password=rscript < "$SQL" )
-
+    [ "$PULL" -eq 1 ] && git_pull
+    [ "$UPDATE" -eq 1 ] && ( update_db ; mysql --user=rscript --password=rscript < "$SQL" )
     [ "$RUN"  -eq 1 ] && run_r
 
 popd
