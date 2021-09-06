@@ -177,7 +177,7 @@ dev.off()
 
 IdBundesland <- 0
 
-S <- 0.6
+S <- 0.4
 
 for ( AG in c('A60-A79','A80+') ) {
   

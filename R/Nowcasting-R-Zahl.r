@@ -69,7 +69,7 @@ par(  mar = c(10,5,10,5)
     , mfrow = c(2,1))
 
 
-rzahlen <- function ( daten , Zeitraum ) {
+rzahlen <- function ( daten , Zeitraum, Alter ) {
   
   ylim <- c(0.5,1.5)
   
@@ -122,7 +122,7 @@ for ( i in c(2,5) ) {
     
   )
   title (
-    sub = paste("Regressionsanalyse", Zeitraum + 1, "Tage")
+    sub = paste("Regressionsanalyse", Zeitraum + 1, "Tage, Atersgruppe", Alter)
   , cex.sub = 3
   , line = 8
   
@@ -172,7 +172,7 @@ d1 <- dummy[dummy[,1] >= daten[1,1],c(1,8:10)]
 
 d1[,5:7] <- daten[,2:4]
 
-rzahlen(d1,41)
+rzahlen(d1,41,Alter)
 
 }
 
