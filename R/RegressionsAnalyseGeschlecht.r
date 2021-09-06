@@ -71,6 +71,40 @@ Geschlecht <- RunSQL(SQL)
 
 CI <- 0.95
 
+
+# Berechnen des durchschnittlichen Anteils eines Wochentages an den Meldungen
+
+SQLWTag <- 
+  paste('
+select
+    WTag
+    , avg(AnteilAnWoche) as AnteilAnWoche
+    , avg(AnteilAnWoche) * 7 as KorFaktor
+    , stddev(AnteilAnWoche) as StdAbweichung
+from ( 
+    select 
+        F.Meldedatum 
+        , weekday(F.Meldedatum) as WTag
+        , AnzahlFallProTag / W.AnzahlFallProWoche as AnteilAnWoche
+    from FaelleProTag as F
+    join
+        FaelleProWoche as W  
+    on  
+        week(F.Meldedatum,3) = W.Kw 
+        and W.Jahr = (case when week(F.Meldedatum,3) = 53 then 2020 else year(F.Meldedatum) end)
+    ) as T
+    
+where 
+    T.Meldedatum > "2020-05-03" 
+    and T.Meldedatum < adddate("', ThisDay, '" ,-weekday( "', ThisDay, '" )) 
+group by WTag;'
+        , sep= ''
+  )
+
+Kor <- RunSQL(SQLWTag)
+
+# print(Kor)
+
 #---
 # 
 # Regressionsanalyse über
@@ -87,55 +121,8 @@ regression_analysis <- function (
   , DaysAhead
   , Geschlecht
 ) {
-
-# Berechnen des durchschnittlichen Anteils eines Wochentages an den Meldungen
   
-  SQLWTag <- 
-    paste('
-select 
- WTag
- , avg(AnteilAnWoche) as AnteilAnWoche
- , avg(AnteilAnWoche) * 7 as KorFaktor
- , stddev(AnteilAnWoche) as StdAbweichung
- from (
-select 
-  F.Meldedatum
-  , weekday(F.Meldedatum) as WTag
-  , sum(F.AnzahlFall) / W.FallWoche as AnteilAnWoche
-from Faelle F 
-join ( 
-  select 
-    week(Meldedatum,3) as Kw
-    , sum(AnzahlFall) as FallWoche
-  from Faelle 
-  where Meldedatum >'
-          , '"2020-05-03"'
-          , 'and Meldedatum < adddate("'
-          , ThisDate
-          , '",-weekday("'
-          , ThisDate
-          , '"))
-  group by Kw 
-  ) as W 
-on 
-  week(F.Meldedatum,3) = W.Kw
-where Meldedatum >'
-          , '"2020-05-03"'
-          , 'and Meldedatum < adddate("'
-          , ThisDate
-          , '",-weekday("'
-          , ThisDate
-          , '"))
-group by F.Meldedatum
-) as T 
-group by WTag;'
-          , sep= ' '
-    )
-  
-  Kor <- RunSQL(SQLWTag)
-  # print(Kor)
-  
-  SQL <- paste (
+SQL <- paste (
   'select 
       Meldedatum as Meldedatum
       , datediff(Meldedatum,"', ThisDate, '") + ', DaysBack, ' as Day 
