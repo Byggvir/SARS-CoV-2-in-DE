@@ -86,7 +86,7 @@ diagram <- function (
          , ylim= limbounds(daily$AnzahlFall[1:m])
          , main = "" 
          , sub = ""
-         , xlab = "Datum"
+         , xlab = ""
          , col=c(rep("lightblue",6),"red")
          , ylab="Anzahl"
          #, names.arg = Tage # [fromto]
@@ -99,9 +99,16 @@ diagram <- function (
     , cex  = 5
   )
 
+  
   title ( 
-    sub = paste("Source: rki.de; Created:", heute )
+    sub = paste("Created:", heute )
     , line= 3
+    , cex = 4
+  )
+
+  title ( 
+    xlab = paste("Datum" )
+    , line= 1
     , cex = 4
   )
 
@@ -125,11 +132,15 @@ diagram <- function (
   )
 
   title ( 
-    sub = paste("Source: rki.de; Created:", heute )
+    sub = paste("Created:", heute )
     , line= 3
     , cex = 4
   )
-
+  title ( 
+    xlab = paste("Datum" )
+    , line= 1
+    , cex = 4
+  )
   grid()
 
   copyright()

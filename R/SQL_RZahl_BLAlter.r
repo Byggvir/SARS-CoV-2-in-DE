@@ -123,7 +123,7 @@ where
   )
   data <- RunSQL( SQL=SQL, prepare = "set @i:=-1;" )
   
-  if (nrow(data) > 0.8 * DaysBack) {
+  if (nrow(data) > 0.6 * DaysBack) {
   FromTo <- data$Day[ data$Meldedatum <= ThisDate ]
   
   y <- data$AnzahlFall[data$Meldedatum <= ThisDate]

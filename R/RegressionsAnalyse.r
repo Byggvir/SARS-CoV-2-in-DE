@@ -234,6 +234,7 @@ where
        , lwd = 3
        , xlim = xlim
        , col = "black"
+       , cex.axis = 4
 
   )
   

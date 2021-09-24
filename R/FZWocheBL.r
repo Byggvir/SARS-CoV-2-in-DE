@@ -12,7 +12,7 @@ require(data.table)
 library(REST)
 library(tidyverse)
 
-MyScriptName <-"RKI"
+MyScriptName <-"FZWocheBL"
 PNG <- "png/Fallzahlen_Wo_"
 
 # Set Working directory to git root
@@ -53,6 +53,13 @@ colors <-c( "red", "yellow", "green", "blue", "black" )
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
+# png(  paste( PNG, BL[i,2],".png", sep="")
+
+# png(  paste( PNG,".png", sep="")
+#       , width = 3840
+#       , height = 2160
+# )
+# par( mfrow = c(4,4))
 
 for (i in BL[,1]) {
 
@@ -60,7 +67,8 @@ for (i in BL[,1]) {
         , width = 1920
         , height = 1080
   )
-  par(mfcol = c(2,1))
+  
+  par( mfrow = c(2,1))
   
   SQL = paste ('call CasesPerWeekBL(',i,' );', sep ="")
 
@@ -115,10 +123,10 @@ for (i in BL[,1]) {
   y <- as.numeric(weekly$AnzahlTodesfall[1:m])
   bp2 <- barplot( y # [fromto]
          , ylim = limbounds(y)*1.2
-         , main = paste("Weekly deaths from calendarweek", weekly$Kw[1], "until", reported) 
+         , main = paste("Weekly deaths from calendarweek", weekly$Kw[1], "until", reported)
          , sub = ""
          , xlab = ""
-         , col = "lightblue" 
+         , col = "lightblue"
          , ylab = "Anzahl"
          , names.arg = labs
          , las = 2
@@ -127,7 +135,7 @@ for (i in BL[,1]) {
   title ( sub = BL[i,2], line = 4, cex.sub=1.5)
 
   text( bp2
-      , y 
+      , y
       , round(y)
       , cex = 1.5
       , pos = 3
@@ -141,7 +149,12 @@ abline( h=y[m-1]
         , lwd = 0.2
 )
 
-copyright()
+grid()
+  
+  
+  copyright()
+  
+  dev.off()
+  
 
-dev.off()
 }

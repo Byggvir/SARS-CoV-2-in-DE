@@ -241,7 +241,7 @@ where
        , lwd = 3
        , xlim = xlim
        , col = "black"
-       , cex.axis = 1.5
+       , cex.axis = 4
 
   )
 

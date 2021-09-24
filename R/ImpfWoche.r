@@ -10,7 +10,11 @@
 
 MyScriptName <-"ImpfWoche"
 
+require(data.table)
 library(REST)
+library(gridExtra)
+library(grid)
+library(lubridate)
 library(tidyverse)
 
 # Set Working directory to git root
@@ -34,10 +38,39 @@ setwd(WD)
 
 fPNG <- "png/Impfungen_Wo_Bund.png"
 
-# Reads the cumulative cases and death from rki.de
-# The Excel file is in a very poor format. Therefore we have to adjust the data.
-# The weekly cases and deaths are in the second worksheet. We need only column 2 and 5.
-# The date  in column one is one day ahead in time.
+f <- function (y) {
+  
+  return ( -log(y/(0.85-y)) )
+  
+}
+
+sigmoid <- function (x,a=0,b=1) {
+  
+  return ( 0.85/(1+exp(a+b*x)))
+  
+}
+plotsigmoid <- function (a, b, col, xlim, ylim) {
+  
+  par( new=TRUE )
+  
+  curve(  sigmoid(x,a,b)
+          , from=xlim[1]
+          , to=xlim[2]
+          , lty = 2
+          , lwd = 5
+          , xlim = xlim
+          , ylim = ylim
+          , col = col
+          , xlab = ""
+          , ylab = ""
+          , xaxt = "n"
+          , yaxt = "n"
+          , cex.axis = 2
+          , cex.lab = 3
+          , cex.main = 5      
+  )
+  
+}
 
 require(data.table)
 
@@ -51,17 +84,20 @@ options(
   , Outdec = "."
   , max.print = 3000
   )
-SQL <- 'select sum(Insgesamt) as Anzahl from Bevoelkerung.DEU where Stichtag ="2019-12-31" and Age >= 12 and Age < 18;'
+
+AG <- c(60,100)
+
+SQL <- paste('select sum(Insgesamt) as Anzahl from Bevoelkerung.DEU where Stichtag ="2019-12-31" and Age >= ', AG[1], ' and Age <= ', AG[2],';')
 Bev <- RunSQL( SQL = SQL)
 
-SQL <- 'call ImpfungenAlter(12,17)'
+SQL <- paste('call ImpfungenAlter(',AG[1],',', AG[2],');')
 ipw <- RunSQL(SQL = SQL)
 
 write.csv(ipw,file="data/Impfungen_Wo_Bund.csv")
 
 m <- length(ipw[,1])
-reported <- ipw$Kw[m]
 
+reported <- ipw$Kw[m]
 
 png(  fPNG
     , width = 1920
@@ -78,14 +114,29 @@ colors <-c( "red", "yellow", "green", "blue", "black" )
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
-y <- cumsum(as.numeric(ipw$Anzahl[1:m]))/Bev$Anzahl * 100
+df <- data.table(
+  x = 1:m
+  , y = cumsum(ipw[,5])/Bev[1,1]
+)
+
+CI <- 0.95
+
+ra <- lm(f(y) ~ x, data=df)
+ci <- confint(ra,level = CI)
+
+a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
+b <- c( ci[2,1], ra$coefficients[2] , ci[2,2])
+
 
 labs <- paste(ipw$Jahr,ipw$Kw, sep='/')
 
-bp1 <- plot(
-           1:m
-         , y # [fromto]
-         , ylim = limbounds(y)*1.1
+xlim <- c(1,m)
+ylim <- c(0,1)
+
+pbp1 <- plot(
+           df
+         , xlim = xlim
+         , ylim = ylim 
          , main = paste("Impfquote"
                         , " von", ipw$Jahr[1], 'Kw' , ipw$Kw[1]
                         ,  "bis", ipw$Jahr[m], 'Kw' , ipw$Kw[m]) 
@@ -93,19 +144,43 @@ bp1 <- plot(
          , xlab = ""
          , col = "lightblue"
          , ylab = "%"
-         #, names.arg = labs
          , las = 2
          , type = 'l'
          , lwd = 5
 )
 
+
 title ( sub = paste("Created:", heute ), line = 4, cex.sub = 1)
 
-text( 1:m
-      , y
-      , round(y,2)
+text( df$x
+      , df$y
+      , round(df$y*100,2)
   )
 
+# plotsigmoid(
+#   a[3]
+#   , b[1]
+#   , col = "green"
+#   , xlim
+#   , ylim
+# )
+# 
+# plotsigmoid(
+#   a[2]
+#   , b[2]
+#   , col = "black"
+#   , xlim
+#   , ylim
+# )
+# 
+# plotsigmoid(
+#   a[1]
+#   , b[3]
+#   , col = "red"
+#   , xlim
+#   , ylim
+# )
+# 
 grid()
 
 copyright()

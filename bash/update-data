@@ -70,7 +70,7 @@ echo -e "${blue}+---------${reset}\n\n"
 function git_pull {
 
     echo -e "\n\n${blue}+---------"
-    echo -e "| ${red}Holen der aktuellen Daten des RKI von giuthub.com"
+    echo -e "| ${red}Holen der aktuellen Daten des RKI von github.com"
     echo -e "${blue}+---------${reset}\n\n"
 
     for D in Infektionen Impfungen Nowcasting Sequenzdaten
