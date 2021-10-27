@@ -21,7 +21,7 @@ if (rstudioapi::isAvailable()){
     SD <- unlist(str_split(dirname(rstudioapi::getSourceEditorContext()$path),'/'))
 } else {
   
-    #  When executi on command line 
+    #  When executing on command line 
     SD = (function() return( if(length(sys.parents())==1) getwd() else dirname(sys.frame(1)$ofile) ))()
     SD <- unlist(str_split(SD,'/'))
 }
@@ -65,7 +65,7 @@ options(
 SQL <- 'select distinct Altersgruppe, 0 as R from Faelle where Altersgruppe<>"unbekan";'
 Altersgruppen <- RunSQL(SQL)
 
-SQL <- 'select distinct Meldedatum from Faelle where Meldedatum >= "2021-01-01"order by Meldedatum;'
+SQL <- 'select distinct Meldedatum from Faelle where Meldedatum >= "2021-01-01" order by Meldedatum;'
 Meldedatum <- RunSQL(SQL = SQL)
 
 # Function execute a regression analysis 

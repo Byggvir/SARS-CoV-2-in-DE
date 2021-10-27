@@ -39,11 +39,11 @@ CREATE PROCEDURE CasesPerWeek ()
 BEGIN
 
    SELECT 
-      ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) AS Kw
+      PandemieWoche(Meldedatum) AS Kw
     , sum(AnzahlFall) AS AnzahlFall
     , sum(AnzahlTodesfall) AS AnzahlTodesfall
     FROM Faelle
-    WHERE ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) > 8
+    WHERE PandemieWoche(Meldedatum) > 8
     GROUP BY Kw ;
 end
 //
@@ -54,11 +54,11 @@ CREATE PROCEDURE CasesPerWeekAgeGroup (AgeGroup CHAR(8))
 BEGIN
 
    SELECT 
-      ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) AS Kw
+      PandemieWoche(Meldedatum) AS Kw
     , sum(AnzahlFall) AS AnzahlFall
     , sum(AnzahlTodesfall) AS AnzahlTodesfall
     FROM Faelle
-    WHERE ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) > 8
+    WHERE PandemieWoche(Meldedatum) > 8
     and Altersgruppe = AgeGroup
     GROUP BY Kw ;
 end
@@ -70,11 +70,11 @@ CREATE PROCEDURE CasesPerWeekAgeGroupBL (AgeGroup CHAR(8), IdBL INT)
 BEGIN
 
    SELECT 
-      ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) AS Kw
+      PandemieWoche(Meldedatum) AS Kw
     , sum(AnzahlFall) AS AnzahlFall
     , sum(AnzahlTodesfall) AS AnzahlTodesfall
     FROM Faelle
-    WHERE ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) > 8
+    WHERE PandemieWoche(Meldedatum) > 8
     and Altersgruppe = AgeGroup
     and IdLandkreis div 1000 = IdBL
     GROUP BY Kw ;
@@ -88,13 +88,13 @@ BEGIN
 
    SELECT 
       IdLandkreis div 1000 AS BL
-    , ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) AS Kw
+    , PandemieWoche(Meldedatum) AS Kw
     , sum(AnzahlFall) AS AnzahlFall
     , sum(AnzahlTodesfall) AS AnzahlTodesfall
     FROM Faelle
     WHERE IdLandkreis div 1000 = IdBL
-    and ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) > 8
-    GROUP BY BL, ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) ;
+    and PandemieWoche(Meldedatum) > 8
+    GROUP BY BL, PandemieWoche(Meldedatum);
 end
 //
 
@@ -123,13 +123,13 @@ CREATE PROCEDURE CasesPerWeekBLWE (West BOOL)
 BEGIN
 
    SELECT 
-       ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) AS Kw
+       PandemieWoche(Meldedatum) AS Kw
       , sum(AnzahlFall) AS AnzahlFall
       , sum(AnzahlTodesfall) AS AnzahlTodesfall
     FROM Faelle
     WHERE is_westbl(IdLandkreis div 1000,West)
-    and  ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) > 8
-    GROUP BY  ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) 
+    and  PandemieWoche(Meldedatum) > 8
+    GROUP BY  PandemieWoche(Meldedatum) 
     ;
 END
 //
@@ -140,23 +140,23 @@ CREATE PROCEDURE CasesPerWeekWE ()
 BEGIN
 
     SELECT 
-        ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) AS Kw
+        PandemieWoche(Meldedatum) AS Kw
         , BLWestEast(IdLandkreis div 1000) AS Bundesland
         , sum(AnzahlFall) AS AnzahlFall
         , sum(AnzahlTodesfall) AS AnzahlTodesfall
         , round(sum(AnzahlTodesfall) / sum(AnzahlFall)*100,1) AS CFR
     FROM Faelle
-    WHERE ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) > 9
+    WHERE PandemieWoche(Meldedatum) > 9
     GROUP BY BLWestEast(IdLandkreis div 1000), Kw
 --     UNION
 --     SELECT 
---         ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) AS Kw
+--         PandemieWoche(Meldedatum) AS Kw
 --         , 'Bund' AS Bundesland
 --         , sum(AnzahlFall) AS Cases
 --         , sum(AnzahlTodesfall) AS Deaths
 --         , round(sum(AnzahlTodesfall) / sum(AnzahlFall)*100,1) AS CFR
 --     FROM Faelle
---     WHERE ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) > 9
+--     WHERE PandemieWoche(Meldedatum) > 9
 --     GROUP BY Kw
     
     
@@ -174,11 +174,11 @@ BEGIN
     CREATE TEMPORARY TABLE cpw ( IdBundesland INT, Kw INT, Cases BIGINT, Deaths BIGINT, PRIMARY KEY (IdBundesland,Kw) )
         SELECT 
             IdLandkreis div 1000 AS IdBundesland
-            , ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) AS Kw
+            , PandemieWoche(Meldedatum) AS Kw
             , sum(AnzahlFall) AS AnzahlFall
             , sum(AnzahlTodesfall) AS AnzahlTodesfall
         FROM Faelle
-        WHERE ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end )
+        WHERE PandemieWoche(Meldedatum)
         GROUP BY IdBundesland, Kw 
     ;
     

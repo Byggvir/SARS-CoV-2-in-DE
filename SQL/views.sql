@@ -42,14 +42,13 @@ create or replace view ImpfBev as
             where 
                 I.AlterVon <= Age 
                 and I.AlterBis >= Age 
-                and Stichtag="2019-12-31" 
+                and Stichtag="2020-12-31" 
             ) as Anzahl 
     from Impfungen as I 
     where AlterVon !=-1
 ;
 
 -- Ende
-
 
 -----
 --Berechnen der Personen in den Fallzahl-Altersgruppen 0-4,5-14,15-34,35-59,60-79 und 80+
@@ -66,7 +65,7 @@ create or replace view InfektBev as
             where 
                 F.AlterVon <= Age 
                 and F.AlterBis >= Age 
-                and Stichtag="2019-12-31" 
+                and Stichtag="2020-12-31" 
             ) as Anzahl 
     from FallAltersgruppen as F
     where Altersgruppe !="unbekan"
@@ -305,18 +304,73 @@ create or replace view FaelleProWoche as
     select     
         ( case when week(Meldedatum,3) = 53 then 2020 else year(Meldedatum) end ) as Jahr
         , week(Meldedatum,3) as Kw
+        , PandemieWoche(Meldedatum) as PandemieWoche
         , sum(AnzahlFall) as AnzahlFallProWoche 
+        , sum(AnzahlTodesfall) as AnzahlTodesfallProWoche 
     from Faelle  
     group by 
         Jahr
-        , Kw  
+        , PandemieWoche  
 ;
 
 create or replace view FaelleProTag as
     select     
         Meldedatum
         , sum(AnzahlFall) as AnzahlFallProTag
+        , sum(AnzahlTodesfall) as AnzahlTodesfallProTag
     from Faelle  
     group by 
         Meldedatum  
 ;
+
+create or replace view FaelleProWocheAltersgruppe as
+   select
+      PandemieWoche(Meldedatum) AS PandemieWoche
+    , year(Meldedatum) as Jahr
+    , week(Meldedatum,3) as Kw
+    , Altersgruppe as Altersgruppe
+    , AlterLow(Altersgruppe) as AlterVon
+    , AlterHigh(Altersgruppe) as AlterBis
+    , sum(AnzahlFall) as AnzahlFall
+    , sum(AnzahlTodesfall) as AnzahlTodesfall
+    from Faelle
+    where Altersgruppe <> 'unbekan'
+    group by 
+        PandemieWoche
+        , Altersgruppe;
+
+create or replace view FaelleProAltersgruppe as
+   select 
+      F.Altersgruppe as Altersgruppe
+    , IB.AlterVon as AlterVon
+    , IB.AlterBis as AlterBis
+    , sum(AnzahlFall) as AnzahlFall
+    , sum(AnzahlTodesfall) as AnzahlTodesfall
+    , IB.Anzahl as AnzahlBev
+    from Faelle as F
+    join InfektBev as IB
+    on ( F.Altersgruppe = IB.Altersgruppe )
+    where F.Altersgruppe <> 'unbekan'
+    group by 
+       F.Altersgruppe;
+
+create or replace view InzidenzAltersgruppe as
+   select
+      PandemieWoche
+    , Kw
+    , F.Altersgruppe as Altersgruppe
+    , AnzahlFall
+    , AnzahlTodesfall
+    , IB.Anzahl as AnzahlBev
+    from FaelleProWocheAltersgruppe as F 
+    join InfektBev as IB
+    on ( F.Altersgruppe = IB.Altersgruppe )
+    where 
+        F.Altersgruppe <> 'unbekan'
+    group by 
+        PandemieWoche
+        , Altersgruppe
+    order by
+        PandemieWoche
+        , Altersgruppe
+    ;

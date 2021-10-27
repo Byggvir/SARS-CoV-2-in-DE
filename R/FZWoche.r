@@ -10,8 +10,19 @@
 
 MyScriptName <-"FZWoche"
 
-library(REST)
 library(tidyverse)
+library(REST)
+library(grid)
+library(gridExtra)
+library(gtable)
+library(lubridate)
+library(ggplot2)
+library(viridis)
+library(hrbrthemes)
+library(scales)
+library(Cairo)
+# library(extrafont)
+# extrafont::loadfonts()
 
 # Set Working directory to git root
 
@@ -32,111 +43,117 @@ WD <- paste(SD[1:(length(SD)-1)],collapse='/')
 
 setwd(WD)
 
-fPNG <- "png/Fallzahlen_Wo_Bund.png"
-
-# Reads the cumulative cases and death from rki.de
-# The Excel file is in a very poor format. Therefore we have to adjust the data.
-# The weekly cases and deaths are in the second worksheet. We need only column 2 and 5.
-# The date  in column one is one day ahead in time.
+fPrefix <- "Fallzahlen_Wo_"
 
 require(data.table)
 
-source("R/lib/copyright.r")
 source("R/lib/myfunctions.r")
 source("R/lib/sql.r")
-
+source("R/lib/color_palettes.r")
 options( 
-    digits = 7
+  digits = 7
   , scipen = 7
   , Outdec = "."
   , max.print = 3000
-  )
-SQL = 'call CasesPerWeek()'
+)
 
-weekly <- RunSQL(SQL = SQL)
-write.csv(weekly,file="data/Fallzahlen_Wo_Bund.csv")
-
-m <- length(weekly[,1])
-reported <- weekly$Kw[m]
-
-
-png(  fPNG
-    , width = 1920
-    , height = 1080
-    )
-
-par(mfcol = c(2,1))
-
-colors <-c( "red", "yellow", "green", "blue", "black" )
+citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
 
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
-y <- as.numeric(weekly$AnzahlFall[1:m])
 
-labs <- weekly$Kw
-j20 <- weekly$Kw < 54
-j21 <- weekly$Kw > 53
+SQL <- paste(
+  'select PandemieWoche(Meldedatum) as Kw'
+  , ', year(Meldedatum) as Jahr'
+  , ', Altersgruppe as Altersgruppe'
+  , ', sum(AnzahlFall) as AnzahlFall, sum(AnzahlTodesfall) as AnzahlTodesfall'
+  , ' from Faelle '
+  , ' where Altersgruppe <> "unbekan" group by Kw, Altersgruppe;', sep='')
 
-labs[labs>53] <- labs[j21] - 53
-labs[j20] <- paste(labs[j20],20,sep='/')
-labs[j21] <- paste(labs[j21],21,sep='/')
+weekly <- RunSQL(SQL = SQL)
+
+m <- length(weekly[,1])
+reported <- weekly$Kw[m]
+
+scl <- max(weekly$AnzahlFall)/max(weekly$AnzahlTodesfall) 
+
+weekly %>% ggplot(
+  aes( x = Kw )) +
+  geom_line(aes(y = AnzahlFall, colour = "Fälle" ), color = 'blue') +
+  geom_line(aes(y = AnzahlTodesfall * scl, colour = "Todesfälle" ), color = 'red') +
+  scale_y_continuous( sec.axis = sec_axis(~./scl, name = "Todesfälle", labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ))
+                      , labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  facet_wrap(vars(Altersgruppe)) +
+  labs(  title = "Wöchentliche Fälle"
+         , subtitle = paste ("Deutschland, Stand:", heute, sep ='')
+         , x ="Pandemiewoche"
+         , y = "Fälle" 
+         , colour = "Fälle/Todesfälle"
+         , caption = citation ) +
+  theme_ipsum() +
+  theme(  axis.text.y  = element_text ( color = 'blue' )
+          , axis.title.y = element_text ( color='blue' )
+          , axis.text.y.right = element_text ( color = 'red' )
+          , axis.title.y.right = element_text ( color='red' )
+          , strip.text.x = element_text (
+            size = 24
+            , color = "black"
+            , face = "bold.italic")
+          , plot.caption = element_text (
+            size = 12
+            , color = "black"
+            , face = "bold.italic" )
+          ) + 
+  theme(plot.title=element_text(size=48, hjust=0.5, face="italic", color="black")) +
+  theme(plot.subtitle=element_text(size=36, hjust=0.5, face="italic", color="black")) -> pp
+
+ggsave(  paste('png/FZBund_Alter.png', sep = '')
+         , type = "cairo-png"
+         , bg = "white"
+         , width = 29.7 * 2
+         , height = 21 * 2
+         , units = "cm"
+         , dpi = 300 )
 
 
-bp1 <- barplot( y # [fromto]
-         , ylim = limbounds(y)*1.1
-         , main = paste("Wöchentliche Fälle von Pandemiewoche", weekly$Kw[1], "bis", reported) 
-         , sub = ""
-         , xlab = ""
-         , col = "lightblue"
-         , ylab = "Anzahl"
-         , names.arg = labs
-         , las = 2
-)
+weekly %>% ggplot(
+  aes( x = AnzahlFall, y = AnzahlTodesfall ) 
+  ) +
+  geom_point(aes(x = AnzahlFall,y = AnzahlTodesfall, colour = Altersgruppe ) ) +
+  scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  geom_smooth( method = "lm", data = weekly %>% filter(Altersgruppe == "A35-A59")) +
+  geom_smooth( method = "lm", data = weekly %>% filter(Altersgruppe == "A60-A79")) +
+  geom_smooth( method = "lm", data = weekly %>% filter(Altersgruppe == "A80+")) +
+  #  facet_wrap(vars(Altersgruppe)) +
+  labs(  title = "Wöchentliche Fälle"
+         , subtitle = paste ("Deutschland, Stand:", heute, sep ='')
+         , x = "Fälle"
+         , y = "Todesfälle" 
+         , colour = "Jahr"
+         , caption = citation ) +
+  theme_ipsum() +
+  theme(  axis.text.y  = element_text ( color = 'blue' )
+          , axis.title.y = element_text ( color='blue' )
+          , axis.text.y.right = element_text ( color = 'red' )
+          , axis.title.y.right = element_text ( color='red' )
+          , strip.text.x = element_text (
+            size = 24
+            , color = "black"
+            , face = "bold.italic" )
+          , plot.caption = element_text (
+            size = 12
+            , color = "black"
+            , face = "bold.italic" )
+          ) + 
+  theme(plot.title=element_text(size=48, hjust=0.5, face="italic", color="black")) +
+  theme(plot.subtitle=element_text(size=36, hjust=0.5, face="italic", color="black")) -> pp2
 
-title ( sub = paste("Created:", heute ), line = 4, cex.sub = 1)
-
-text( bp1
-      , y
-      , round(y)
-      , cex = 1
-      , pos = 3
-      , offset = 3
-      , srt = 90
-)
-
-abline(h=y[m-1] , col = 'red')
-
-abline(h=max(y) , col = 'red')
-
-grid()
-
-y <- as.numeric(weekly$AnzahlTodesfall[1:m])
-bp2 <- barplot( y # [fromto]
-         , ylim = limbounds(y)*1.1
-         , main = paste("Wöchentliche Todesfälle DE von Pandemiewoche", weekly$Kw[1], "bis", reported) 
-         , sub = ""
-         , xlab = ""
-         , col = "lightblue" 
-         , ylab = "Anzahl"
-         , names.arg = labs
-         , las = 2
-)
-
-abline(h=y[m-1] , col = 'red' , lty = 3)
-abline(h=max(y) , col = 'red' , lty = 3)
-
-title ( sub = paste("Created:", heute ), line = 4, cex.sub = 1)
-
-text( bp2
-      , y 
-      , round(y)
-      , cex = 1
-      , pos = 3
-      , offset = 1
-      , srt = 90
-)
-
-copyright()
-
-dev.off()
+ggsave( paste('png/FZBund_AlterScatterplot.png', sep = '')
+         , type = "cairo-png"
+         , bg = "white"
+         , width = 29.7
+         , height = 21
+         , units = "cm"
+         , dpi = 300 )

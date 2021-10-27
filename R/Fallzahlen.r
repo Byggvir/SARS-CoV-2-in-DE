@@ -10,11 +10,9 @@
 
 options(
     scipen = 999
-  , OutDec=',')
-
+  , OutDec=',' )
 
 MyScriptName <- "Fallzahlen"
-
 
 require(data.table)
 library(tidyverse)
@@ -143,5 +141,3 @@ ggsave( plot = gg,
         )
        , type = "cairo-png",  bg = "white"
        , width = 29.7, height = 21, units = "cm", dpi = 150)
-
-dev.off()

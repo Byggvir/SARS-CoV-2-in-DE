@@ -8,7 +8,7 @@
 # E-Mail: thomas@arend-rhb.de
 #
 
-MyScriptName <-"FZWocheAlter"
+MyScriptName <-"FZWocheAlterBL"
 
 library(REST)
 library(tidyverse)

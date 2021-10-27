@@ -73,7 +73,7 @@ function git_pull {
     echo -e "| ${red}Holen der aktuellen Daten des RKI von github.com"
     echo -e "${blue}+---------${reset}\n\n"
 
-    for D in Infektionen Impfungen Nowcasting Sequenzdaten
+    for D in Infektionen Impfungen Nowcasting Sequenzdaten Hospital
     do
         echo -e "\n\n${blue}+---------"
         echo -e "| ${red}$D "
@@ -119,8 +119,6 @@ CREATE TABLE IF NOT EXISTS Faelle (
     , INDEX(Meldedatum)
     , INDEX(RefDatum)
     , INDEX(Geschlecht)
-    , INDEX(Altersgruppe)
-    , INDEX(Geschlecht)
     , INDEX(Altersgruppe));
 
 LOAD DATA LOCAL INFILE '${TEMP}/Aktuell.csv' 
@@ -156,7 +154,11 @@ LOAD DATA LOCAL INFILE '${TEMP}/Impfungen.csv'
     FIELDS TERMINATED BY ',' 
     IGNORE 0 ROWS;
 
+call CreateFaelleBL;
+
 EOF
+
+
 ) >> "$SQL"
 
 }
