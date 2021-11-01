@@ -63,17 +63,17 @@ options(
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
-SQL <- paste('select IdLandkreis div 1000 as IdBundesland, Bundesland as Bundesland, PandemieWoche(Meldedatum) as Kw, sum(AnzahlFall) as AnzahlFall, sum(AnzahlTodesfall) as AnzahlTodesfall from Faelle as F join Bundesland as B on B.IdBundesland = F.IdLandkreis div 1000 group by Bundesland, Kw;', sep='')
+SQL <- paste('select * from InzidenzBL;', sep='')
 weekly <- RunSQL(SQL = SQL)
 
-#scl <- max(weekly$AnzahlFall)/max(weekly$AnzahlTodesfall) 
+scl <- max(weekly$AnzahlFall)/max(weekly$AnzahlTodesfall) 
   
 weekly %>% ggplot(
-  aes( x = Kw )) +
+  aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlFall, colour = "Fälle" ), color = 'blue') +
-#  geom_line(aes(y = AnzahlTodesfall * scl, colour = "Todesfälle" ), color = 'red') +
-  scale_y_continuous( # sec.axis = sec_axis(~./scl, name = "Todesfälle", labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ))
-                       labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  geom_line(aes(y = AnzahlTodesfall * scl, colour = "Todesfälle" ), color = 'red') +
+  scale_y_continuous(  sec.axis = sec_axis(~./scl, name = "Todesfälle", labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ))
+                       , labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   facet_wrap(vars(Bundesland)) +
   theme_ipsum() +
   theme(  axis.text.y  = element_text ( color = 'blue' )
@@ -92,10 +92,44 @@ weekly %>% ggplot(
        , colour = "Fälle/Todesfälle"
        , caption = citation ) -> pp1
 
-ggsave(  'png/FZBundeslaender.png'
+ggsave(  'png/FZBundeslaender-Absolut.png'
        , type = "cairo-png"
        , bg = "white"
        , width = 29.7 * 2
        , height = 21 * 2
        , units = "cm"
        , dpi = 300 )
+
+scl <- max(weekly$AnzahlFall/weekly$Bev)/max(weekly$AnzahlTodesfall/weekly$Bev) 
+
+weekly %>% ggplot(
+  aes( x = PandemieWoche )) +
+  geom_line(aes(y = AnzahlFall / Bev * 100000, colour = "Fälle" ), color = 'blue') +
+  geom_line(aes(y = AnzahlTodesfall / Bev *100000 * scl, colour = "Todesfälle" ), color = 'red') +
+  scale_y_continuous( sec.axis = sec_axis(~./scl, name = "Todesfälle", labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ))
+                      , labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  facet_wrap(vars(Bundesland)) +
+  theme_ipsum() +
+  theme(  axis.text.y  = element_text ( color = 'blue' )
+          , axis.title.y = element_text ( color='blue' )
+          , axis.text.y.right = element_text ( color = 'red' )
+          , axis.title.y.right = element_text ( color='red' )
+          , strip.text.x = element_text (
+            size = 24
+            , color = "black"
+            , face = "bold.italic"
+          ) ) +
+  labs(  title = "Inzidenz nach Bundesland"
+         , subtitle= paste("Deutschland, Stand:", heute)
+         , x = "Pandemiewoche"
+         , y = "Fälle pro 100.000" 
+         , colour = "Fälle/Todesfälle"
+         , caption = citation ) -> pp1
+
+ggsave(  'png/FZBundeslaender-Inzidenz.png'
+         , type = "cairo-png"
+         , bg = "white"
+         , width = 29.7 * 2
+         , height = 21 * 2
+         , units = "cm"
+         , dpi = 300 )

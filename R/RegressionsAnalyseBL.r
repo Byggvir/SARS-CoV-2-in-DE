@@ -91,7 +91,7 @@ from (
     select 
         F.Meldedatum 
         , weekday(F.Meldedatum) as WTag
-        , AnzahlFallProTag / W.AnzahlFallProWoche as AnteilAnWoche
+        , F.AnzahlFall / W.AnzahlFall as AnteilAnWoche
     from FaelleProTag as F
     join
         FaelleProWoche as W  

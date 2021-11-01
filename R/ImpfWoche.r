@@ -87,13 +87,13 @@ options(
 
 AG <- c(60,100)
 
-SQL <- paste('select sum(Insgesamt) as Anzahl from Bevoelkerung.DEU where Stichtag ="2019-12-31" and Age >= ', AG[1], ' and Age <= ', AG[2],';')
+SQL <- paste('select sum(Insgesamt) as Anzahl from DESTATIS.DEU where Stichtag ="2020-12-31" and Altersgruppe >= ', AG[1], ' and Age <= ', AG[2],';')
 Bev <- RunSQL( SQL = SQL)
 
 SQL <- paste('call ImpfungenAlter(',AG[1],',', AG[2],');')
 ipw <- RunSQL(SQL = SQL)
 
-write.csv(ipw,file="data/Impfungen_Wo_Bund.csv")
+# write.csv(ipw,file="data/Impfungen_Wo_Bund.csv")
 
 m <- length(ipw[,1])
 

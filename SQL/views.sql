@@ -26,6 +26,23 @@ begin
 end 
 //
 
+create or replace procedure topfaelle ( n INT )
+begin
+    set @r:=0; 
+    select * 
+    from ( 
+        select 
+            Meldedatum
+            , Anzahlfall
+            , @r:=@r+1 as Rank 
+        from FaelleProTag 
+        order by
+            AnzahlFall desc limit n 
+        ) as B 
+    order by Meldedatum;
+end 
+//
+
 delimiter ;
 
 -----
@@ -110,7 +127,7 @@ view ImpfSummary as
         , I1.AlterBis
         , sum(I1.Anzahl)
         , ( select 
-                --sum(I2.Anzahl) 
+                sum(I2.Anzahl) 
             from ImpfungenProTag as I2 
             where I2.Impfdatum <= I1. Impfdatum
             and I2.AlterVon = I1.AlterVon
@@ -305,8 +322,8 @@ create or replace view FaelleProWoche as
         ( case when week(Meldedatum,3) = 53 then 2020 else year(Meldedatum) end ) as Jahr
         , week(Meldedatum,3) as Kw
         , PandemieWoche(Meldedatum) as PandemieWoche
-        , sum(AnzahlFall) as AnzahlFallProWoche 
-        , sum(AnzahlTodesfall) as AnzahlTodesfallProWoche 
+        , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
     from Faelle  
     group by 
         Jahr
@@ -316,11 +333,38 @@ create or replace view FaelleProWoche as
 create or replace view FaelleProTag as
     select     
         Meldedatum
-        , sum(AnzahlFall) as AnzahlFallProTag
-        , sum(AnzahlTodesfall) as AnzahlTodesfallProTag
+        , year(Meldedatum) as Jahr
+        , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
     from Faelle  
     group by 
         Meldedatum  
+;
+
+create or replace view FaelleProTagBL as
+    select     
+        IdLandkreis div 1000 as IdBundesland
+        , Meldedatum
+        , year(Meldedatum) as Jahr
+        , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
+    from Faelle  
+    group by 
+        IdBundesland
+        , Meldedatum
+;
+
+create or replace view FaelleProTagAltersgruppe as
+    select     
+        Meldedatum
+        , Altersgruppe
+        , year(Meldedatum) as Jahr
+        , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
+    from Faelle  
+    group by 
+        Meldedatum
+        , Altersgruppe;
 ;
 
 create or replace view FaelleProWocheAltersgruppe as
@@ -354,6 +398,32 @@ create or replace view FaelleProAltersgruppe as
     group by 
        F.Altersgruppe;
 
+create or replace view FaelleProMonat as
+    select     
+        year(Meldedatum) as Jahr
+        , month(Meldedatum) as Monat
+        , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
+    from Faelle  
+    group by 
+        Jahr
+        , Monat
+;
+
+create or replace view FaelleProMonatBL as
+    select     
+        IdLandkreis div 1000 as IdBundesland 
+        , year(Meldedatum) as Jahr
+        , month(Meldedatum) as Monat
+        , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
+    from Faelle  
+    group by
+        IdBundesland
+        , Jahr
+        , Monat
+;
+
 create or replace view InzidenzAltersgruppe as
    select
       PandemieWoche
@@ -374,3 +444,68 @@ create or replace view InzidenzAltersgruppe as
         PandemieWoche
         , Altersgruppe
     ;
+    
+create or replace view InzidenzAltersgruppeBL as
+
+    select 
+        IdLandkreis div 1000 as IdBundesland
+      , B.Bundesland as Bundesland
+      , PandemieWoche(Meldedatum) as PandemieWoche
+      , F.Altersgruppe as Altersgruppe
+      , sum(AnzahlFall) as AnzahlFall
+      , sum(AnzahlTodesfall) as AnzahlTodesfall
+      , Anzahl as Bev
+    from Faelle as F 
+    join ( 
+        select 
+               IdBundesland
+            , Altersgruppe 
+            , sum(Anzahl) as Anzahl
+            from DESTATIS.StdBev6BL 
+            where 
+                Stichtag = "2020-12-31" 
+            group by 
+                IdBundesland
+                , Altersgruppe
+        ) as S 
+    on 
+        F.IdLandkreis div 1000 = S.IdBundesland
+        and F.Altersgruppe = S.Altersgruppe
+    join Bundesland as B
+    on
+        F.IdLandkreis div 1000 = B.IdBundesland
+    group by 
+        F.IdLandkreis div 1000
+        , PandemieWoche(Meldedatum)
+        , F.Altersgruppe
+;
+
+create or replace view InzidenzBL as
+
+    select 
+        IdLandkreis div 1000 as IdBundesland
+        , B.Bundesland as Bundesland
+        , PandemieWoche(Meldedatum) as PandemieWoche
+        , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
+        , Anzahl as Bev
+    from Faelle as F 
+    join ( 
+        select 
+              IdBundesland
+            , sum(Anzahl) as Anzahl
+            from DESTATIS.StdBev6BL 
+            where 
+                Stichtag = "2020-12-31" 
+            group by 
+                IdBundesland
+        ) as S 
+    on 
+        F.IdLandkreis div 1000 = S.IdBundesland
+    join Bundesland as B
+    on
+        F.IdLandkreis div 1000 = B.IdBundesland
+    group by 
+        F.IdLandkreis div 1000
+        , PandemieWoche(Meldedatum)
+;

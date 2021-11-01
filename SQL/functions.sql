@@ -11,4 +11,38 @@ function PandemieWoche ( Datum DATE ) returns INT
 begin
       return datediff(Datum,"2019-12-30") div 7 + 1;
 end
+
 //
+
+create or replace
+function sigma_rel ( n INT, k INT) returns DOUBLE
+
+begin
+  
+  if ( n != 0  and k <= n ) then
+  
+  	return sqrt(k * (n-k) / n) / n ;
+
+  else
+  	return 0;
+  end if;
+
+end
+//
+create or replace
+function sigma ( n INT, k INT) returns DOUBLE
+
+begin
+  
+  if ( n != 0  and k <= n ) then
+  
+  	return sqrt(k * (n-k) / n) ;
+
+  else
+  	return 0;
+  end if;
+
+end
+//
+
+delimiter ;

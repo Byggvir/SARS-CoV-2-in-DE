@@ -67,8 +67,8 @@ diagram <- function (
 
   png(  
     paste( PNG, N, '.png', sep="" )
-    , width=1920
-    , height=1080
+    , width=3840
+    , height=2160
   )
 
   par(mfcol=c(2,1))
@@ -91,25 +91,26 @@ diagram <- function (
          , ylab="Anzahl"
          #, names.arg = Tage # [fromto]
          , las = 2
+         
   )
 
   title ( 
     main = paste( main, "Fälle bis", reported) 
-    , line = 3
-    , cex  = 5
+    , line = -3
+    , cex.main = 8
   )
 
   
   title ( 
     sub = paste("Created:", heute )
     , line= 3
-    , cex = 4
+    , cex.sub = 4
   )
 
   title ( 
     xlab = paste("Datum" )
     , line= 1
-    , cex = 4
+    , cex.lab = 4
   )
 
   grid()
@@ -127,19 +128,19 @@ diagram <- function (
 
   title ( 
     main = paste( main, "Todesfälle bis", reported) 
-    , line = 3
-    , cex  = 5
+    , line = -3
+    , cex.main  = 8
   )
 
   title ( 
     sub = paste("Created:", heute )
     , line= 3
-    , cex = 4
+    , cex.sub = 4
   )
   title ( 
     xlab = paste("Datum" )
     , line= 1
-    , cex = 4
+    , cex.lab = 4
   )
   grid()
 

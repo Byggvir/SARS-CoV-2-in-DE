@@ -31,6 +31,8 @@ join
           IdBundesland
         , sum(Anzahl) as Anzahl
       from DESTATIS.DT124110013
+      where
+        Stichtag = "2020-12-31"
       group by IdBundesland
     )
     as D 
@@ -38,7 +40,8 @@ on
     A.IdLandkreis div 1000 = D.IdBundesland 
 group by 
       A.IdLandkreis div 1000
-order by AnzahlTodesfall desc
+order by 
+    AnzahlTodesfall desc
 ) as R
 ;
 
@@ -73,7 +76,10 @@ join
           IdBundesland
         , sum(Anzahl) as Anzahl
       from DESTATIS.DT124110013
-      group by IdBundesland
+      where
+        Stichtag = "2020-12-31"
+      group by 
+        IdBundesland
     )
     as D 
 on 
@@ -126,7 +132,8 @@ join
         , sum(Anzahl) as Anzahl
       from DESTATIS.DT124110013
       where 
-        Altersgruppe >= @L 
+        Stichtag = "2020-12-31"
+        and Altersgruppe >= @L 
         and Altersgruppe <= @U
       group by IdBundesland
     )
@@ -148,7 +155,7 @@ drop procedure if exists MortalityBundeslandStdBev //
 create procedure MortalityBundeslandStdBev ()
 begin
 
-set @bev := (Select sum(Anzahl) from DESTATIS.StdBev6);
+set @bev := (Select sum(Anzahl) from DESTATIS.StdBev6 where Stichtag = "2020-12-31");
 
 set @i:=0;
 
@@ -182,12 +189,18 @@ on
     and A.Geschlecht = S.Geschlecht 
 
 join DESTATIS.StdBev6BL as B
-on 
-    A.IdLandkreis div 1000 = B.IdBundesland
+on  
+    S.Stichtag = B.Stichtag
+    and A.IdLandkreis div 1000 = B.IdBundesland
     and A.Geschlecht = B.Geschlecht 
     and A.Altersgruppe = B.Altersgruppe 
 
-group by A.IdLandkreis div 1000,A.Geschlecht,A.Altersgruppe 
+where
+    S.Stichtag = "2020-12-31"
+group by 
+    A.IdLandkreis div 1000
+    , A.Geschlecht
+    , A.Altersgruppe 
 ) as R
 group by 
     R.IdBundesland

@@ -125,8 +125,6 @@ p <- ggplot(data, aes(fill=Bundesland, y=CFR, x=Bundesland)) +
 
 gg <- grid.arrange(p, ncol=1)
 
-plot(gg)
-
 ggsave( plot = gg, 
         file = paste( 
           "png/"
@@ -139,3 +137,29 @@ ggsave( plot = gg,
         , type = "cairo-png",  bg = "white"
         , width = 29.7, height = 21, units = "cm", dpi = 150)
 
+SQL <- 'select B.Bundesland as Bundesland,Altersgruppe,sum(AnzahlTodesfall)/sum(AnzahlFall) * 100 as CFR from Faelle as F join Bundesland as B on B.IdBundesland = F.IdLandkreis div 1000 group by IdBundesland, Altersgruppe;'
+data <- RunSQL(SQL)
+
+data %>% filter (Altersgruppe == 'A80+') %>% ggplot(aes(fill=Bundesland, y=CFR, x=Bundesland)) +
+  geom_bar(position="dodge", stat="identity") +
+  geom_text(aes(label=paste( CFR, sep='')), size=3, position=position_dodge(width=0.9), vjust=-0.25) +
+  # facet_wrap(vars(Altersgruppe)) +
+  scale_fill_viridis(discrete = T) +
+  ggtitle("Corona: Rohe CFR") +
+  theme_ipsum() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  xlab("Bundesländer") +
+  ylab("CFR in [%]") -> p
+  
+  ggsave( plot = p, 
+          file = paste( 
+            "png/"
+            ,  heute
+            , '-'
+            , MyScriptName
+            , '-3.png'
+            , sep = ""
+          )
+          , type = "cairo-png",  bg = "white"
+          , width = 29.7, height = 21, units = "cm", dpi = 150)
+  

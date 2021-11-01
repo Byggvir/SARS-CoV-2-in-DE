@@ -31,7 +31,9 @@ join
     ( select 
           IdBundesland
         , sum(Anzahl) as Anzahl
-      from DESTATIS.DT124110013
+      from DESTATIS.DT124110013 as S
+      where 
+        Stichtag = "2020-12-31"
       group by IdBundesland
     )
     as D 
@@ -76,6 +78,8 @@ join
           IdBundesland
         , sum(Anzahl) as Anzahl
       from DESTATIS.DT124110013
+      where 
+        Stichtag = "2020-12-31"
       group by IdBundesland
     )
     as D 
@@ -110,7 +114,7 @@ select
     , R.Bundesland
     , R.Anzahl
     , R.Bevoelkerung
-    , R.IncectionRatio
+    , R.InfectionRatio
 from (
 select 
       A.IdLandkreis div 1000
@@ -129,7 +133,8 @@ join
         , sum(Anzahl) as Anzahl
       from DESTATIS.DT124110013
       where 
-        Altersgruppe >= @L 
+        Stichtag = "2020-12-31"
+        and Altersgruppe >= @L 
         and Altersgruppe <= @U
       group by IdBundesland
     )
@@ -144,6 +149,7 @@ order by InfectionRatio desc
 ;
 
 end
+
 //
 
 drop procedure if exists InfectionsBundeslandStdBev //
@@ -151,7 +157,7 @@ drop procedure if exists InfectionsBundeslandStdBev //
 create procedure InfectionsBundeslandStdBev ()
 begin
 
-set @bev := (Select sum(Anzahl) from DESTATIS.StdBev6);
+set @bev := (Select sum(Anzahl) from DESTATIS.StdBev6 where Stichtag = "2020-12-31");
 
 set @i:=0;
 
@@ -184,10 +190,12 @@ on
 
 join DESTATIS.StdBev6BL as B
 on 
-    A.IdLandkreis div 1000 = B.IdBundesland
+    S.Stichtag = B.Stichtag
+    and A.IdLandkreis div 1000 = B.IdBundesland
     and A.Geschlecht = B.Geschlecht 
     and A.Altersgruppe = B.Altersgruppe 
-
+where 
+    S.Stichtag = "2020-12-31"
 group by 
     A.IdLandkreis div 1000
     , A.Geschlecht

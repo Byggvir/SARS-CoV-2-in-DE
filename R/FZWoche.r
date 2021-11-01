@@ -63,14 +63,7 @@ today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
 
-SQL <- paste(
-  'select PandemieWoche(Meldedatum) as Kw'
-  , ', year(Meldedatum) as Jahr'
-  , ', Altersgruppe as Altersgruppe'
-  , ', sum(AnzahlFall) as AnzahlFall, sum(AnzahlTodesfall) as AnzahlTodesfall'
-  , ' from Faelle '
-  , ' where Altersgruppe <> "unbekan" group by Kw, Altersgruppe;', sep='')
-
+SQL <- ' select * from FaelleProWocheAltersgruppe;'
 weekly <- RunSQL(SQL = SQL)
 
 m <- length(weekly[,1])
@@ -79,7 +72,7 @@ reported <- weekly$Kw[m]
 scl <- max(weekly$AnzahlFall)/max(weekly$AnzahlTodesfall) 
 
 weekly %>% ggplot(
-  aes( x = Kw )) +
+  aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlFall, colour = "Fälle" ), color = 'blue') +
   geom_line(aes(y = AnzahlTodesfall * scl, colour = "Todesfälle" ), color = 'red') +
   scale_y_continuous( sec.axis = sec_axis(~./scl, name = "Todesfälle", labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ))
@@ -123,15 +116,15 @@ weekly %>% ggplot(
   geom_point(aes(x = AnzahlFall,y = AnzahlTodesfall, colour = Altersgruppe ) ) +
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
-  geom_smooth( method = "lm", data = weekly %>% filter(Altersgruppe == "A35-A59")) +
-  geom_smooth( method = "lm", data = weekly %>% filter(Altersgruppe == "A60-A79")) +
-  geom_smooth( method = "lm", data = weekly %>% filter(Altersgruppe == "A80+")) +
-  #  facet_wrap(vars(Altersgruppe)) +
-  labs(  title = "Wöchentliche Fälle"
+  geom_smooth( method = "lm", formula = y ~ x, data = weekly %>% filter(Altersgruppe == "A35-A59")) +
+  geom_smooth( method = "lm", formula = y ~ x, data = weekly %>% filter(Altersgruppe == "A60-A79")) +
+  geom_smooth( method = "lm", formula = y ~ x, data = weekly %>% filter(Altersgruppe == "A80+")) +
+  facet_wrap(vars(Jahr)) +
+  labs(  title = "SARS-CoV-2 Todesfälle ~ Fälle nach Kalenderwoche"
          , subtitle = paste ("Deutschland, Stand:", heute, sep ='')
          , x = "Fälle"
          , y = "Todesfälle" 
-         , colour = "Jahr"
+         , colour = "Altersgruppe"
          , caption = citation ) +
   theme_ipsum() +
   theme(  axis.text.y  = element_text ( color = 'blue' )
@@ -141,14 +134,14 @@ weekly %>% ggplot(
           , strip.text.x = element_text (
             size = 24
             , color = "black"
-            , face = "bold.italic" )
+            , face = "italic" )
           , plot.caption = element_text (
             size = 12
             , color = "black"
-            , face = "bold.italic" )
+            , face = "italic" )
           ) + 
-  theme(plot.title=element_text(size=48, hjust=0.5, face="italic", color="black")) +
-  theme(plot.subtitle=element_text(size=36, hjust=0.5, face="italic", color="black")) -> pp2
+  theme(plot.title=element_text(size=36, hjust=0.5, face="bold.italic", color="black")) +
+  theme(plot.subtitle=element_text(size=24, hjust=0.5, face="italic", color="black")) -> pp2
 
 ggsave( paste('png/FZBund_AlterScatterplot.png', sep = '')
          , type = "cairo-png"

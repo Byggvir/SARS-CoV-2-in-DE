@@ -203,7 +203,7 @@ fa %>% ggplot(
   theme_ipsum() +
   labs(  title = "Todesfälle in der Altersgruppen"
          , subtitle= paste("Deutschland, Stand:", heute)
-         , x ="Altersgruppe"
+         , x = "Altersgruppe"
          , y = "Todesfälle"
          , caption = citation ) -> pp6
 

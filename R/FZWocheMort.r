@@ -62,14 +62,21 @@ citation <- "© 2021 by Thomas Arend\nQuellen: Robert Koch-Institut (2021)\nSARS
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
+SQL <- 'select * from FallAltersgruppen where AlterVon >=35;'
+Altersgruppen <- RunSQL(SQL = SQL)
 
+for ( i in 1:nrow(Altersgruppen)) {
+  
 SQL <- paste(
-  'select F.Jahr,F.Kw,PandemieWoche,AnzahlTodesfall as CoronaTodesfall, sum(Male)+sum(Female) as Todesfall '
-  , 'from FaelleProWocheAltersgruppe as F join DESTATIS.SterbefaelleWoche as S'
-  , 'on F.Jahr=S.Jahr and F.Kw=S.Kw'
-  , 'where F.Altersgruppe = "A80+" and S.AlterVon >= 80'
-  , 'group by F.Jahr,F.Kw;'
-  , sep=' ')
+  'select PandemieWoche, F.Jahr, F.Kw, AnzahlTodesfall as CoronaTodesfall, sum(Male)+sum(Female) as Todesfall '
+  , ' from FaelleProWocheAltersgruppe as F join DESTATIS.SterbefaelleWoche as S'
+  , ' on F.Jahr = S.Jahr and F.Kw = S.Kw'
+  , ' where F.Altersgruppe = "', Altersgruppen[i,1], '"'
+  , ' and S.AlterVon >= ', Altersgruppen[i,2]
+  , ' and S.AlterBis <= ', Altersgruppen[i,3]
+  , ' and PandemieWoche > 8'
+  , ' group by PandemieWoche;'
+  , sep='')
 
 weekly <- RunSQL(SQL = SQL)
 
@@ -80,36 +87,39 @@ scl <- max(weekly$Todesfall)/max(weekly$CoronaTodesfall)
 
 weekly %>% ggplot(
   aes( x = PandemieWoche )) +
-  geom_line(aes(y = Todesfall, colour = "Gesamt" ), color = 'blue') +
-  geom_line(aes(y = CoronaTodesfall * scl, colour = "Corona" ), color = 'red') +
-  scale_y_continuous( sec.axis = sec_axis(~./scl, name = "Corona-Todesfälle", labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ))
-                      , labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
-  labs(  title = "Gesamt und Corona-Todesfälle 80 Jahr und älter"
-         , subtitle = paste ("Deutschland, Stand:", heute, sep ='')
-         , x ="Pandemiewoche"
-         , y = "Fälle" 
-         , colour = "Gesamt Todesfälle / Corona-Todesfälle"
-         , caption = citation ) +
+  geom_line(aes(y = Todesfall, colour = 'Gesamt' ), color = 'blue') +
+  geom_line(aes(y = CoronaTodesfall * scl , colour = 'SARS-CoV-2' ), color = 'red') +
+  scale_color_manual( name = 'Todesfälle', values = c('Gesamt' = 'blue', 'SARS-CoV-2' = 'red')) +
+  scale_y_continuous(  sec.axis = sec_axis(~./scl, name = "SARS-CoV-2-Todesfälle", labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ))
+                       , labels = function (x) format(x, big.mark = '.', decimal.mark= ',', scientific = FALSE ) ) +
+  labs(  title = paste('Gesamt und Corona-Todesfälle\nAltersgruppe', Altersgruppen[i,1], sep=' ')
+         , subtitle = paste ('Deutschland, Stand:', heute, sep = ' ')
+         , x = 'Pandemiewoche'
+         , y = 'Fälle' 
+         , colour = 'Todesfälle'
+         , caption = citation 
+         , legend.position="bottom"
+  ) +
   theme_ipsum() +
   theme(  axis.text.y  = element_text ( color = 'blue' )
-          , axis.title.y = element_text ( color='blue' )
+          , axis.title.y = element_text ( color = 'blue' )
           , axis.text.y.right = element_text ( color = 'red' )
-          , axis.title.y.right = element_text ( color='red' )
+          , axis.title.y.right = element_text ( color = 'red' )
           , strip.text.x = element_text (
             size = 24
             , color = "black"
             , face = "bold.italic"
-          ) ) + 
-  theme(plot.title=element_text(size=24, hjust=0.5, face="italic", color="black")) +
-  theme(plot.subtitle=element_text(size=18, hjust=0.5, face="italic", color="black")) -> pp
+            ) ) +
+  theme(plot.title=element_text(size = 24, hjust = 0.5, face = "italic", color = "black" )) +
+  theme(plot.subtitle=element_text(size = 18, hjust = 0.5, face = "italic", color = "black" )) -> pp
 
-ggsave(  paste('png/FZBundMort1.png', sep = '')
-         , type = "cairo-png"
-         , bg = "white"
-         , width = 29.7
-         , height = 21
-         , units = "cm"
-         , dpi = 300 )
+ggsave( paste('png/FZBundMort-', Altersgruppen[i,1], '-1.png', sep = '')
+        , type = "cairo-png"
+        , bg = "white"
+        , width = 29.7
+        , height = 21
+        , units = "cm"
+        , dpi = 300 )
 
 
 weekly %>% ggplot(
@@ -118,29 +128,62 @@ weekly %>% ggplot(
   geom_point(aes(x = Todesfall, y = CoronaTodesfall , colour = factor(Jahr) ) ) +
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
-  scale_color_manual( breaks = c(2020,2021), values=c( "black", "blue") ) +
-  geom_smooth( method = "lm") +
+  scale_color_manual( breaks = c(2020,2021), values=c( "orange", "blue") ) +
+  geom_smooth( method = "lm", data = weekly %>% filter ( Jahr == 2020 ), formula = y ~ x , colour = "orange" ) +
+  geom_smooth( method = "lm", data = weekly %>% filter ( Jahr == 2021 ), formula = y ~ x , colour = "blue" ) +
   # facet_wrap(vars(Jahr)) +
-  labs(  title = "Todesfälle und gemeldete Corona-Todesfälle"
+  labs(  title = paste('SARS-CoV-2 Todesfälle ~ Todesfälle pro Kalenderwoche\nAltersgruppe', Altersgruppen[i,1], sep=' ') 
          , subtitle = paste ("Deutschland, Stand:", heute, sep ='')
          , x = "Alle Todesfälle"
-         , y = "Corona Todesfälle" 
+         , y = "SARS-CoV-2"
          , colour = "Jahr"
          , caption = citation ) +
   theme_ipsum() +
   theme(  strip.text.x = element_text (
             size = 24
             , color = "black"
-            , face = "bold.italic"
+            , face = "italic"
           ) ) + 
-  theme(plot.title=element_text(size=24, hjust=0.5, face="italic", color="black")) +
-  theme(plot.subtitle=element_text(size=18, hjust=0.5, face="italic", color="black")) -> pp2
+  theme(plot.title=element_text( size = 24, hjust = 0.5, face = "bold.italic", color = "black" )) +
+  theme(plot.subtitle=element_text( size = 18, hjust = 0.5, face = "italic", color = "black" )) -> pp2
 
-ggsave( paste('png/FZBundMort2.png', sep = '')
+ggsave( paste('png/FZBundMort-', Altersgruppen[i,1], '-2.png', sep = '')
          , type = "cairo-png"
          , bg = "white"
          , width = 29.7
          , height = 21
          , units = "cm"
          , dpi = 150 )
- 
+
+corona_sterbefaelle <- data.frame (
+  PandemieWoche = c(weekly$PandemieWoche, weekly$PandemieWoche)
+  , Art = c(rep('Corona',nrow(weekly)), rep('Normal',nrow(weekly)))
+  , AnzahlTodesfall = c(weekly$CoronaTodesfall,weekly$Todesfall-weekly$CoronaTodesfall)
+)
+    
+corona_sterbefaelle %>% ggplot(
+  aes( x = PandemieWoche, y = AnzahlTodesfall , fill = Art)) +
+  geom_bar(stat="identity") +
+  scale_color_manual( name = 'Todesfälle', values = c('Gesamt' = 'blue', 'SARS-CoV-2' = 'red')) +
+  scale_y_continuous( labels = function (x) format(x, big.mark = '.', decimal.mark= ',', scientific = FALSE ) ) +
+  labs(  title = paste('Gesamt und Corona-Todesfälle\nAltersgruppe', Altersgruppen[i,1], sep=' ')
+         , subtitle = paste ('Deutschland, Stand:', heute, sep = ' ')
+         , x = 'Pandemiewoche'
+         , y = 'Fälle' 
+         , colour = 'Todesfälle'
+         , caption = citation 
+         , legend.position="bottom"
+  ) +
+  theme_ipsum() +
+  theme(plot.title=element_text(size = 24, hjust = 0.5, face = "italic", color = "black" )) +
+  theme(plot.subtitle=element_text(size = 18, hjust = 0.5, face = "italic", color = "black" )) -> pp
+
+ggsave( paste('png/FZBundMort-', Altersgruppen[i,1], '-3.png', sep = '')
+        , type = "cairo-png"
+        , bg = "white"
+        , width = 29.7
+        , height = 21
+        , units = "cm"
+        , dpi = 300 )
+
+}

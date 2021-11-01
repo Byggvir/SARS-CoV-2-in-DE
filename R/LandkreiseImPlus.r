@@ -85,13 +85,10 @@ p <- ggplot(data, aes( x = sKw)) +
   theme_ipsum() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),legend.position="bottom") +
   xlab("Kalenderwoche") +
-  ylab("Fallzahlen pro Kw")
+  ylab("Fallzahlen pro Kw") +
 
-gg <- grid.arrange(p, ncol=1)
 
-plot(gg)
-
-ggsave(plot = gg, file = paste('png/Landkreise-', From_Kw,"-",To_Kw,".png", sep="")
+ggsave( file = paste('png/Landkreise-', From_Kw,"-",To_Kw,".png", sep="")
        , type = "cairo-png",  bg = "white"
        , width = 29.1, height = 21, units = "cm", dpi = 150)
 }

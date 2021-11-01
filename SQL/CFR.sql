@@ -7,7 +7,7 @@ drop procedure if exists CFRBundeslandStdBev //
 create procedure CFRBundeslandStdBev ()
 begin
 
-set @bev := (Select sum(Anzahl) from DESTATIS.StdBev6);
+set @bev := (Select sum(Anzahl) from DESTATIS.StdBev6 where Stichtag = "2020-12-31");
 
 set @i:=0;
 
@@ -42,10 +42,12 @@ on
 
 join DESTATIS.StdBev6BL as B
 on 
-    A.IdLandkreis div 1000 = B.IdBundesland
+    S.Stichtag = B.Stichtag
+    and A.IdLandkreis div 1000 = B.IdBundesland
     and A.Geschlecht = B.Geschlecht
     and A.Altersgruppe = B.Altersgruppe 
-
+where
+    S.Stichtag = "2020-12-31"
 group by A.IdLandkreis div 1000,A.Geschlecht,A.Altersgruppe 
 ) as R
 group by 
@@ -104,7 +106,7 @@ from (
     from Faelle as F 
     join Bundesland as B 
     on 
-        B.IdLandkreis div 1000 = B.IdBundesland
+        F.IdLandkreis div 1000 = B.IdBundesland
     group by F.IdLandkreis div 1000, F.Altersgruppe
     ) as O 
 order by 
