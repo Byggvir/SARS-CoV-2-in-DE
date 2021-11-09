@@ -398,6 +398,17 @@ create or replace view FaelleProAltersgruppe as
     group by 
        F.Altersgruppe;
 
+create or replace view FaelleProAltersgruppeGeschlecht as
+   select 
+      Altersgruppe as Altersgruppe
+    , Geschlecht as Geschlecht
+    , sum(AnzahlFall) as AnzahlFall
+    , sum(AnzahlTodesfall) as AnzahlTodesfall
+    from Faelle as F
+    group by 
+       Altersgruppe
+       , Geschlecht;
+
 create or replace view FaelleProMonat as
     select     
         year(Meldedatum) as Jahr
@@ -509,3 +520,27 @@ create or replace view InzidenzBL as
         F.IdLandkreis div 1000
         , PandemieWoche(Meldedatum)
 ;
+
+create or replace view Impfdurchbruch as
+SELECT
+    Woche   
+    , case when AlterBis <> 100 
+        then concat(AlterVon,"-",AlterBis)
+        else concat(AlterVon,"+")
+      end as Altersgruppe
+    , Outcome 
+    , Gruppe
+    , AnzahlKum
+    , Anzahl4W
+FROM ImpfD as I
+JOIN ImpfDOutcome as O
+ON 
+    I.IdOutcome = O.IdOutcome
+JOIN ImpfDGruppe as G
+ON
+    I.IdGruppe = G.IdGruppe
+where
+    I.IdGruppe <> "A"
+;
+
+    

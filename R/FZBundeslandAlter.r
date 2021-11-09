@@ -67,8 +67,8 @@ SQL <- 'select * from Bundesland where IdBundesland > 0 order by IdBundesland;'
 Bundesland <- RunSQL(SQL = SQL)
 
 SQL <- 'select * from InzidenzAltersgruppeBL;'
-if ( ! exists("weekly")) {
-  weekly <- RunSQL(SQL = SQL)
+if ( ! exists("weeklyAGBL")) {
+  weeklyAGBL <- RunSQL(SQL = SQL)
 }
 
 SQL <- 'select * from FallAltersgruppen;'
@@ -78,10 +78,10 @@ for (i in 1:nrow(Bundesland)) {
 
 BL <- Bundesland[i,1]
 
-w <- weekly %>% filter(IdBundesland == i )
+w <- weeklyAGBL %>% filter(IdBundesland == i )
 scl <- max(w$AnzahlFall/w$Bev)/max(w$AnzahlTodesfall/w$Bev)
 
-weekly %>% filter(IdBundesland == i ) %>% ggplot(
+weeklyAGBL %>% filter(IdBundesland == i ) %>% ggplot(
   aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlFall / Bev * 100000, colour = "Fälle" ), color = 'blue') +
   geom_line(aes(y = AnzahlTodesfall  / Bev * 100000 * scl, colour = "Todesfälle" ), color = 'red') +
@@ -118,10 +118,10 @@ ggsave(  paste('png/FZBundeslaenderAlter',Bundesland[i,2],'.png', sep = '')
 
 for ( AG in Altersgruppen[,1]) {
   print(AG)
-  w <- weekly %>% filter(Altersgruppe == AG )
+  w <- weeklyAGBL %>% filter(Altersgruppe == AG )
   scl <- max(w$AnzahlFall/w$Bev)/max(w$AnzahlTodesfall/w$Bev)
   
-  weekly %>% filter(Altersgruppe == AG ) %>% ggplot(
+  weeklyAGBL %>% filter(Altersgruppe == AG ) %>% ggplot(
     aes( x = PandemieWoche )) +
     geom_line(aes(y = AnzahlFall / Bev * 100000, colour = "Fälle" ), color = 'blue') +
     geom_line(aes(y = AnzahlTodesfall  / Bev * 100000 * scl, colour = "Todesfälle" ), color = 'red') +

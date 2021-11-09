@@ -113,21 +113,22 @@ grid.draw(table)
 
 dev.off()
 
-p <- ggplot(data, aes(fill=Bundesland, y=Mortality, x=Bundesland)) +
-  geom_bar(position="dodge", stat="identity") +
-  geom_text(aes(label=paste(Mortality, ' (', Rang, ')', sep='')), size=2, position=position_dodge(width=0.9), vjust=-0.25) +
-  scale_fill_viridis(discrete = T) +
+p <- ggplot( data, aes( x = reorder(Bundesland, -Mortality), y = Mortality, fill = Bundesland)) +
+  geom_bar( position="dodge", stat="identity") +
+  # geom_text( aes( label = paste( Mortality, '\n(', Rang, ')', sep='')), size=3, position=position_dodge(width=0.9), vjust=0) +
+  geom_text( aes( label = Mortality ), size = 4, position=position_dodge(width=0.9), vjust=0) +
+  scale_fill_viridis( discrete = T ) +
   ggtitle("Corona: Standardisierte Todesfälle pro 100.000 Einwohner") +
   theme_ipsum() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme( axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 12 )) +
   xlab("Bundesländer") +
   ylab("Standardisierte Todesfälle pro 100.000")
 
-gg <- grid.arrange(p, ncol=1)
+# gg <- grid.arrange(p, ncol=1)
+# 
+# plot(gg)
 
-plot(gg)
-
-ggsave( plot = gg, 
+ggsave( plot = p, 
         file = paste( 
           "png/"
           ,  heute
@@ -137,4 +138,4 @@ ggsave( plot = gg,
        , type = "cairo-png",  bg = "white"
        , width = 29.7, height = 21, units = "cm", dpi = 150)
 
-dev.off()
+# dev.off()

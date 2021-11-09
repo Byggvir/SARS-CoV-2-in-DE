@@ -76,7 +76,8 @@ weekly %>% ggplot(
                        , labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   facet_wrap(vars(Bundesland)) +
   theme_ipsum() +
-  theme(  axis.text.y  = element_text ( color = 'blue' )
+  theme(  plot.title = element_text(size=48)
+        , axis.text.y  = element_text ( color = 'blue' )
         , axis.title.y = element_text ( color='blue' )
         , axis.text.y.right = element_text ( color = 'red' )
         , axis.title.y.right = element_text ( color='red' )
@@ -110,7 +111,8 @@ weekly %>% ggplot(
                       , labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   facet_wrap(vars(Bundesland)) +
   theme_ipsum() +
-  theme(  axis.text.y  = element_text ( color = 'blue' )
+  theme(  plot.title = element_text(size=48)
+          , axis.text.y  = element_text ( color = 'blue' )
           , axis.title.y = element_text ( color='blue' )
           , axis.text.y.right = element_text ( color = 'red' )
           , axis.title.y.right = element_text ( color='red' )

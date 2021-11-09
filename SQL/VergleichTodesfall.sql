@@ -164,51 +164,57 @@ select
     , Z.Bundesland
     , round(Z.SAnzahl / @bev *100000,4) as Mortality
 from (
-select 
-      R.IdBundesland
-    , R.Bundesland
-    , sum(R.SMortality) as SAnzahl
-from (
-select 
-      A.IdLandkreis div 1000 as IdBundesland
-    , L.Bundesland
-    , A.Geschlecht
-    , A.Altersgruppe
-    , sum(AnzahlTodesfall) as Anzahl
-    , S.Anzahl as Bevoelkerung
-    , B.Anzahl as BevoelkerungBL
-    , sum(AnzahlTodesfall)/B.Anzahl*S.Anzahl as SMortality
-from Faelle as A 
-join Bundesland as L
-on 
-    A.IdLandkreis div 1000 = L.IdBundesland
+    select
+        0 as IdBundesland
+        , 'Deutschland' as Bundesland
+        , sum(AnzahlTodesfall) as SAnzahl
+    from Faelle
+    union 
+    select 
+        R.IdBundesland as IdBundesland
+        , R.Bundesland as Bundesland
+        , sum(R.SMortality) as SAnzahl
+    from (
+        select 
+            A.IdLandkreis div 1000 as IdBundesland
+            , L.Bundesland
+            , A.Geschlecht
+            , A.Altersgruppe
+            , sum(AnzahlTodesfall) as Anzahl
+            , S.Anzahl as Bevoelkerung
+            , B.Anzahl as BevoelkerungBL
+            , sum(AnzahlTodesfall)/B.Anzahl*S.Anzahl as SMortality
+        from Faelle as A 
+        join Bundesland as L
+        on 
+            A.IdLandkreis div 1000 = L.IdBundesland
 
-join DESTATIS.StdBev6 as S 
-on 
-    A.Altersgruppe = S.Altersgruppe 
-    and A.Geschlecht = S.Geschlecht 
+        join DESTATIS.StdBev6 as S 
+        on 
+            A.Altersgruppe = S.Altersgruppe 
+            and A.Geschlecht = S.Geschlecht 
 
-join DESTATIS.StdBev6BL as B
-on  
-    S.Stichtag = B.Stichtag
-    and A.IdLandkreis div 1000 = B.IdBundesland
-    and A.Geschlecht = B.Geschlecht 
-    and A.Altersgruppe = B.Altersgruppe 
+        join DESTATIS.StdBev6BL as B
+        on  
+            S.Stichtag = B.Stichtag
+            and A.IdLandkreis div 1000 = B.IdBundesland
+            and A.Geschlecht = B.Geschlecht 
+            and A.Altersgruppe = B.Altersgruppe 
 
-where
-    S.Stichtag = "2020-12-31"
-group by 
-    A.IdLandkreis div 1000
-    , A.Geschlecht
-    , A.Altersgruppe 
-) as R
-group by 
-    R.IdBundesland
-order by SAnzahl desc
-) as Z
-;
+        where
+            S.Stichtag = "2020-12-31"
+        group by 
+            A.IdLandkreis div 1000
+            , A.Geschlecht
+            , A.Altersgruppe 
+        ) as R
+    group by 
+        R.IdBundesland
+    order by SAnzahl desc
+ 
+ ) as Z ;
 
 end
 //
 
-delimiter ; 
+delimiter ;

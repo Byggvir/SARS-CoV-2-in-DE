@@ -167,8 +167,14 @@ select
     , round(Z.SAnzahl / @bev *100000,4) as InfectionRatio
 from (
 select 
-      R.IdBundesland
-    , R.Bundesland
+    0 as IdBundesland
+    , 'Deutschland' as Bundesland
+    , sum(AnzahlFall) as SAnzahl
+from Faelle
+union
+select 
+      R.IdBundesland as IdBundesland
+    , R.Bundesland as Bundesland
     , sum(R.SInfections) as SAnzahl
 from (
 select 

@@ -93,7 +93,7 @@ function update_db {
     echo -e "${blue}+---------${reset}\n\n" 
 
 awk -f "${AWKDIR}/fallzahlen.awk" -F ';' "${AKTUELL}" > "${TEMP}/Aktuell.csv"
-awk -f "${AWKDIR}/impfungen.awk" -F ';' "${IMPFUNGEN}" | sed -f "${SEDDIR}/impfungen.sed" > "${TEMP}/Impfungen.csv"
+sed -f "${SEDDIR}/impfungen.sed" "${IMPFUNGEN}" | awk -f "${AWKDIR}/impfungen.awk" -F ';' > "${TEMP}/Impfungen.csv"
 
 ( cat <<EOF
 USE RKI;
@@ -154,7 +154,7 @@ LOAD DATA LOCAL INFILE '${TEMP}/Impfungen.csv'
     FIELDS TERMINATED BY ',' 
     IGNORE 0 ROWS;
 
-call CreateFaelleBL;
+-- call CreateFaelleBL;
 
 EOF
 

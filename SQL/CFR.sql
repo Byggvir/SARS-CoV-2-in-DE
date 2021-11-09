@@ -17,8 +17,16 @@ select
     , round(Z.Deaths / Z.Cases*100,2) as CFR
 from (
 select 
-      R.IdBundesland
-    , R.Bundesland
+      0 as IdBundesland
+    , 'Deutschland' as Bundesland
+    , sum(AnzahlTodesfall) as Deaths
+    , sum(AnzahlFall) as Cases
+from Faelle
+
+union
+select 
+      R.IdBundesland as IdBundesland
+    , R.Bundesland as Bundesland
     , sum(R.SDeaths) as Deaths
     , sum(R.SCases) as Cases
 from (
@@ -71,7 +79,12 @@ select
       @i:=@i+1 as Rang
     , Bundesland 
     , CFR 
-from ( 
+from (
+    select 
+        'Deutschland' as Bundesland
+        , round(sum(AnzahlTodesfall)/sum(AnzahlFall)*100,2) as CFR
+    from  Faelle
+    union
     select 
         B.Bundesland as Bundesland
         , round(sum(AnzahlTodesfall)/sum(AnzahlFall)*100,2) as CFR

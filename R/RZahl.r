@@ -43,14 +43,14 @@ WD <- paste(SD[1:(length(SD)-1)],collapse='/')
 
 setwd(WD)
 
+citation <- "© 2021 by Thomas Arend\nQuellen: Robert Koch-Institut (2021)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153\nQuelle: © Statistisches Bundesamt (Destatis) Sonderauswertung, 2021"
+
 require(data.table)
 
 source("R/lib/color_palettes.r")
 source("R/lib/copyright.r")
 source("R/lib/myfunctions.r")
 source("R/lib/sql.r")
-
-citation <- "© 2021 by Thomas Arend\nQuellen: Robert Koch-Institut (2021)\nSARS-CoV-2 Impfungen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153\nQuelle: © Statistisches Bundesamt (Destatis) Sonderauswertung, 2021"
 
 options( 
     digits = 7
@@ -62,43 +62,49 @@ options(
 today <- Sys.Date()
 heute <- format(today, "%Y%m%d")
 
-SQL <- 'select * from ImpfQuote;'
-impfquote <- RunSQL(SQL)
+# SQL <- 'select * from FallAltersgruppen;'
+# AG <- RunSQL(SQL)
 
-impfquote %>% ggplot( aes( x = ImpfDatum, y = Quote)) +
-  geom_line( data = impfquote %>% filter(AlterVon == 12), aes( colour = "A12-A17" ) )  +
-  geom_line( data = impfquote %>% filter(AlterVon == 18), aes( colour = "A18-A59" ) ) +
-  geom_line( data = impfquote %>% filter(AlterVon == 60), aes( colour = "A60+" ) ) +
+SQL <- 'select * from RZahl where Zeitraum = 20 and IdBundesland = 0 and Altersgruppe <> "A0+";'
+rzahl <- RunSQL(SQL)
+
+rzahl %>% ggplot( aes( x = Datum, y = R)) +
+  geom_line( aes( y = R ))  +
   scale_color_manual(values=cbp1) +
-  scale_y_continuous(labels = scales::percent) +
-  ggtitle("Corona: Impfquote nach Datum und Altersgruppe") +
-  labs(  title = "Impfquote nach Altersgruppe"
+  facet_wrap( vars( Altersgruppe ) ) +
+  ggtitle("Corona: R-Zahl nach Datum und Altersgruppe") +
+  theme_ipsum() +
+  theme( ) +
+  labs(  title = "R-Zahl nach Altersgruppe"
          , subtitle= paste("Deutschland, Stand:", heute)
          , x ="Datum"
-         , y = "Quote [%]" 
+         , y = "Zahl" 
          , colour = "Altersgruppe"
          , caption = citation ) +
-  theme_ipsum() +
-  theme(  axis.text.y  = element_text ( color = 'blue' )
-          , axis.title.y = element_text ( color='blue' )
-          , axis.text.y.right = element_text ( color = 'red' )
-          , axis.title.y.right = element_text ( color='red' )
-          , strip.text.x = element_text (
-            size = 24
-            , color = "black"
-            , face = "bold.italic")
-          , plot.caption = element_text (
-            size = 12
-            , color = "black"
-            , face = "bold.italic" )
-  ) + 
+theme(  axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 12 )
+        , axis.text.y  = element_text ( color = 'blue' )
+        , axis.title.y = element_text ( color='blue' )
+        , axis.text.y.right = element_text ( color = 'red' )
+        , axis.title.y.right = element_text ( color='red' )
+        , strip.text.x = element_text (
+          size = 24
+          , color = "black"
+          , face = "bold.italic")
+        , plot.caption = element_text (
+          size = 12
+          , color = "black"
+          , face = "bold.italic" )
+) + 
   theme(plot.title=element_text(size=48, hjust=0.5, face="italic", color="black")) +
   theme(plot.subtitle=element_text(size=36, hjust=0.5, face="italic", color="black")) -> p
 
-ggsave( plot = p, 
-        file = paste( 
-          "png/ImpfQuote.png"
+
+ggsave( plot = p
+        , file = paste( 
+          'png/R-Zahl_AG.png'
           , sep = ""
         )
         , type = "cairo-png",  bg = "white"
-        , width = 29.7, height = 21, units = "cm", dpi = 150)
+        , width = 29.7, height = 21, units = "cm", dpi = 150
+        
+)

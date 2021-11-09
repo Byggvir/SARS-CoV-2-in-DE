@@ -51,7 +51,7 @@ create table FaelleBL
                 , Altersgruppe
     ;
     
-    lock tables FaelleBL write wait 30;
+    -- lock tables FaelleBL write wait 30;
     
     update FaelleBL as A 
         set AnzahlFallKum = ( 
@@ -79,7 +79,7 @@ create table FaelleBL
             
     ; 
     
-    unlock tables;
+--    unlock tables;
 end
 //
 

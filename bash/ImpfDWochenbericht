@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# Folders and files
+# $(date +%F -d "-11 days")
+
+WOCHE="$1"
+
+SPATH=$(dirname "$0")
+if [ "$SPATH" = "." ] 
+then
+  GIT=$(dirname "$PWD")
+else
+  GIT=$(dirname "$SPATH")
+fi
+echo G=$GIT 
+
+SEDDIR="bash/sed"
+AWKDIR="bash/awk"
+
+[ "$DEBUG" = "ON" ] && TEMP="/tmp/impfd" || TEMP="/tmp/impfd-$(date '+%F')"
+[ ! -d  "${TEMP}" ] && mkdir "${TEMP}"
+
+SQL="$TEMP/impfd.sql"
+
+# List of download URL
+
+echo -e "\n\n${blue}+---------"
+echo -e "| ${red}Tempoary file in: $TEMP"
+echo -e "${blue}+---------${reset}\n\n"
+
+cat <<EOF >$SQL
+use RKI;
+
+delete from ImpfD where Woche = "$WOCHE";
+
+EOF
+
+xclip -o \
+| tr '\t' ';' \
+| sed --file sed/impfd.sed \
+| awk -F ';' -e 'BEGIN { Woche="'$WOCHE'";}' --file awk/impfd.awk >> "$SQL"
+
+cat <<EOF >> "$SQL"
+
+insert into ImpfD 
+select 
+    A.Woche
+    , A.AlterVon
+    , A.AlterBis
+    , A.IdOutcome
+    , "U" as IdGruppe
+    , A.AnzahlKum - B.AnzahlKum as AnzahlKum
+    , A.Anzahl4W - B.Anzahl4W as Anzahl4W
+from ImpfD as A 
+join ImpfD as B 
+on 
+    A.Woche = B.Woche 
+    and A.AlterVon = B.AlterVon
+    and A.IdOutcome = B.IdOutcome 
+where 
+    A.Woche = "$WOCHE"
+    and A.IdGruppe="A" 
+    and B.IdGruppe="G" ;
+
+EOF
+
+mysql --user=rscript --password=rscript RKI < "$SQL"
