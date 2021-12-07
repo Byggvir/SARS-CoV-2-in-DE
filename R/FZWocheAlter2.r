@@ -71,7 +71,7 @@ heute <- format(today, "%d %b %Y")
 SQL <- paste('select * from FaelleProWocheAltersgruppe;', sep='')
 weekly <- RunSQL(SQL = SQL)
 
-weekly %>% ggplot(
+weekly %>% filter(PandemieWoche < max(PandemieWoche) -1) %>% ggplot(
   aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlFall)) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
@@ -87,7 +87,7 @@ ggsave('png/FZWoche_Fall.png'
        , type = "cairo-png",  bg = "white"
        , width = 29.7, height = 21, units = "cm", dpi = 150)
 
-weekly %>% ggplot(
+weekly %>% filter(PandemieWoche < max(PandemieWoche) -1) %>% ggplot(
   aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlTodesfall)) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
@@ -108,7 +108,7 @@ ggsave('png/FZWoche_Todesfall.png'
 SQL <- paste('select * from InzidenzAltersgruppe;', sep='')
 inzidenz <- RunSQL(SQL = SQL)
 
-inzidenz %>% ggplot(
+inzidenz %>% filter(PandemieWoche < max(PandemieWoche) -1)%>% ggplot(
   aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlFall/AnzahlBev*100000)) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
@@ -125,7 +125,7 @@ ggsave('png/FZWoche_FallInzidenz.png'
        , width = 29.7, height = 21, units = "cm", dpi = 150)
 
 
-inzidenz %>% ggplot(
+inzidenz %>% filter(PandemieWoche < max(PandemieWoche) -1) %>% ggplot(
   aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlTodesfall/AnzahlBev*100000)) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +

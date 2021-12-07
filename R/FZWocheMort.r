@@ -85,7 +85,7 @@ reported <- weekly$Kw[m]
 
 scl <- max(weekly$Todesfall)/max(weekly$CoronaTodesfall) 
 
-weekly %>% ggplot(
+weekly %>%  ggplot(
   aes( x = PandemieWoche )) +
   geom_line(aes(y = Todesfall, colour = 'Gesamt' ), color = 'blue') +
   geom_line(aes(y = CoronaTodesfall * scl , colour = 'SARS-CoV-2' ), color = 'red') +

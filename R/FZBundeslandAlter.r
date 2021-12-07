@@ -66,7 +66,7 @@ heute <- format(today, "%d %b %Y")
 SQL <- 'select * from Bundesland where IdBundesland > 0 order by IdBundesland;'
 Bundesland <- RunSQL(SQL = SQL)
 
-SQL <- 'select * from InzidenzAltersgruppeBL;'
+SQL <- 'select * from InzidenzAltersgruppeBL where Altersgruppe <> "unbekan";'
 if ( ! exists("weeklyAGBL")) {
   weeklyAGBL <- RunSQL(SQL = SQL)
 }
@@ -95,15 +95,17 @@ weeklyAGBL %>% filter(IdBundesland == i ) %>% ggplot(
          , colour = "Fälle / Todesfälle"
          , caption = citation ) +
   theme_ipsum() +
-  theme(  axis.text.y  = element_text ( color = 'blue' )
-        , axis.title.y = element_text ( color='blue' )
-        , axis.text.y.right = element_text ( color = 'red' )
-        , axis.title.y.right = element_text ( color='red' )
-        , strip.text.x = element_text (
-          size = 24
-          , color = "black"
-          , face = "bold.italic"
-        ) ) + 
+  theme(    axis.text.x  = element_text ( color = 'black', size = 24)
+            , axis.title.x = element_text ( color='black', size = 24)
+            , axis.text.y  = element_text ( color = 'blue', size = 24)
+            , axis.title.y = element_text ( color='blue', size = 24)
+            , axis.text.y.right = element_text ( color = 'red', size = 24 )
+            , axis.title.y.right = element_text ( color='red', size = 24 )
+            , strip.text.x = element_text (
+              size = 24
+              , color = "black"
+              , face = "bold.italic"
+            ) ) + 
   theme(plot.title=element_text(size=48, hjust=0.5, face="italic", color="black")) +
   theme(plot.subtitle=element_text(size=36, hjust=0.5, face="italic", color="black")) -> pp
  
@@ -128,17 +130,19 @@ for ( AG in Altersgruppen[,1]) {
     scale_y_continuous( sec.axis = sec_axis(~./scl, name = "Todesfälle / 100.000", labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ))
                         , labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
     facet_wrap(vars(Bundesland)) +
-    labs(  title = "CoViD-19 Inzidenz nach Bundesland"
+    labs(  title = "Wöchentliche CoViD-19 Fälle pro 100.000"
            , subtitle= paste("Altersgruppe ", AG,", Stand:", heute, sep ='')
            , x = "Pandemiewoche"
            , y = "Fälle / 100.000" 
-           , colour = "Fälle/Todesfälle"
+           , colour = "Fälle / Todesfälle"
            , caption = citation ) +
     theme_ipsum() +
-    theme(  axis.text.y  = element_text ( color = 'blue' )
-            , axis.title.y = element_text ( color='blue' )
-            , axis.text.y.right = element_text ( color = 'red' )
-            , axis.title.y.right = element_text ( color='red' )
+    theme(    axis.text.x  = element_text ( color = 'black', size = 24)
+            , axis.title.x = element_text ( color='black', size = 24)
+            , axis.text.y  = element_text ( color = 'blue', size = 24)
+            , axis.title.y = element_text ( color='blue', size = 24)
+            , axis.text.y.right = element_text ( color = 'red', size = 24 )
+            , axis.title.y.right = element_text ( color='red', size = 24 )
             , strip.text.x = element_text (
               size = 24
               , color = "black"

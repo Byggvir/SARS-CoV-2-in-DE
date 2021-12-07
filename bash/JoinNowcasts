@@ -1,0 +1,46 @@
+#!/bin/bash
+
+DEBUG=OFF
+
+# Color for output
+
+red=`tput setaf 1`
+green=`tput setaf 2`
+blue=`tput setaf 4`
+reset=`tput sgr0`
+
+[ "$DEBUG" = "ON" ] && TEMP="/tmp/rki" || TEMP="/tmp/rki-$(date '+%F')"
+[ ! -d  "${TEMP}" ] && mkdir "${TEMP}"
+
+CSV="$TEMP/nowcasts.csv"
+
+( echo 'BerechnetAm,Datum,PS_7_Tage_R_Wert,UG_PI_7_Tage_R_Wert,OG_PI_7_Tage_R_Wert'
+  grep '^2021-*' /data/git/SARS-CoV-2-in-DE/Nowcasting/Archiv/Nowcast_R_2021*.csv \
+  | sed '/,,,/d;/,\.,\.,\./d; s#^.*Nowcast_R_##;s#\.csv:#,#;s#,\.#,0.#g' \
+  | awk -F ',' '{ if ($12 != "") { print($1 "," $2 "," $12 "," $13 "," $14) } else { print($1 "," $2 "," $9 "," $10 "," $11) } }' \
+  ) > "$CSV"
+
+(
+cat <<EOF
+use RKI;
+
+DROP TABLE IF EXISTS Nowcasts;
+
+CREATE TABLE IF NOT EXISTS Nowcasts
+    ( 
+     BerechnetAm DATE
+    , Datum DATE
+    , PS_7_Tage_R_Wert DOUBLE
+    , UG_PI_7_Tage_R_Wert DOUBLE
+    , OG_PI_7_Tage_R_Wert DOUBLE
+    , primary key (BerechnetAm, Datum))
+;
+
+LOAD DATA LOCAL INFILE '${TEMP}/nowcasts.csv' 
+    INTO TABLE Nowcasts 
+    FIELDS TERMINATED BY ',' 
+    IGNORE 1 ROWS;
+    
+EOF
+
+) |  mysql --user=rscript --password=rscript

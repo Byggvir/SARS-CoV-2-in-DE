@@ -4,7 +4,7 @@ library(data.table)
 
 RunSQL <- function (
   SQL = 'select * from Faelle;'
-  , prepare="set @i := 1;") {
+  , prepare= c("set @i := 1;")) {
   
   rmariadb.settingsfile <- "/data/git/SARS-CoV-2-in-DE/SQL/rki.cnf"
   
@@ -16,7 +16,9 @@ RunSQL <- function (
     , group=rmariadb.db
     , bigint="numeric"
   )
-  dbExecute(DB, prepare)
+  for ( P in prepare ){
+    dbExecute(DB, P)
+  }
   rsQuery <- dbSendQuery(DB, SQL)
   dbRows<-dbFetch(rsQuery)
 

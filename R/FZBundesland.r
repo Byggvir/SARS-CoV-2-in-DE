@@ -68,7 +68,7 @@ weekly <- RunSQL(SQL = SQL)
 
 scl <- max(weekly$AnzahlFall)/max(weekly$AnzahlTodesfall) 
   
-weekly %>% ggplot(
+weekly %>% filter( PandemieWoche < max(PandemieWoche) & PandemieWoche >= 90) %>% ggplot(
   aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlFall, colour = "Fälle" ), color = 'blue') +
   geom_line(aes(y = AnzahlTodesfall * scl, colour = "Todesfälle" ), color = 'red') +
@@ -76,16 +76,16 @@ weekly %>% ggplot(
                        , labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   facet_wrap(vars(Bundesland)) +
   theme_ipsum() +
-  theme(  plot.title = element_text(size=48)
-        , axis.text.y  = element_text ( color = 'blue' )
-        , axis.title.y = element_text ( color='blue' )
-        , axis.text.y.right = element_text ( color = 'red' )
-        , axis.title.y.right = element_text ( color='red' )
-        , strip.text.x = element_text (
-          size = 24
-          , color = "black"
-          , face = "bold.italic"
-        ) ) +
+  theme(  plot.title = element_text( size=48 )
+          , axis.text.y  = element_text ( color = 'blue', size = 24)
+          , axis.title.y = element_text ( color='blue', size = 24)
+          , axis.text.y.right = element_text ( color = 'red', size = 24 )
+          , axis.title.y.right = element_text ( color='red', size = 24 )
+          , strip.text.x = element_text (
+              size = 24
+              , color = "black"
+              , face = "bold.italic"
+          ) ) + 
   labs(  title = "Wöchentliche Fälle nach Bundesland"
        , subtitle= paste("Deutschland, Stand:", heute)
        , x ="Pandemiewoche"
@@ -103,7 +103,7 @@ ggsave(  'png/FZBundeslaender-Absolut.png'
 
 scl <- max(weekly$AnzahlFall/weekly$Bev)/max(weekly$AnzahlTodesfall/weekly$Bev) 
 
-weekly %>% ggplot(
+weekly %>% filter(PandemieWoche < max(PandemieWoche) & PandemieWoche >= 90) %>% ggplot(
   aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlFall / Bev * 100000, colour = "Fälle" ), color = 'blue') +
   geom_line(aes(y = AnzahlTodesfall / Bev *100000 * scl, colour = "Todesfälle" ), color = 'red') +
@@ -121,11 +121,11 @@ weekly %>% ggplot(
             , color = "black"
             , face = "bold.italic"
           ) ) +
-  labs(  title = "Inzidenz nach Bundesland"
+  labs(  title = "Wöchentlcihe Fallzahl pro 100.000 nach Bundesland"
          , subtitle= paste("Deutschland, Stand:", heute)
          , x = "Pandemiewoche"
          , y = "Fälle pro 100.000" 
-         , colour = "Fälle/Todesfälle"
+         , colour = "Fälle / Todesfälle"
          , caption = citation ) -> pp1
 
 ggsave(  'png/FZBundeslaender-Inzidenz.png'

@@ -128,3 +128,20 @@ end
 //
 
 delimiter ;
+
+create or replace view CFRBLAG as
+
+    select
+        B.Bundesland as Bundesland
+        , F.Altersgruppe as Altersgruppe
+        , round(sum(AnzahlTodesfall)/sum(AnzahlFall)*100,4) as CFR
+    from Faelle as F 
+    join Bundesland as B 
+    on 
+        F.IdLandkreis div 1000 = B.IdBundesland
+    where 
+        Meldedatum > '2021-05-31' and Meldedatum < '2021-08-01'
+    group by F.IdLandkreis div 1000, F.Altersgruppe
+    order by 
+    Bundesland, Altersgruppe
+;

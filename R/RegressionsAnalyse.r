@@ -156,7 +156,7 @@ where
      , Zeitraum = DaysBack
      , R = 2
   )
-  
+  options(OutDec='.')
   UpdateSQL <- paste ('insert into RZahl values (0,"A0+","'
                       , ThisDate
                       , '",'
@@ -174,7 +174,9 @@ where
                       , ', Rhigh ='
                       , exp(4*b[3])
                       , ' ;' 
+                      , sep = ''  
                       )
+  
   ExecSQL(UpdateSQL)
   
   FromDay <- ThisDate-days(DaysBack)
@@ -187,7 +189,7 @@ where
   PrognoseTab <- data.table (
     Date = Tage
     , Day = sTage
-    , WTag = Wochentage[wday(Tage,week_start = 1)]
+    , WTag = Wochentage[wday(Tage, week_start = 1)]
     , WTag2 = wday(Tage, week_start = 1)
     , Kor = Kor[wday(Tage, week_start = 1),3]
     , assumed = round(exp(a[2] + b[2] * sTage) * Kor[wday(Tage, week_start = 1),3])
@@ -207,8 +209,8 @@ where
               , ".png"
               , sep = ""
   )
-  , width = 3840
-  , height = 2160
+  , width = 1920
+  , height = 1080
   )
 
   par (   mar = c(10,5,10,5) 
@@ -234,14 +236,14 @@ where
        , lwd = 3
        , xlim = xlim
        , col = "black"
-       , cex.axis = 4
+       , cex.axis = 2
 
   )
   
   
   t <- title ( 
     main = paste( "Tägliche Fallzahl in DEU mit Prognose bis", as.character(ThisDate+ DaysAhead)) 
-    , cex.main = 4
+    , cex.main = 2
   )
   copyright(c("RKI","TA"))
   
@@ -283,7 +285,7 @@ where
          , 0
          , "Regressionsanalyse"
          , adj = 1 
-         , cex = 2
+         , cex = 1.5
          , col = "blue"
   )
   
@@ -291,7 +293,7 @@ where
          , 0
          , "Prognose"
          , adj = 0
-         , cex = 2 
+         , cex = 1.5 
          , col = "blue"
   )
   
@@ -299,7 +301,7 @@ where
          , ylim[2]/2
          , as.character(ThisDate)
          , adj = 0
-         , cex = 3 
+         , cex = 2 
          , col = "blue"
          , las = 3
 
@@ -330,7 +332,7 @@ where
              , "green"
            )
            , lwd = 2
-           , cex = 2
+           , cex = 1.5
            , inset = 0.05
            , lty = c(1,1,4,1,1,1)
   )
@@ -351,26 +353,20 @@ where
     )
     , lty = 3 
     , lwd = 3
-    , cex = 2.5
+    , cex = 2
   )
 
   dev.off()
   return(ra)
-  
+  1
 }
 
 # Wann <- as.Date("2020-04-01")
 
-for ( j in c(21) ) {
-  # for ( i in c(10, 13) )
- for (i in c(20,27,34,41)) 
-{
-    
+
   ra2 <- regression_analysis (
       ThisDate = ThisDay
-    , DaysBack = i
-    , DaysAhead = j
+    , DaysBack = 27
+    , DaysAhead = 21
    
   )
-} # End for i
-} # End for j

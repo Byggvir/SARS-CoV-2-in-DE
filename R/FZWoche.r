@@ -24,6 +24,13 @@ library(Cairo)
 # library(extrafont)
 # extrafont::loadfonts()
 
+options( 
+  digits = 7
+  , scipen = 7
+  , Outdec = "."
+  , max.print = 3000
+)
+
 # Set Working directory to git root
 
 if (rstudioapi::isAvailable()){
@@ -33,7 +40,7 @@ if (rstudioapi::isAvailable()){
   
 } else {
   
-  #  When executi on command line 
+  #  When executing on command line 
   SD = (function() return( if(length(sys.parents())==1) getwd() else dirname(sys.frame(1)$ofile) ))()
   SD <- unlist(str_split(SD,'/'))
   
@@ -43,25 +50,18 @@ WD <- paste(SD[1:(length(SD)-1)],collapse='/')
 
 setwd(WD)
 
-fPrefix <- "Fallzahlen_Wo_"
+fPrefix <- "Fallzahlen_Woche"
 
 require(data.table)
 
 source("R/lib/myfunctions.r")
 source("R/lib/sql.r")
 source("R/lib/color_palettes.r")
-options( 
-  digits = 7
-  , scipen = 7
-  , Outdec = "."
-  , max.print = 3000
-)
 
 citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
 
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
-
 
 SQL <- ' select * from FaelleProWocheAltersgruppe;'
 weekly <- RunSQL(SQL = SQL)
@@ -85,14 +85,17 @@ weekly %>% ggplot(
          , colour = "Fälle/Todesfälle"
          , caption = citation ) +
   theme_ipsum() +
-  theme(  axis.text.y  = element_text ( color = 'blue' )
-          , axis.title.y = element_text ( color='blue' )
-          , axis.text.y.right = element_text ( color = 'red' )
-          , axis.title.y.right = element_text ( color='red' )
+  theme(  axis.text.y  = element_text ( color = 'blue', size = 18 )
+          , axis.title.y = element_text ( color='blue', size = 24 )
+          , axis.text.y.right = element_text ( color = 'red', size = 18 )
+          , axis.title.y.right = element_text ( color='red', size = 24 )
+          , axis.text.x = element_text ( color = 'black', size = 18 )
+          , axis.title.x = element_text ( color='black', size = 18 )
           , strip.text.x = element_text (
             size = 24
             , color = "black"
-            , face = "bold.italic")
+            , face = "bold.italic"
+            )
           , plot.caption = element_text (
             size = 12
             , color = "black"
@@ -101,7 +104,7 @@ weekly %>% ggplot(
   theme(plot.title=element_text(size=48, hjust=0.5, face="italic", color="black")) +
   theme(plot.subtitle=element_text(size=36, hjust=0.5, face="italic", color="black")) -> pp
 
-ggsave(  paste('png/FZBund_Alter.png', sep = '')
+ggsave(  paste(fPrefix,'_Alter.png', sep = '')
          , type = "cairo-png"
          , bg = "white"
          , width = 29.7 * 2
@@ -127,23 +130,67 @@ weekly %>% ggplot(
          , colour = "Altersgruppe"
          , caption = citation ) +
   theme_ipsum() +
-  theme(  axis.text.y  = element_text ( color = 'blue' )
-          , axis.title.y = element_text ( color='blue' )
-          , axis.text.y.right = element_text ( color = 'red' )
-          , axis.title.y.right = element_text ( color='red' )
+  theme(  axis.text.y  = element_text ( color = 'blue', size = 18)
+          , axis.title.y = element_text ( color='blue', size = 18)
+          , axis.text.x = element_text ( color = 'black', size = 18 )
+          , axis.title.x = element_text ( color='black', size = 18 )
           , strip.text.x = element_text (
             size = 24
             , color = "black"
-            , face = "italic" )
+            , face = "bold.italic"
+          )
           , plot.caption = element_text (
             size = 12
             , color = "black"
-            , face = "italic" )
-          ) + 
+            , face = "bold.italic" )
+        ) + 
   theme(plot.title=element_text(size=36, hjust=0.5, face="bold.italic", color="black")) +
   theme(plot.subtitle=element_text(size=24, hjust=0.5, face="italic", color="black")) -> pp2
 
-ggsave( paste('png/FZBund_AlterScatterplot.png', sep = '')
+ggsave( paste(fPrefix,'_AlterScatterplot.png', sep = '')
+         , type = "cairo-png"
+         , bg = "white"
+         , width = 29.7
+         , height = 21
+         , units = "cm"
+         , dpi = 300 )
+
+SQL <- ' select * from FaelleProWoche;'
+daten <- RunSQL(SQL = SQL)
+
+
+daten %>% ggplot(
+  aes( x = PandemieWoche, y = AnzahlFall)) +
+  geom_bar(position="dodge", stat="identity") +
+  geom_text(aes(label=AnzahlFall), size=2.5, position=position_dodge(width=0.9), hjust=0,vjust=0.5, angle= 90) +
+  expand_limits( y = 500000) +
+  scale_fill_viridis(discrete = T) +
+  scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  labs(  title = "Corona-Fälle nach Woche des Meldedatums"
+         , subtitle = paste ("Deutschland, Stand:", heute, sep ='')
+         , x = "PandemieWoche"
+         , y = "Fälle" 
+         , colour = "Fälle"
+         , caption = citation ) +
+  theme_ipsum() +
+  theme(  axis.text.y  = element_text ( size = 12 )
+          , axis.title.y = element_text ( size = 18 )
+          , axis.text.x = element_text ( size = 12 )
+          , axis.title.x = element_text (size = 12 )
+          , strip.text.x = element_text (
+            size = 24
+            , color = "black"
+            , face = "bold.italic"
+          )
+          , plot.caption = element_text (
+            size = 12
+            , color = "black"
+            , face = "bold.italic" )
+  ) + 
+  theme(plot.title=element_text(size=36, hjust=0.5, face="italic", color="black")) +
+  theme(plot.subtitle=element_text(size=24, hjust=0.5, face="italic", color="black")) -> pp
+
+ggsave(  paste('png/Fallzahlen_Woche.png', sep = '')
          , type = "cairo-png"
          , bg = "white"
          , width = 29.7

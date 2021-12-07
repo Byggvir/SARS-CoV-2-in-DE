@@ -41,19 +41,24 @@ source("R/lib/sql.r")
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
+SQL <- 'select distinct Meldedatum from Faelle where Meldedatum >= "2021-01-01" order by Meldedatum;'
+Meldedatum <- RunSQL(SQL = SQL)
+
 args = commandArgs(trailingOnly=TRUE)
 
 if (length(args) == 0) {
-  ThisDay <- today - 2
+  ForDays <- today - 2
   
 } else if (length(args) == 1) {
-  ThisDay <- as.Date(args[1])
-  
+  if ( args[1] == '-a' ) {
+    ForDays <- Meldedatum[,1]
+  }
+  else {
+    ForDays <- as.Date(args[1])
+  }
 } else if (length(args) >= 2){
-  ThisDay <- as.Date(args[1])
+    ForDays <- as.Date(args[1])
 }
-
-print(ThisDay)
 
 options( 
   digits=5
@@ -64,9 +69,6 @@ options(
 
 SQL <- 'select distinct Altersgruppe, 0 as R from Faelle where Altersgruppe<>"unbekan";'
 Altersgruppen <- RunSQL(SQL)
-
-SQL <- 'select distinct Meldedatum from Faelle where Meldedatum >= "2021-01-01" order by Meldedatum;'
-Meldedatum <- RunSQL(SQL = SQL)
 
 # Function execute a regression analysis 
 
@@ -159,8 +161,8 @@ where
   
 } # End Regressionsanalyse
 
-for (M in c(ThisDay) ) { # Meldedatum[,1]) {
-  
+for (M in ForDays) {
+    
   for (j in c(0)) {
   
     for (i in c(20,41)) {

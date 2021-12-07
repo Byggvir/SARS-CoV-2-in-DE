@@ -1,24 +1,11 @@
 use RKI;
 
-delimiter //
+create or replace view FaelleBundesland as
 
-drop procedure if exists FaelleBundesland //
-
-create procedure FaelleBundesland ()
-begin
-
-set @i:=0;
-
-select 
-    @i:=@i+1 as Rang
-    , Bundesland
-    , AnzahlFall as Anzahl
-    , Bevoelkerung
-    , InfectionRatio
-from (
 select 
       A.IdLandkreis div 1000 as IdBundesland
     , B.Bundesland as Bundesland
+    , B.Abk as Abk
     , Altersgruppe
     , sum(A.AnzahlFall) as Anzahlfall
     , D.Anzahl as Bevoelkerung
@@ -41,6 +28,26 @@ on
     A.IdLandkreis div 1000 = D.IdBundesland 
 group by 
       A.IdLandkreis div 1000
+;
+
+delimiter //
+
+drop procedure if exists RangFaelleBundesland //
+
+create procedure RangFaelleBundesland ()
+begin
+
+set @i:=0;
+
+select 
+    @i:=@i+1 as Rang
+    , IdBundesland as IdBundesland
+    , Bundesland as Bundesland
+    , Abk as Abk
+    , AnzahlFall as Anzahl
+    , Bevoelkerung as Bevoelkerung
+    , InfectionRatio as InfectionRatio
+from ( select * from FaelleBundesland
 order by AnzahlFall desc
 ) as R
 order by
@@ -66,7 +73,6 @@ from (
 select 
       A.IdLandkreis div 1000 as IdBundesland
     , B.Bundesland as Bundesland
-    , Altersgruppe
     , sum(A.AnzahlFall) as AnzahlFall
     , D.Anzahl as Bevoelkerung
 from Faelle as A 
@@ -163,53 +169,21 @@ set @i:=0;
 
 select 
     @i:=@i+1 as Rang
-    , Z.Bundesland
+    , IdBundesland as IdBundesland
+    , Z.Bundesland as Bundesland
+    , Z.Abk as Abk
     , round(Z.SAnzahl / @bev *100000,4) as InfectionRatio
 from (
 select 
     0 as IdBundesland
     , 'Deutschland' as Bundesland
+    , 'DE' as Abk
+    , sum(AnzahlFall) as Anzahl
     , sum(AnzahlFall) as SAnzahl
 from Faelle
 union
-select 
-      R.IdBundesland as IdBundesland
-    , R.Bundesland as Bundesland
-    , sum(R.SInfections) as SAnzahl
-from (
-select 
-      A.IdLandkreis div 1000 as IdBundesland
-    , L.Bundesland
-    , A.Geschlecht
-    , A.Altersgruppe
-    , sum(AnzahlFall) as Anzahl
-    , sum(AnzahlFall)/B.Anzahl*S.Anzahl as SInfections
-from Faelle as A 
-join Bundesland as L
-on 
-    A.IdLandkreis div 1000 = L.IdBundesland
-
-join DESTATIS.StdBev6 as S 
-on 
-    A.Altersgruppe = S.Altersgruppe 
-    and A.Geschlecht = S.Geschlecht 
-
-join DESTATIS.StdBev6BL as B
-on 
-    S.Stichtag = B.Stichtag
-    and A.IdLandkreis div 1000 = B.IdBundesland
-    and A.Geschlecht = B.Geschlecht 
-    and A.Altersgruppe = B.Altersgruppe 
-where 
-    S.Stichtag = "2020-12-31"
-group by 
-    A.IdLandkreis div 1000
-    , A.Geschlecht
-    , A.Altersgruppe 
-) as R
-group by 
-    R.IdBundesland
---    , R.Geschlecht
+select *
+from StdFaelleBL
 order by SAnzahl desc
 ) as Z
 ;
@@ -218,3 +192,4 @@ end
 //
 
 delimiter ; 
+

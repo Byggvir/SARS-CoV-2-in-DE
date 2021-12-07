@@ -67,7 +67,7 @@ options(
 SQL <- 'select distinct Altersgruppe from Faelle where Altersgruppe <> "unbekan";'
 Altersgruppen <- RunSQL(SQL)
 
-SQL <- 'select * from Bundesland order by IdBundesland;'
+SQL <- 'select * from Bundesland where IdBundesland <> 0 order by IdBundesland;'
 Bundesland <- RunSQL(SQL = SQL)
 
 # Function execute a regression analysis 
@@ -123,7 +123,6 @@ regression_analysis <- function (
   , Altersgruppe
 ) {
 
-  
 SQL <- paste (
   'select 
       Meldedatum as Meldedatum

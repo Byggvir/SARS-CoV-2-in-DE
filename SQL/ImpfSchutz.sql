@@ -55,4 +55,5 @@ group by
 ) as B
 join ImpfDOutcome as O
 on B.IdOutcome = O.IdOutcome
+order by Woche, Altersgruppe
 ;

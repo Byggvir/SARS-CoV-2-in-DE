@@ -70,7 +70,7 @@ Altersgruppen <- RunSQL(SQL)
 SQL <- 'select distinct * from Bundesland order by IdBundesland;'
 Bundesland <- RunSQL(SQL = SQL)
 
-SQL <- 'select distinct Meldedatum from Faelle where Meldedatum >= "2021-06-01" order by Meldedatum;'
+SQL <- 'select distinct Meldedatum from Faelle where Meldedatum >= "2020-06-01" order by Meldedatum;'
 Meldedatum <- RunSQL(SQL = SQL)
 
 # Function execute a regression analysis 

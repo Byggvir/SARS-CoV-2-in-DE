@@ -240,4 +240,148 @@ BEGIN
 end
 //
 
+DROP PROCEDURE IF EXISTS LandkreisePw //
+
+CREATE PROCEDURE LandkreisePw ()
+BEGIN
+ 
+    DROP TABLE IF EXISTS FaelleLandkreisPw;
+    CREATE TABLE FaelleLandkreisPw
+    ( IdLandkreis INT 
+    , Pw INT 
+    , AnzahlFall INT
+    , PRIMARY KEY (IdLandkreis,Pw) )
+    (
+    SELECT
+        IdLandkreis as IdLandkreis
+        , PandemieWoche(Meldedatum) as Pw
+        , sum(AnzahlFall) as AnzahlFall
+    from Faelle 
+    group by 
+        IdLandkreis, Pw
+    )
+    ;    
+
+END
+//
+
+DROP PROCEDURE IF EXISTS Landkreis714 //
+
+CREATE PROCEDURE Landkreis714 ( MD DATE)
+BEGIN
+
+drop table if exists l7;
+
+create temporary table l7 (
+    select 
+        F.IdLandkreis
+        , sum(F.AnzahlFall) as Woche
+    from Faelle as F 
+    where 
+        F.Meldedatum <= MD 
+        and F.Meldedatum > adddate(MD, -7) 
+    group by 
+        F.IdLandkreis
+    );
+    
+drop table if exists l14;
+create temporary table l14 (
+    select 
+        F.IdLandkreis
+        , sum(F.AnzahlFall) as Woche
+    from Faelle as F
+    where 
+        F.Meldedatum <= adddate(MD, - 7) 
+        and F.Meldedatum > adddate(MD, -14) 
+    group by 
+        F.IdLandkreis
+    );
+        
+select 
+    B.IdBundesland
+    , B.Bundesland
+    , F1.IdLandkreis
+    , L.Landkreis
+    , L.EW_insgesamt
+    , F1.Woche as Woche
+    , F2.Woche as Vorwoche 
+from l7 as F1 
+join l14 as F2
+on
+    F1.IdLandkreis = F2.IdLandkreis
+join 
+    Landkreis as L
+on
+    F1.IdLandkreis = L.IdLandkreis
+join 
+    Bundesland as B
+on
+    F1.IdLandkreis div 1000 = B.IdBundesland;
+
+END
+//
+
+DROP PROCEDURE IF EXISTS LandkreisUp //
+
+CREATE PROCEDURE LandkreisUp ( MD DATE)
+BEGIN
+
+drop table if exists l7;
+
+create temporary table l7 (
+    select 
+        F.IdLandkreis
+        , sum(F.AnzahlFall) as Woche
+    from Faelle as F 
+    where 
+        F.Meldedatum <= MD 
+        and F.Meldedatum > adddate(MD, -7) 
+    group by 
+        F.IdLandkreis
+    );
+    
+drop table if exists l14;
+
+create temporary table l14 (
+    select 
+        F.IdLandkreis
+        , sum(F.AnzahlFall) as Woche
+    from Faelle as F
+    where 
+        F.Meldedatum <= adddate(MD, - 7) 
+        and F.Meldedatum > adddate(MD, -14) 
+    group by 
+        F.IdLandkreis
+    );
+        
+select 
+    count(*) 
+from l7 as F1 
+join l14 as F2
+on
+    F1.IdLandkreis = F2.IdLandkreis
+where
+    F1.Woche > F2.Woche
+union
+select 
+    count(*) 
+from l7 as F1 
+join l14 as F2
+on
+    F1.IdLandkreis = F2.IdLandkreis
+where
+    F1.Woche = F2.Woche
+union
+select 
+    count(*) 
+from l7 as F1 
+join l14 as F2
+on
+    F1.IdLandkreis = F2.IdLandkreis
+where
+    F1.Woche < F2.Woche
+;
+END
+//
+
 delimiter ;

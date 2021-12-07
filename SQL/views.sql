@@ -63,6 +63,20 @@ create or replace view ImpfBev as
             ) as Anzahl 
     from Impfungen as I 
     where AlterVon !=-1
+    union
+    select
+        0 as AlterVon
+        , 11 as AlterBis
+        , ( select 
+                sum(Insgesamt) 
+            from DEU as D 
+            where 
+                Age >= 0 
+                and Age <= 11 
+                and Stichtag="2020-12-31" 
+            ) as Anzahl 
+    ;
+    
 ;
 
 -- Ende
@@ -162,12 +176,31 @@ view ImpfQuote as
 -- Ende
 
 create or replace
+view ImpfQuoteBL as
+    select 
+          I.IdLandkreis div 1000 as IdBundesland
+        , B.Bundesland as Bundesland
+        , B.Abk as Abk
+        , sum(I.Anzahl) / S.Anzahl as Quote 
+    from Impfungen as I 
+    join Bundesland as B
+    on 
+        I.IdLandkreis div 1000 = B.IdBundesland 
+    join DESTATIS.StdBevBL as S 
+    on I.IdLandkreis div 1000 = S.IdBundesland 
+    where I.ImpfSchutz = 2
+        and S.Stichtag = "2020-12-31"
+        and Impfdatum <= "2021-11-29"
+    group by I.IdLandkreis div 1000
+;
+
+create or replace
 view avgImpfQuote as
     select 
-        I.ImpfDatum as ImpfDatum
+        I.Impfdatum as Impfdatum
         , I.AlterVon as AlterVon
         , I.AlterBis as AlterBis
-        , (select avg(Kumulativ) from ImpfSummary as A where A.AlterVon = I.AlterVon and A.Impfdatum <= I.Impfdatum and adddate(A.Impfdatum,41) >= I.ImpfDatum) / B.Anzahl as Quote
+        , (select avg(Kumulativ) from ImpfSummary as A where A.AlterVon = I.AlterVon and A.Impfdatum <= I.Impfdatum and adddate(A.Impfdatum,41) >= I.Impfdatum) / B.Anzahl as Quote
     from ImpfSummary as I 
     join ImpfBev as B 
     on 
@@ -330,6 +363,19 @@ create or replace view FaelleProWoche as
         , PandemieWoche  
 ;
 
+create or replace view FaelleProRefWoche as
+    select     
+        ( case when week(Refdatum,3) = 53 then 2020 else year(Refdatum) end ) as Jahr
+        , week(Refdatum,3) as Kw
+        , PandemieWoche(Refdatum) as PandemieWoche
+        , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
+    from Faelle  
+    group by 
+        Jahr
+        , PandemieWoche  
+;
+
 create or replace view FaelleProTag as
     select     
         Meldedatum
@@ -341,6 +387,17 @@ create or replace view FaelleProTag as
         Meldedatum  
 ;
 
+create or replace view FaelleProRefTag as
+    select     
+        Refdatum
+        , year(Refdatum) as Jahr
+        , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
+    from Faelle  
+    group by 
+        Refdatum  
+;
+    
 create or replace view FaelleProTagBL as
     select     
         IdLandkreis div 1000 as IdBundesland
@@ -413,6 +470,19 @@ create or replace view FaelleProMonat as
     select     
         year(Meldedatum) as Jahr
         , month(Meldedatum) as Monat
+        , date(concat(year(Meldedatum),"-",month(Meldedatum),"-",1)) as Datum
+        , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
+    from Faelle  
+    group by 
+        Jahr
+        , Monat
+;
+
+create or replace view FaelleProRefMonat as
+    select     
+        year(Refdatum) as Jahr
+        , month(Refdatum) as Monat
         , sum(AnzahlFall) as AnzahlFall
         , sum(AnzahlTodesfall) as AnzahlTodesfall
     from Faelle  
@@ -496,6 +566,7 @@ create or replace view InzidenzBL as
     select 
         IdLandkreis div 1000 as IdBundesland
         , B.Bundesland as Bundesland
+        , B.Abk as Abk
         , PandemieWoche(Meldedatum) as PandemieWoche
         , sum(AnzahlFall) as AnzahlFall
         , sum(AnzahlTodesfall) as AnzahlTodesfall
@@ -521,7 +592,7 @@ create or replace view InzidenzBL as
         , PandemieWoche(Meldedatum)
 ;
 
-create or replace view Impfdurchbruch as
+CREATE OR REPLACE VIEW Impfdurchbruch AS
 SELECT
     Woche   
     , case when AlterBis <> 100 
@@ -543,4 +614,136 @@ where
     I.IdGruppe <> "A"
 ;
 
-    
+CREATE OR REPLACE VIEW ImpfAnteile AS
+SELECT 
+    Woche
+    , AlterVon
+    , AlterBis
+    , Outcome
+    , max(Alle) as Alle
+    , max(Geimpft) as Geimpft
+    , max(Ungeimpft) as Ungeimpft
+FROM (
+      
+    SELECT
+        Woche
+        , AlterVon
+        , AlterBis
+        , Outcome
+        , case when IdGruppe = 'A' then Anzahl4W else 0 end as Alle
+        , case when IdGruppe = 'G' then Anzahl4W else 0 end as Geimpft
+        , case when IdGruppe = 'U' then Anzahl4W else 0 end as Ungeimpft
+    FROM ImpfD as D
+    JOIN ImpfDOutcome as O
+    ON 
+        O.IdOutcome = D.IdOutcome
+) as I
+GROUP BY
+    Woche, AlterVon, AlterBis, Outcome
+;
+
+create or replace view StdFaelleBL as
+select 
+      R.IdBundesland as IdBundesland
+    , R.Bundesland as Bundesland
+    , R.Abk as Abk
+    , sum(Anzahl) as Anzahl
+    , sum(R.SInfections) as SAnzahl
+from (
+select 
+      A.IdLandkreis div 1000 as IdBundesland
+    , L.Bundesland as Bundesland
+    , L.Abk as Abk
+    , A.Geschlecht as Geschlecht
+    , A.Altersgruppe as Altersgruppe
+    , sum(AnzahlFall) as Anzahl
+    , sum(AnzahlFall)/B.Anzahl*S.Anzahl as SInfections
+from Faelle as A 
+join Bundesland as L
+on 
+    A.IdLandkreis div 1000 = L.IdBundesland
+
+join DESTATIS.StdBev6 as S 
+on 
+    A.Altersgruppe = S.Altersgruppe 
+    and A.Geschlecht = S.Geschlecht 
+
+join DESTATIS.StdBev6BL as B
+on 
+    S.Stichtag = B.Stichtag
+    and A.IdLandkreis div 1000 = B.IdBundesland
+    and A.Geschlecht = B.Geschlecht 
+    and A.Altersgruppe = B.Altersgruppe 
+where 
+    S.Stichtag = "2020-12-31"
+group by 
+    A.IdLandkreis div 1000
+    , A.Geschlecht
+    , A.Altersgruppe 
+) as R
+group by 
+    R.IdBundesland
+;   
+
+create or replace view FaelleAG as
+select 
+    *
+    , case when Altersgruppe = 'A00-A04' then AnzahlFall else 0 end as A00_A04
+    , case when Altersgruppe = 'A05-A14' then AnzahlFall else 0 end as A05_A14
+    , case when Altersgruppe = 'A15-A34' then AnzahlFall else 0 end as A15_A34
+    , case when Altersgruppe = 'A35-A59' then AnzahlFall else 0 end as A35_A59
+    , case when Altersgruppe = 'A60-A79' then AnzahlFall else 0 end as A60_A79
+    , case when Altersgruppe = 'A80+' then AnzahlFall else 0 end as A80_A100
+    , case when Altersgruppe = 'A00-A04' then AnzahlTodesfall else 0 end as T00_T04
+    , case when Altersgruppe = 'A05-A14' then AnzahlTodesfall else 0 end as T05_T14
+    , case when Altersgruppe = 'A15-A34' then AnzahlTodesfall else 0 end as T15_T34
+    , case when Altersgruppe = 'A35-A59' then AnzahlTodesfall else 0 end as T35_T59
+    , case when Altersgruppe = 'A60-A79' then AnzahlTodesfall else 0 end as T60_T79
+    , case when Altersgruppe = 'A80+' then AnzahlTodesfall else 0 end as T80_T100
+from 
+    Faelle;
+
+create or replace view FaelleAGProTag as
+select 
+    Meldedatum
+    , sum(AnzahlFall) as AnzahlFall
+    , sum(AnzahlTodesfall) as AnzahlTodesfall
+    , sum(A00_A04) as A00_A04
+    , sum(A05_A14) as A05_A14
+    , sum(A15_A34) as A15_A34
+    , sum(A35_A59) as A35_A59
+    , sum(A60_A79) as A60_A79
+    , sum(A80_A100) as A80_A100
+    , sum(T00_T04) as T00_T04
+    , sum(T05_T14) as T05_T14
+    , sum(T15_T34) as T15_T34
+    , sum(T35_T59) as T35_T59
+    , sum(T60_T79) as T60_T79
+    , sum(T80_T100) as T80_T100
+from 
+    FaelleAG
+group by
+    Meldedatum;
+
+create or replace view FaelleAGProMonat as
+select 
+    year(Meldedatum) as Jahr
+    , month(Meldedatum) as Monat
+    , sum(AnzahlFall) as AnzahlFall
+    , sum(AnzahlTodesfall) as AnzahlTodesfall
+    , sum(A00_A04) as A00_A04
+    , sum(A05_A14) as A05_A14
+    , sum(A15_A34) as A15_A34
+    , sum(A35_A59) as A35_A59
+    , sum(A60_A79) as A60_A79
+    , sum(A80_A100) as A80_A100
+    , sum(T00_T04) as T00_T04
+    , sum(T05_T14) as T05_T14
+    , sum(T15_T34) as T15_T34
+    , sum(T35_T59) as T35_T59
+    , sum(T60_T79) as T60_T79
+    , sum(T80_T100) as T80_T100
+from 
+    FaelleAG
+group by
+    Jahr, Monat;

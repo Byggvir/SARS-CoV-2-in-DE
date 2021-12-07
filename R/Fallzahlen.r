@@ -54,11 +54,7 @@ source("R/lib/sql.r")
 today <- Sys.Date()
 heute <- format(today, "%Y%m%d")
 
-data <- RunSQL('call FaelleBundesland;')
-
-data[,5] <- round(data[,5]*100,2)
-
-print(data)
+data <- RunSQL('call RangFaelleBundesland;')
 
 png( paste( 
       "png/"
@@ -90,9 +86,9 @@ tt <- ttheme_default(
   )
 )
 table <- tableGrob(
-  data
+  d = data %>% mutate(InfectionRatio = InfectionRatio * 100)
   , theme = tt
-  , cols = c("Rang", "Bundesland", "Anzahl", "Bevölkerung", "Anteil [%]" )
+  , cols = c("Rang", "Id", "Bundesland", "Abk", "Anzahl", "Bevölkerung", "Anteil [%]" )
   , vp = vp
 )
 
@@ -116,21 +112,17 @@ grid.draw(table)
 
 dev.off()
 
-p <- ggplot(data, aes(fill=Bundesland, y=Anzahl, x=Bundesland)) +
+p <- data %>% ggplot( aes(fill=Bundesland, y=Anzahl/Bevoelkerung * 100.000, x = reorder(Bundesland, -InfectionRatio))) +
   geom_bar(position="dodge", stat="identity") +
-  geom_text(aes(label=Anzahl), size=2.5, position=position_dodge(width=0.9), vjust=-0.25) +
+  geom_text(aes(label=round(Anzahl/Bevoelkerung*100000,2)), size=2.5, position=position_dodge(width=0.9), vjust=-0.25) +
   scale_fill_viridis(discrete = T) +
-  ggtitle("Corona: Fallzahlen absolut") +
+  ggtitle("Corona: Fallzahlen bezogen auf Einwohner") +
   theme_ipsum() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   xlab("Bundesländer") +
-  ylab("Insgesamt gemeldete Fälle")
+  ylab("Gemeldete Fälle pro 100.000")
 
-gg <- grid.arrange(p, ncol=1)
-
-plot(gg)
-
-ggsave( plot = gg, 
+ggsave( plot = p, 
         file = paste( 
           "png/"
           ,  heute
@@ -140,4 +132,4 @@ ggsave( plot = gg,
         , sep = ""
         )
        , type = "cairo-png",  bg = "white"
-       , width = 29.7, height = 21, units = "cm", dpi = 150)
+       , width = 29.7, height = 21, units = "cm", dpi = 150 )
