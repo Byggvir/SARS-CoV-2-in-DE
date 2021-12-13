@@ -51,7 +51,7 @@ source("R/lib/myfunctions.r")
 source("R/lib/sql.r")
 source("R/lib/color_palettes.r")
 
-citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)\nWochenberichte bis 44. Kw"
+citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)\nGitHub SARS-CoV-2 Infektionen"
 
 options( 
     digits = 7
@@ -79,14 +79,14 @@ SQL <- paste(
 
 Landkreise <- RunSQL(SQL = SQL)
 
-for ( B in Bundesland[,1] ) {
+for ( B in Bundesland[,2] ) {
   
-Landkreise %>% filter( IdBundesland == B ) %>% ggplot() +
+Landkreise %>% filter(Bundesland == B) %>% ggplot() +
   stat_ellipse(aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000, size = EW_insgesamt ), type = "t", geom = "polygon", alpha = 0.1 ) +
   geom_abline( intercept = 0, slope = 1, color ='red' ) +
   geom_abline( intercept = 0, slope = 0.75, color ='green' ) +
   geom_point( aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000,  size = EW_insgesamt), color = 'darkgrey') +
-  geom_point( data = Bundesland %>% filter(IdBundesland == B)
+  geom_point( data = Bundesland %>% filter(Bundesland == B)
               , aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000)
               , shape = 3, stroke = 4, fill = "blue", color = "darkblue", alpha = 0.5, size = 10 ) +
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
@@ -101,17 +101,66 @@ Landkreise %>% filter( IdBundesland == B ) %>% ggplot() +
           , color = "black"
           , face = "bold.italic"
         ) ) +
-  labs(  title= paste("Landkreise", Bundesland[B,2], 'bis Meldedatum', untilday)
+  labs(  title= paste('Landkreise nach Bundesland bis Meldedatum', untilday)
        , subtitle = "Änderung Fallzahlen pro 100.000 Einwohner"
        , x = paste( 'Fälle von', z4, 'bis', z3, 'pro 100.000' )
        , y = paste( 'Fälle von', z2, 'bis', z1, 'pro 100.000' )
        , caption = citation )
 
-ggsave(  paste('png/LandkreisTendenz-',Bundesland[B,2],'.png', sep='')
+ggsave(  paste('png/Landkreis-Tendenz-',B, '.png', sep='')
+       , device = 'png'
        , type = "cairo-png"
        , bg = "white"
-       , width = 29.7
-       , height = 21
+       , width = 29.7 * 2
+       , height = 21 * 2
        , units = "cm"
        , dpi = 300 )
 }
+
+Bundesland %>% ggplot() +
+  stat_ellipse(aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000 ), type = "t", geom = "polygon", alpha = 0.1 ) +
+  geom_abline( intercept = 0, slope = 1, color ='red' ) +
+  geom_abline( intercept = 0, slope = 0.75, color ='green' ) +
+  geom_point( aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000, colour = Bundesland), size= 18, alpha = 0.5) +
+  geom_text( aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000, label = Abk), vjust=0.5, hjust=0.5, size= 6) +
+  scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  scale_fill_viridis(discrete = T) +
+  expand_limits( x = 0 , y = 0 ) +
+  theme_ipsum() +
+  theme(  plot.title = element_text( size = 24 )
+          , plot.subtitle = element_text( size = 18 )
+          , legend.position="right"
+          , axis.title.x = element_text( size = 18 )
+          , axis.title.y = element_text( size = 18 )
+          , axis.text.x = element_text( size = 18 )
+          , axis.text.y = element_text( size = 18 )
+          , strip.text.x = element_text (
+            size = 12
+            , color = "black"
+            , face = "bold.italic"
+          ) 
+          , legend.text = element_text(
+            size = 12
+            , color = "black"
+            , face = "bold.italic"
+          )
+          , legend.title = element_text(
+            size = 18
+            , color = "black"
+            , face = "bold.italic"
+          )) +
+  labs(  title= paste('Veränderung der Corona-Fallzahlen der Bundesländer bis Meldedatum', untilday)
+         , subtitle = paste('Fallzahlen pro 100.000 Einwohner pro 7-Tageszeitraum') 
+         , x = paste( 'Fälle von', z4, 'bis', z3, 'pro 100.000' )
+         , y = paste( 'Fälle von', z2, 'bis', z1, 'pro 100.000' )
+         , caption = citation 
+         , colour = 'Bundesland')
+
+ggsave(  paste('png/BundeslandTendenz', '.png', sep='')
+         , type = "cairo-png"
+         , bg = "white"
+         , width = 29.7 * 2
+         , height = 21 * 2
+         , units = "cm"
+         , dpi = 300 )

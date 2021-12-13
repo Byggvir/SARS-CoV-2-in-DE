@@ -8,7 +8,7 @@ CREATE PROCEDURE LandkreisTable (IdLK INT)
 BEGIN
 
 select 
-      Kw
+      Pw
     , max( case when Altersgruppe = 'A00-A04' then Anzahl else 0 end ) as 'A00-A04'
     , max( case when Altersgruppe = 'A05-A14' then Anzahl else 0 end ) as 'A05-A14'
     , max( case when Altersgruppe = 'A15-A34' then Anzahl else 0 end ) as 'A15-A34'
@@ -19,20 +19,19 @@ select
     , sum(Anzahl) as Summe
 from (
     select 
-        ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) as Kw
+        PandemieWoche(Meldedatum) as Pw
         , Altersgruppe as Altersgruppe
         , sum(AnzahlFall) as Anzahl 
     from Faelle
     where 
         IdLandkreis = IdLK
     group by 
-          Kw
+          Pw
         , Altersgruppe
     ) as A
 group by
-    A.Kw
-having Kw >= 35
-;
+    A.Pw;
+
 end
 //
 
@@ -42,14 +41,14 @@ CREATE PROCEDURE LandkreisAltersgruppen (IdLK INT)
 BEGIN
 
     select 
-        ( case when Meldedatum > "2021-01-03" then 53+week(Meldedatum,3) else week(Meldedatum,3) end ) as Kw
+        PandemieWoche(Meldedatum) as Pw
         , Altersgruppe as Altersgruppe
         , sum(AnzahlFall) as Anzahl 
     from Faelle
     where 
         IdLandkreis = IdLK
     group by 
-          Kw
+          Pw
         , Altersgruppe
 
 ;
@@ -65,7 +64,7 @@ BEGIN
     create table if not exists Kalenderwochen (
           Jahr INT
         , Kw INT
-        , sKw INT
+        , Pw INT
         , PRIMARY KEY (Jahr, Kw));
     
     set @f := 0;
@@ -90,7 +89,7 @@ BEGIN
         IdLandkreis INT
         , Jahr INT
         , Kw INT
-        , sKw INT
+        , Pw INT
         , AnzahlFall BIGINT
         , AnzahlTodesfall BIGINT
         , primary key (IdLandkreis,Jahr,Kw))
@@ -98,7 +97,7 @@ BEGIN
         IdLandkreis
         , Jahr
         , Kw
-        , sKw
+        , Pw
         , 0 as AnzahlFall
         , 0 as AnzahlTodesfall
     from Landkreis, Kalenderwochen;
@@ -107,19 +106,17 @@ BEGIN
     select
         IdLandkreis as IdLandkreis
         , ( case when week(Meldedatum,3) = 53 then 2020 else year(Meldedatum) end ) as Jahr
-        , week ( Meldedatum,3 ) as Kw
-        , K.sKw as sKw
+        , week(Meldedatum,3) as Kw
+        , PandemieWoche(Meldedatum) as Pw
         , sum(AnzahlFall) as AnzahlFall
         , sum(AnzahlTodesfall) as AnzahlTodesfall
     from Faelle as F
     join Kalenderwochen as K
     on 
-        ( case when week(Meldedatum,3) = 53 then 2020 else year(Meldedatum) end ) = K.Jahr
-        and week(Meldedatum,3) = K.Kw
+        PandemieWoche(Meldedatum) = K.Pw
     group by 
           IdLandkreis
-        , Kw
-        , sKw
+        , Pw
     ;
 
 
@@ -137,7 +134,7 @@ BEGIN
     CREATE TEMPORARY TABLE Tendenz
     ( Jahr INT 
     , Kw INT 
-    , sKw INT 
+    , Pw INT 
     , Anzahl INT
     , Tendenz CHAR(4) DEFAULT 'More')
  
@@ -145,7 +142,7 @@ BEGIN
     ( select 
         K.Jahr as Jahr
         , K.Kw as Kw
-        , K.sKw as sKw 
+        , K.Pw as Pw 
         , case when F.Lk is NULL then 0 else F.Lk end as Anzahl
         , 'Zero' as Tendenz
 
@@ -154,37 +151,37 @@ BEGIN
         select 
             Jahr
             , Kw
-            , sKw
+            , Pw
             , count(IdLandkreis) as Lk
         from FallzahlenLandkreis
         where Anzahlfall=0
         group by 
-            sKw
+            Pw
     ) as F
     on 
-        K.sKw = F.sKw
+        K.Pw = F.Pw
     group by 
-        sKw
+        Pw
     order by 
-        sKw
-    )
+        Pw
+        )
     
     union
     
     ( select 
         L1.Jahr as Jahr
         , L1.Kw as Kw
-        , L1.sKw as sKw
+        , L1.Pw as Pw
         , count(L1.IdLandkreis) as Anzahl
         , 'LEQ' as Tendenz
     from FallzahlenLandkreis as L1
     join FallzahlenLandkreis as L2
     on L1.IdLandkreis = L2.IdLandkreis
-    and L1.sKw = L2.sKw + 1
+    and L1.Pw = L2.Pw + 1
     where 
         L1.AnzahlFall <= L2.AnzahlFall
     group by
-        L1.sKw
+        L1.Pw
     order by L1.Jahr, L1.Kw
     )
         
@@ -193,17 +190,17 @@ BEGIN
     (select 
         L1.Jahr as Jahr
         , L1.Kw as Kw
-        , L1.sKw as sKw
+        , L1.Pw as Pw
         , count(L1.IdLandkreis) as Anzahl
         , 'GT' as Tendenz
     from FallzahlenLandkreis as L1
     join FallzahlenLandkreis as L2
     on L1.IdLandkreis = L2.IdLandkreis
-    and L1.sKw = L2.sKw + 1
+    and L1.Pw = L2.Pw + 1
     where L1.AnzahlFall > L2.AnzahlFall
     
     group by
-        L1.sKw
+        L1.Pw
     order by L1.Jahr, L1.Kw
     );
     
@@ -218,7 +215,7 @@ BEGIN
         select 
             Jahr
             , Kw
-            , sKw
+            , Pw
             , case when Tendenz = 'Zero' then Anzahl else 0 end as Zero
             , case when Tendenz = 'LEQ' then Anzahl else 0 end as LEQ
             , case when Tendenz = 'GT' then Anzahl else 0 end as GT
@@ -226,16 +223,16 @@ BEGIN
         group by 
             Jahr
             , Kw
-            , sKw
+            , Pw
             , Tendenz
         ) as T 
     where 
-        sKw >= From_Kw
-        and sKw <= To_Kw
+        Pw >= From_Kw
+        and Pw <= To_Kw
     group by 
         Jahr
         , Kw
-        , sKw;
+        , Pw;
    
 end
 //
@@ -246,16 +243,19 @@ CREATE PROCEDURE LandkreisePw ()
 BEGIN
  
     DROP TABLE IF EXISTS FaelleLandkreisPw;
+    
     CREATE TABLE FaelleLandkreisPw
     ( IdLandkreis INT 
     , Pw INT 
-    , AnzahlFall INT
+    , AnzahlFall BIGINT(20)
+    , AnzahlTodesfall BIGINT(20)
     , PRIMARY KEY (IdLandkreis,Pw) )
     (
     SELECT
         IdLandkreis as IdLandkreis
         , PandemieWoche(Meldedatum) as Pw
         , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
     from Faelle 
     group by 
         IdLandkreis, Pw
@@ -319,6 +319,7 @@ on
     F1.IdLandkreis div 1000 = B.IdBundesland;
 
 END
+
 //
 
 DROP PROCEDURE IF EXISTS LandkreisUp //
@@ -382,6 +383,7 @@ where
     F1.Woche < F2.Woche
 ;
 END
+
 //
 
 delimiter ;

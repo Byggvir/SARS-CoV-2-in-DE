@@ -75,7 +75,7 @@ from Nowcasts as A;'
 
 daten <- RunSQL(SQL)
 
-daten %>% filter ( Datum >= "2021-12-01" & Datum < "2022-01-01" & BerechnetAm < "2022-01-15") %>% ggplot( aes(x= BerechnetAm)) +
+daten %>% filter ( Datum >= "2021-11-01" & Datum < "2021-12-01" & BerechnetAm < "2021-12-15") %>% ggplot( aes(x= BerechnetAm)) +
   geom_line(aes( y = PS_7_Tage_R_Wert, colour ="Punktschätzer"), size = 1) +
   geom_line(aes( y = UG_PI_7_Tage_R_Wert, colour ="Untergrenze"), size = 0.5) +
   geom_line(aes( y = OG_PI_7_Tage_R_Wert, colour ="Obergrenze"), size = 0.5) +
@@ -104,7 +104,7 @@ daten %>% filter ( Datum >= "2021-12-01" & Datum < "2022-01-01" & BerechnetAm < 
        , colour = "Schätzung"
        , caption = citation ) -> p
 
-ggsave(  paste('png/R_Entwicklung', 12, '.png', sep='')
+ggsave(  paste('png/R_Entwicklung', 11, '.png', sep='')
        , type = "cairo-png"
        , bg = "white"
        , width = 29.7 * 2

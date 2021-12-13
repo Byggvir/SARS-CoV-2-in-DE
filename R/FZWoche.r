@@ -119,9 +119,7 @@ weekly %>% ggplot(
   geom_point(aes(x = AnzahlFall,y = AnzahlTodesfall, colour = Altersgruppe ) ) +
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
-  geom_smooth( method = "lm", formula = y ~ x, data = weekly %>% filter(Altersgruppe == "A35-A59")) +
-  geom_smooth( method = "lm", formula = y ~ x, data = weekly %>% filter(Altersgruppe == "A60-A79")) +
-  geom_smooth( method = "lm", formula = y ~ x, data = weekly %>% filter(Altersgruppe == "A80+")) +
+  geom_smooth( data = weekly %>% filter(Altersgruppe >= "A35-A59"), method = "lm", formula = y ~ x, aes(colour = Altersgruppe)) +
   facet_wrap(vars(Jahr)) +
   labs(  title = "SARS-CoV-2 Todesfälle ~ Fälle nach Kalenderwoche"
          , subtitle = paste ("Deutschland, Stand:", heute, sep ='')

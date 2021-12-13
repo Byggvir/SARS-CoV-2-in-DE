@@ -1,0 +1,61 @@
+#!/bin/bash
+
+DEBUG=OFF
+
+# Color for output
+
+red=`tput setaf 1`
+green=`tput setaf 2`
+blue=`tput setaf 4`
+reset=`tput sgr0`
+
+[ "$DEBUG" = "ON" ] && TEMP="/tmp/rki" || TEMP="/tmp/rki-$(date '+%F')"
+[ ! -d  "${TEMP}" ] && mkdir "${TEMP}"
+
+CSV="$TEMP/Infektionen.csv"
+
+
+( grep -v 'Meldedatum' /data/git/SARS-CoV-2-in-DE/Infektionen/Archiv/2021-*.csv \
+   | sed 's#/data/git/SARS-CoV-2-in-DE/Infektionen/Archiv/##; s#_Deutschland_SarsCov2_Infektionen.csv:#,#' \
+   | awk -F ',' 'BEGIN {i=1}{if ($8 != 0) {print( i "," $1 "," $5 "," $6 ","$2 "," $3 "," $4 ","  $7 "," $8 "," $9 "," $10 "," $11 "," $12 "," $13) ; i=i+1}}' \
+) > "$CSV"
+
+(
+cat <<EOF
+use RKI;
+
+DROP TABLE IF EXISTS NeuInfektionen;
+
+CREATE TABLE IF NOT EXISTS NeuInfektionen
+    ( 
+    Id BIGINT (20)
+    , Bestandsdatum DATE
+    , Meldedatum DATE
+    , Refdatum DATE
+    , IdLandkreis INT
+    , Altersgruppe CHAR(8)
+    , Geschlecht CHAR (1)
+    , IstErkrankungsbeginn INT
+    , NeuerFall INT
+    , NeuerTodesfall INT
+    , NeuGenesen INT
+    , AnzahlFall BIGINT(20)
+    , AnzahlTodesfall BIGINT(20)
+    , AnzahlGenesen BIGINT(20)
+        , primary key (Id)
+        , index (IdLandkreis)
+        , index (Bestandsdatum)
+        , index (Meldedatum)
+        , index (Refdatum)
+        , index (Altersgruppe)
+        , index (Geschlecht))
+;
+
+LOAD DATA LOCAL INFILE '${TEMP}/Infektionen.csv' 
+    INTO TABLE NeuInfektionen 
+    FIELDS TERMINATED BY ',' 
+    IGNORE 0 ROWS;
+    
+EOF
+
+) |  mysql --user=rscript --password=rscript

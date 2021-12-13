@@ -128,9 +128,6 @@ LOAD DATA LOCAL INFILE '${TEMP}/Aktuell.csv'
 
 SELECT max(Meldedatum) FROM Faelle;  
 
-DROP TABLE IF EXISTS FallzahlenLandkreise;
-CALL UpdateFallzahlenLandkreise();
-
 DROP TABLE IF EXISTS Impfungen;
 
 CREATE TABLE IF NOT EXISTS Impfungen (
@@ -154,7 +151,6 @@ LOAD DATA LOCAL INFILE '${TEMP}/Impfungen.csv'
     FIELDS TERMINATED BY ',' 
     IGNORE 0 ROWS;
 
--- call CreateFaelleBL;
 
 EOF
 

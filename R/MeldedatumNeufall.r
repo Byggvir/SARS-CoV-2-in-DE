@@ -12,7 +12,7 @@ MyScriptName <- "MeldedatumNeufall"
 library(tidyverse)
 require(data.table)
 library(REST)
-library(ggplot2)
+#library(ggplot2)
 
 # Set Working directory to git root
 
@@ -54,14 +54,14 @@ SELECT distinct A.Meldedatum, dayofweek(A.Meldedatum),B.Infizierte
 FROM Faelle as A
 LEFT JOIN (SELECT Meldedatum, sum(AnzahlFall) AS Infizierte
 FROM Faelle as C WHERE NeuerFall <> 0 GROUP BY Meldedatum) AS B
-ON A.Meldedatum=B.Meldedatum where A.Meldedatum > "' , as.character(today-15), '";' , sep = "" )
+ON A.Meldedatum=B.Meldedatum where A.Meldedatum > "' , heute <- format(today-15, "%Y-%m-%d"), '";' , sep = "" )
 
 NeueFaelle <-RunSQL(SQL = SQL)
 NeueFaelle[is.na(NeueFaelle[,3]),3] <- 0
 
 # NeueFaelle[is.na(NeueFaelle[,3]),3] <- 0
 
-mytags <- as.character(NeueFaelle[,1])
+mytags <- format(NeueFaelle[,1], "%Y-%m-%d")
 
 mytags[NeueFaelle[,2] != 2 ] <- ""
 
@@ -103,7 +103,7 @@ SQL <- paste('SELECT distinct A.Refdatum, dayofweek(A.Refdatum),B.Infizierte
   LEFT JOIN (SELECT Refdatum, sum(AnzahlFall) AS Infizierte 
     FROM Faelle as C WHERE IstErkrankungsbeginn = 1 and NeuerFall <> 0 GROUP BY Refdatum) AS B
     ON A.Refdatum = B.Refdatum where A.Refdatum > "'
-    , as.character(today-15)
+    , format(today-15, "%Y-%m-%d")
     , '";'
     , sep = "")
 
@@ -149,7 +149,7 @@ SELECT distinct A.Meldedatum, dayofweek(A.Meldedatum),B.Todesfaelle
 FROM Faelle as A
 LEFT JOIN (SELECT Meldedatum, sum(AnzahlTodesfall) AS Todesfaelle
 FROM Faelle as C WHERE NeuerTodesfall <> 0 GROUP BY Meldedatum) AS B
-ON A.Meldedatum=B.Meldedatum where A.Meldedatum > "' , as.character(today-45), '";' , sep = "" )
+ON A.Meldedatum=B.Meldedatum where A.Meldedatum > "' , format(today-56, "%Y-%m-%d"), '";' , sep = "" )
 
 NeueFaelle <-RunSQL(SQL = SQL)
 NeueFaelle[is.na(NeueFaelle[,3]),3] <- 0
@@ -184,18 +184,20 @@ text( bp1
       , NeueFaelle[,3] 
       , paste(round(NeueFaelle[,3]/s *100, 2), "%", sep = "")
       , cex = 2
-      , adj = 0.5
-      , pos = 3
+      , adj = 0
+      , pos = 4
+      , srt = 90
       , offset = 0.2
       
 )
 
 grid()
-mtext( paste("Datenbestand", as.character(today))
+mtext( paste("Datenbestand", format(today, "%Y-%m-%d"))
       , side = 4
       , outer = FALSE
       , line = 3
       , cex = 2
+
 )
              
 grid()

@@ -10,7 +10,7 @@
 require(data.table)
 library(tidyverse)
 library(REST)
-library(ggplot2)
+#library(ggplot2)
 
 # Set Working directory to git root
 
@@ -95,7 +95,7 @@ text( bp2
       
 )
 
-mtext( paste("Datenbestand", as.character(today))
+mtext( paste("Datenbestand", format(today, "%Y-%m-%d"))
       , side = 4
       , outer = FALSE
       , line = 3

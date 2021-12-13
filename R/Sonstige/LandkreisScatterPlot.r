@@ -8,7 +8,7 @@
 # E-Mail: thomas@arend-rhb.de
 #
 
-MyScriptName <-"FZBundesland"
+MyScriptName <-"LandkreiseScatterPlot"
 
 library(tidyverse)
 library(REST)
@@ -51,7 +51,7 @@ source("R/lib/myfunctions.r")
 source("R/lib/sql.r")
 source("R/lib/color_palettes.r")
 
-citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)"
+citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021), GitHub SARS-CoV-1 Infektionen"
 
 options( 
     digits = 7
@@ -64,12 +64,15 @@ today <- Sys.Date() - 1
 heute <- format(today, "%d %b %Y")
 
 SQL <- 'select * from Bundesland order by IdBundesland;'
-Bundesland <- RunSQL(SQL)
+BL <- RunSQL(SQL)
+
+ExecSQL(SQL='call LandkreisePw;')
+ExecSQL(SQL='call BundeslandPw;')
 
 SQL <- paste(
     '
     select 
-      A.Idlandkreis as IdLankreis
+      A.IdLandkreis as IdLandkreis
     , L.Landkreis as Landkreis
     , A.IdLandkreis div 1000 as IdBundesland
     , A.Pw - 53 as Pw
@@ -86,13 +89,38 @@ SQL <- paste(
 
 Landkreise <- RunSQL(SQL = SQL)
 
+SQL <- paste(
+  '
+    select 
+      A1.IdBundesland as IdBundesland
+    , B.Bundesland as Bundesland
+    , A1.Pw - 53 as Pw
+    , A1.AnzahlFall as Anzahl
+    , A2.AnzahlFall as AnzahlVorwoche
+    , B.EW_insgesamt
+    from FaelleBundeslandPw as A1 
+    
+    join FaelleBundeslandPw as A2
+    on A1.IdBundesland = A2.IdBundesland and A1.Pw = A2.Pw + 1 
+    join Bundesland as B
+    on A1.IdBundesland = B.IdBundesland
+    where 101 >= A1.Pw and A1.Pw >= 96;'
+  , sep = ' ')
+
+Bundesland <- RunSQL(SQL = SQL)
+
 for ( B in 1:16) {
   
 Landkreise %>% filter(IdBundesland == B) %>% ggplot() +
   stat_ellipse(aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000), type = "t", geom = "polygon", alpha = 0.1 ) +
   geom_abline(intercept = 0,slope = 1, color ='red') +
   geom_point( aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000, colour=Landkreis), size = 2) +
+  geom_point( data = Bundesland %>% filter(IdBundesland == B)
+                , aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000)
+                , shape = 3, stroke = 2, fill = "blue", color = "darkblue", alpha = 0.5, size = 5 ) +
+    
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_fill_viridis(discrete = T) +
   expand_limits( x = 0 , y = 0 ) +
@@ -105,13 +133,13 @@ Landkreise %>% filter(IdBundesland == B) %>% ggplot() +
           , color = "black"
           , face = "bold.italic"
         ) ) +
-  labs( title= paste("Landkreise",Bundesland[B+1,2]) 
+  labs( title= paste("Landkreise",BL[B+1,2]) 
        , subtitle = "Fallzahlen pro 100.000 Einwohner\nWoche ~ Vorwoche"
        , x = "Fälle Vorwoche pro 100.000"
        , y = "Fälle Woche pro 100.000"
        , caption = citation )
 
-ggsave(  paste('png/LandkreisWocheVorwoche-',Bundesland[B+1,2],'.png', sep='')
+ggsave(  paste('png/LandkreisWocheVorwoche-',BL[B+1,2],'.png', sep='')
        , type = "cairo-png"
        , bg = "white"
        , width = 29.7

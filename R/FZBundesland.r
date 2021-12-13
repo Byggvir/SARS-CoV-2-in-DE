@@ -121,15 +121,17 @@ weekly %>% filter(PandemieWoche < max(PandemieWoche) & PandemieWoche >= 90) %>% 
             , color = "black"
             , face = "bold.italic"
           ) ) +
-  labs(  title = "Wöchentlcihe Fallzahl pro 100.000 nach Bundesland"
+  labs(  title = "Wöchentliche Fallzahl pro 100.000 nach Bundesland"
          , subtitle= paste("Deutschland, Stand:", heute)
          , x = "Pandemiewoche"
          , y = "Fälle pro 100.000" 
          , colour = "Fälle / Todesfälle"
          , caption = citation ) -> pp1
 
-ggsave(  'png/FZBundeslaender-Inzidenz.png'
-         , type = "cairo-png"
+ggsave(  filename = 'png/FZBundeslaender-Inzidenz.png'
+         , path = WD
+         , device = 'png'
+         #, type = "cairo-png"
          , bg = "white"
          , width = 29.7 * 2
          , height = 21 * 2
