@@ -18,6 +18,12 @@ while [[ $# -gt 0 ]]; do
   key="$1"
 
   case $key in
+    -a|--all)
+      PULL=1
+      UPDATE=1
+      RUN=1
+      shift # past argument
+      ;;
     -p|--pull)
       PULL=1
       shift # past argument
