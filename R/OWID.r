@@ -60,23 +60,25 @@ options(
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
-region <- 'South Africa'
+region <- c('Denmark', 'South Africa')
 
-daten <- read.csv(file = 'data/owid-covid-data.csv')
+daten <- read.csv(file = 'https://covid.ourworldindata.org/data/owid-covid-data.csv')
 
 daten$date <- as.Date(daten$date)
 
-daten %>% filter( location == region ) -> daten
+for (r in region ) {
+  
+  daten %>% filter( location == r ) -> rdaten
 
-max_cases <- max( daten$new_cases_smoothed_per_million, na.rm=TRUE)
-max_hosp  <- max( daten$weekly_hosp_admissions_per_million,na.rm=TRUE)
+  max_cases <- max( rdaten$new_cases_smoothed_per_million, na.rm=TRUE)
+  max_hosp  <- max( rdaten$weekly_hosp_admissions_per_million,na.rm=TRUE)
 
-scl <- max_cases / max_hosp
+  scl <- max_cases / max_hosp
 
-daten %>% ggplot() +
-  geom_line(data = daten %>% filter( ! is.na(new_cases_smoothed_per_million) ), aes( x = date, y = new_cases_smoothed_per_million ), color = 'blue') +
-  geom_line(data = daten %>% filter( ! is.na(weekly_hosp_admissions_per_million) ), aes( x = date, y = weekly_hosp_admissions_per_million * scl), color = 'red') +
-  scale_y_continuous(  sec.axis = sec_axis(~./scl, name = "Hospitalisierung", labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ))
+  rdaten %>% ggplot() +
+    geom_line(data = rdaten %>% filter( ! is.na(new_cases_smoothed_per_million) ), aes( x = date, y = new_cases_smoothed_per_million ), color = 'blue') +
+    geom_line(data = rdaten %>% filter( ! is.na(weekly_hosp_admissions_per_million) ), aes( x = date, y = weekly_hosp_admissions_per_million * scl), color = 'red') +
+    scale_y_continuous(  sec.axis = sec_axis(~./scl, name = "Hospitalisierung", labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ))
                        , labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   theme_ipsum() +
   theme(  plot.title = element_text( size = 48 )
@@ -90,13 +92,13 @@ daten %>% ggplot() +
             , face = "bold.italic"
           ) ) +
   labs(  title = "Fallzahlen + Hospitalisierte"
-         , subtitle = paste(region ," Stand:", heute)
+         , subtitle = paste(r, "Stand:", heute)
          , x = "Datum"
          , y = "Fälle" 
          , colour = "Fälle")
 
 
-ggsave(  filename = paste( 'png/', region, '.png', sep = '' )
+ggsave(  filename = paste( 'png/', r, '.png', sep = '' )
          , path = WD
          , device = 'png'
          #, type = "cairo-png"
@@ -107,9 +109,9 @@ ggsave(  filename = paste( 'png/', region, '.png', sep = '' )
          , dpi = 300 
          )
 
-daten %>% ggplot() +
-  geom_point( data = daten %>% filter( ! is.na(new_cases_smoothed_per_million) & ! is.na(weekly_hosp_admissions_per_million)), aes( x = new_cases_smoothed_per_million,y = weekly_hosp_admissions_per_million ), color = 'blue') +
-  geom_smooth( data = daten %>% filter( ! is.na(new_cases_smoothed_per_million) & ! is.na(weekly_hosp_admissions_per_million)), aes( x = new_cases_smoothed_per_million,y = weekly_hosp_admissions_per_million ), color = 'blue') +
+rdaten %>% ggplot() +
+  geom_point( data = rdaten %>% filter( ! is.na(new_cases_smoothed_per_million) & ! is.na(weekly_hosp_admissions_per_million)), aes( x = new_cases_smoothed_per_million,y = weekly_hosp_admissions_per_million ), color = 'blue') +
+  geom_smooth( data = rdaten %>% filter( ! is.na(new_cases_smoothed_per_million) & ! is.na(weekly_hosp_admissions_per_million)), aes( x = new_cases_smoothed_per_million,y = weekly_hosp_admissions_per_million ), color = 'blue') +
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
     scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
     theme_ipsum() +
@@ -123,14 +125,14 @@ daten %>% ggplot() +
             , color = "black"
             , face = "bold.italic"
           ) ) +
-  labs(  title = "Fallzahlen + Hospitalisierte"
-         , subtitle = paste(region ," Stand:", heute)
-         , x = "Datum"
-         , y = "Fälle" 
+  labs(  title = "Hospitalisierte ~ Fallzahlen"
+         , subtitle = paste(r ," Stand:", heute)
+         , x = "Fälle pro Tag"
+         , y = "Hospitalisierte pro Woche" 
          , colour = "Fälle")
 
 
-ggsave(  filename = paste( 'png/', region, '-sp.png', sep = '' )
+ggsave(  filename = paste( 'png/', r, '-sp.png', sep = '' )
          , path = WD
          , device = 'png'
          #, type = "cairo-png"
@@ -140,7 +142,8 @@ ggsave(  filename = paste( 'png/', region, '-sp.png', sep = '' )
          , units = "cm"
          , dpi = 300 
 )
-ra <- lm(weekly_hosp_admissions_per_million ~ new_cases_smoothed_per_million, data = daten %>% filter( ! is.na(new_cases_smoothed_per_million) & ! is.na(weekly_hosp_admissions_per_million)) ) 
+ ra <- lm(weekly_hosp_admissions_per_million ~ new_cases_smoothed_per_million, data = rdaten %>% filter( ! is.na(new_cases_smoothed_per_million) & ! is.na(weekly_hosp_admissions_per_million)) ) 
 
-print(summary(ra))
+ print(summary(ra))
 
+}
