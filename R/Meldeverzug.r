@@ -1,28 +1,30 @@
 #!/usr/bin/env Rscript
 #
 #
-# Script: RKI.r
+# Script: Meldeverzug.r
 #
 # Stand: 2020-10-21
 # (c) 2020 by Thomas Arend, Rheinbach
 # E-Mail: thomas@arend-rhb.de
 #
 
-MyScriptName <-"FZBundesland"
+MyScriptName <-"Meldeverzug"
 
-library(tidyverse)
-library(REST)
-library(grid)
-library(gridExtra)
-library(gtable)
-library(lubridate)
-library(ggplot2)
-library(viridis)
-library(hrbrthemes)
-library(scales)
-library(Cairo)
-# library(extrafont)
-# extrafont::loadfonts()
+library( tidyverse )
+library( REST )
+library( grid )
+library( gridExtra )
+library( gtable )
+library( lubridate )
+library( readODS )
+library( ggplot2 )
+library( ggrepel )
+library( viridis )
+library( hrbrthemes )
+library( scales )
+library( ragg )
+library(extrafont)
+extrafont::loadfonts()
 
 # Set Working directory to git root
 
@@ -71,29 +73,28 @@ daten <- RunSQL(SQL = SQL)
 
 daten$WTag <- factor(daten$DoW,labels = WochentageLang)
 
-daten %>% filter (Verzug < 5) %>% ggplot(
-  aes( group=Verzug )) +
-  geom_boxplot(aes(y = Anteil )) +
+daten %>% filter ( Verzug < 5 ) %>% ggplot( ) +
+  geom_boxplot(aes( x = Verzug, y = Anteil,group = Verzug )) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
-  facet_wrap(vars(WTag),nrow = 2) +
-  theme_ipsum() +
-  theme(  plot.title = element_text( size=48 )
-          , axis.text.y  = element_text ( color = 'black', size = 24)
-          , axis.title.y = element_text ( color='black', size = 24)
-          , strip.text.x = element_text (
+  facet_wrap( vars( WTag ), nrow = 2 ) +
+  theme_ipsum( base_family = 'Helvetica' ) +
+  theme(  plot.title = element_text( size = 36 )
+          , axis.text.y  = element_text( color = 'black', size = 24 )
+          , axis.title.y = element_text( color = 'black', size = 24 )
+          , strip.text.x = element_text(
               size = 24
               , color = "black"
               , face = "bold.italic"
           ) ) + 
   labs(  title = "Anteil der nach n Tagen gemeldeten an den gesamten Fällen des Tages"
        , subtitle= paste("Deutschland, Stand:", heute)
-       , x ="Verzug"
+       , x = "Verzug"
        , y = "Anteil [%]" 
-       , caption = citation )
+       , caption = citation 
+       )
 
 ggsave(  'png/Verzug.png'
        , device = 'png'
-       , type = "cairo-png"
        , bg = "white"
        , width = 29.7 * 2
        , height = 21 * 2

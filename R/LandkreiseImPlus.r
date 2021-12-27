@@ -89,7 +89,7 @@ p <- ggplot(data, aes( x = sKw)) +
 
 
 ggsave( file = paste('png/Landkreise-', From_Kw,"-",To_Kw,".png", sep="")
-       , type = "cairo-png",  bg = "white"
+,  bg = "white"
        , width = 29.1, height = 21, units = "cm", dpi = 150)
 }
 

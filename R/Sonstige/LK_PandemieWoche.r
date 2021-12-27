@@ -8,7 +8,7 @@
 # E-Mail: thomas@arend-rhb.de
 #
 
-MyScriptName <-"LandkreiseScatterPlot"
+MyScriptName <-"LK_PandemieWoche"
 
 library(tidyverse)
 library(REST)
@@ -17,10 +17,11 @@ library(gridExtra)
 library(gtable)
 library(lubridate)
 library(ggplot2)
+library(ggrepel)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -63,6 +64,8 @@ options(
 today <- Sys.Date() - 1
 heute <- format(today, "%d %b %Y")
 
+PWoche <- ( as.integer(today - as.Date('2019-12-29')) - 4 ) %/% 7 + 1
+
 SQL <- 'select * from Bundesland order by IdBundesland;'
 BL <- RunSQL(SQL)
 
@@ -84,7 +87,7 @@ SQL <- paste(
     on A.IdLandkreis = B.IdLandkreis and A.Pw = B.Pw + 1 
     join Landkreis as L
     on A.IdLandkreis = L.IdLandkreis
-    where 101 >= A.Pw and A.Pw >= 96;'
+    where ', PWoche,' >= A.Pw and A.Pw >= ', PWoche - 5, ';'
   , sep = ' ')
 
 Landkreise <- RunSQL(SQL = SQL)
@@ -104,7 +107,7 @@ SQL <- paste(
     on A1.IdBundesland = A2.IdBundesland and A1.Pw = A2.Pw + 1 
     join Bundesland as B
     on A1.IdBundesland = B.IdBundesland
-    where 101 >= A1.Pw and A1.Pw >= 96;'
+    where ', PWoche,' >= A1.Pw and A1.Pw >=', PWoche - 5,';'
   , sep = ' ')
 
 Bundesland <- RunSQL(SQL = SQL)
@@ -139,8 +142,7 @@ Landkreise %>% filter(IdBundesland == B) %>% ggplot() +
        , y = "Fälle Woche pro 100.000"
        , caption = citation )
 
-ggsave(  paste('png/LandkreisWocheVorwoche-',BL[B+1,2],'.png', sep='')
-       , type = "cairo-png"
+ggsave(  paste('png/LK/PandemieWoche-',BL[B+1,2],'.png', sep='')
        , bg = "white"
        , width = 29.7
        , height = 21

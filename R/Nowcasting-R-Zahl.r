@@ -30,7 +30,7 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 library(extrafont)
 extrafont::loadfonts()
 
@@ -118,7 +118,6 @@ daten %>% ggplot(
   theme(plot.subtitle=element_text(size=36, hjust=0.5, face="italic", color="black")) -> pp
 
 ggsave(  paste('png/R-Zahl.png', sep = '')
-         , type = "cairo-png"
          , bg = "white"
          , width = 29.7 * 2
          , height = 21 * 2

@@ -22,7 +22,7 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 library(extrafont)
 extrafont::loadfonts()
 
@@ -53,16 +53,16 @@ heute <- format(today, "%Y%m%d")
 
 SQL <- 'select F.IdLandkreis div 1000 as IdBundesland,B.Bundesland,F.Altersgruppe,sum(AnzahlTodesFall) as AnzahlTodesfall,sum(AnzahlFall) as AnzahlFall, Bev from Faelle as F join Bundesland as B on B.IdBundesland = F.IdLandkreis div 1000 join DESTATIS.StdBevRKIAG as S on F.Altersgruppe = S.Altersgruppe and F.IdLandkreis div 1000 = S.IdBundesland and F.Altersgruppe >= "A35" group by F.IdLandkreis div 1000, F.Altersgruppe;'
 
-if ( ! exists("data") ) {
+if ( ! exists("result") ) {
   
-  data <- RunSQL(SQL)
+  result <- RunSQL(SQL)
   
 }
 
 
-data %>% ggplot( aes( x = AnzahlFall/Bev * 100, y = AnzahlTodesfall/Bev * 100 )) +
+result %>% ggplot( aes( x = AnzahlFall/Bev * 100, y = AnzahlTodesfall/Bev * 100 )) +
   geom_point( aes( y = AnzahlTodesfall/Bev * 100, colour = Bundesland), shape = 21, size = 3, stroke = 1) +
-  geom_smooth (method = "lm", data = data, formula = y ~ x )  +
+  geom_smooth (method = "lm", data = result, formula = y ~ x )  +
   facet_wrap(vars(Altersgruppe)) +
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
@@ -82,6 +82,6 @@ data %>% ggplot( aes( x = AnzahlFall/Bev * 100, y = AnzahlTodesfall/Bev * 100 ))
             , '.png'
             , sep = ""
           )
-          , type = "cairo-png",  bg = "white"
+          ,  bg = "white"
           , width = 29.7, height = 21, units = "cm", dpi = 150)
   

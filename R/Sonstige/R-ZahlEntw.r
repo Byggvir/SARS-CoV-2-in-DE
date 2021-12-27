@@ -20,7 +20,7 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -63,6 +63,9 @@ options(
 today <- Sys.Date() - 1
 heute <- format(today, "%d %b %Y")
 
+Jahr <- 2021
+Monat <- 12
+
 SQL <- '
 select 
   A.Datum
@@ -75,7 +78,7 @@ from Nowcasts as A;'
 
 daten <- RunSQL(SQL)
 
-daten %>% filter ( Datum >= "2021-11-01" & Datum < "2021-12-01" & BerechnetAm < "2021-12-15") %>% ggplot( aes(x= BerechnetAm)) +
+daten %>% filter ( year(Datum) == Jahr & month(Datum) == Monat & BerechnetAm <= "2022-01-15" ) %>% ggplot( aes(x= BerechnetAm)) +
   geom_line(aes( y = PS_7_Tage_R_Wert, colour ="Punktschätzer"), size = 1) +
   geom_line(aes( y = UG_PI_7_Tage_R_Wert, colour ="Untergrenze"), size = 0.5) +
   geom_line(aes( y = OG_PI_7_Tage_R_Wert, colour ="Obergrenze"), size = 0.5) +
@@ -98,14 +101,13 @@ daten %>% filter ( Datum >= "2021-11-01" & Datum < "2021-12-01" & BerechnetAm < 
               , face = "bold.italic"
             ) ) + 
   labs(  title = "Entwicklung des berechneten R-Wertes für ausgewählte Tage"
-       , subtitle= "Stand: 30.11.2021"
+       , subtitle= "Stand: 21.12.2021"
        , x = "Datum"
        , y = "R-Zahl"
        , colour = "Schätzung"
        , caption = citation ) -> p
 
-ggsave(  paste('png/R_Entwicklung', 11, '.png', sep='')
-       , type = "cairo-png"
+ggsave(  paste('png/R_Entwicklung', Monat, '.png', sep='')
        , bg = "white"
        , width = 29.7 * 2
        , height = 21 * 2

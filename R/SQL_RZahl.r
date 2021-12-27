@@ -152,7 +152,6 @@ where
                       , ' ;' 
                       , sep=''
   )
-  print(UpdateSQL)
   ExecSQL(UpdateSQL)
 
 

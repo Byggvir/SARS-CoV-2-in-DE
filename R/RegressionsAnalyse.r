@@ -199,8 +199,7 @@ where
   
   # print(PrognoseTab)
   
-  png( paste( "png/Prognose"
-              , "_"
+  png( paste( "png/Prognosen/"
               , as.character(ThisDate)
               , "_"
               , DaysBack

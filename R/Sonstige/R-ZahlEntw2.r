@@ -20,7 +20,7 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -42,8 +42,6 @@ if (rstudioapi::isAvailable()){
 WD <- paste(SD[1:(length(SD)-2)],collapse='/')
 
 setwd(WD)
-
-fPrefix <- "Ausprobieren_"
 
 require(data.table)
 
@@ -92,14 +90,13 @@ daten %>%
               , face = "italic"
             ) ) + 
   labs(  title = "Differenz des R-Wert zum 14 Tage später gemeldeten Wert"
-       , subtitle= "R(t) - R(t+14) / Stand: 30.11.2021"
+       , subtitle= paste( "R(t) - R(t+14) / Stand:", heute )
        , x = "Datum"
        , y = "R-Zahl"
        , colour = "Schätzung"
        , caption = citation ) -> p
 
 ggsave(  paste('png/R_EntwicklungDiff', 3, '.png', sep='')
-       , type = "cairo-png"
        , bg = "white"
        , width = 29.7
        , height = 21

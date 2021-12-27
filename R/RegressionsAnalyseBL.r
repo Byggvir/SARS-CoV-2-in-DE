@@ -207,8 +207,7 @@ where
   
   # print(PrognoseTab)
   
-  png( paste( "png/Prognose"
-              , "_"
+  png( paste( "png/Prognosen/"
               , BL[IdBundesland,2]
               , "_"
               , as.character(ThisDate)

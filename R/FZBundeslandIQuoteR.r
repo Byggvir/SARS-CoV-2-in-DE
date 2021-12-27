@@ -20,7 +20,7 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -103,7 +103,6 @@ IQuote %>% ggplot() +
         ) )
 
 ggsave(  paste('png/FZIQuoteR_',Stichtag,'.png', sep = '')
-       , type = "cairo-png"
        , bg = "white"
        , width = 29.7 * 2
        , height = 21 * 2

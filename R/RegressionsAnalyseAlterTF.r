@@ -350,8 +350,8 @@ for (j in c(14)) {
   
   for (i in c(41)) {
   
-    png( paste( "png/Prognose"
-                , "_Alter_"
+    png( paste( "png/Prognosen/"
+                , "Alter_"
                 , as.character(ThisDay)
                 , "_"
                 , j

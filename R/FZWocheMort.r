@@ -14,13 +14,15 @@ library(tidyverse)
 library(REST)
 library(grid)
 library(gridExtra)
+library(magick)
 library(gtable)
 library(lubridate)
+library(gganimate)
 library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -114,7 +116,6 @@ weekly %>%  ggplot(
   theme(plot.subtitle=element_text(size = 18, hjust = 0.5, face = "italic", color = "black" )) -> pp
 
 ggsave( paste('png/FZBundMort-', Altersgruppen[i,1], '-1.png', sep = '')
-        , type = "cairo-png"
         , bg = "white"
         , width = 29.7
         , height = 21
@@ -148,7 +149,6 @@ weekly %>% ggplot(
   theme(plot.subtitle=element_text( size = 18, hjust = 0.5, face = "italic", color = "black" )) -> pp2
 
 ggsave( paste('png/FZBundMort-', Altersgruppen[i,1], '-2.png', sep = '')
-         , type = "cairo-png"
          , bg = "white"
          , width = 29.7
          , height = 21
@@ -179,7 +179,6 @@ corona_sterbefaelle %>% ggplot(
   theme(plot.subtitle=element_text(size = 18, hjust = 0.5, face = "italic", color = "black" )) -> pp
 
 ggsave( paste('png/FZBundMort-', Altersgruppen[i,1], '-3.png', sep = '')
-        , type = "cairo-png"
         , bg = "white"
         , width = 29.7
         , height = 21

@@ -135,7 +135,7 @@ gg <- grid.arrange(p, ncol=1)
 plot(gg)
 
 ggsave(plot = gg, file = paste('png/LK/LK-', lk[i,1],"-",lk[i,2],"-2.png", sep="")
-       , type = "cairo-png",  bg = "white"
+,  bg = "white"
        , width = 29.1, height = 21, units = "cm", dpi = 150)
 }
 
@@ -158,7 +158,7 @@ LandkreisDiagram <- function (i) {
   plot(gg)
   
   ggsave(plot = gg, file = paste('png/LK/LK-', lk[i,1],"-",lk[i,2],"-2.png", sep="")
-         , type = "cairo-png",  bg = "white"
+,  bg = "white"
          , width = 29.1, height = 21, units = "cm", dpi = 150)
 }
 

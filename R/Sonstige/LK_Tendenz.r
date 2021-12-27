@@ -8,7 +8,7 @@
 # E-Mail: thomas@arend-rhb.de
 #
 
-MyScriptName <-"FZBundesland"
+MyScriptName <-"LK_Tendenz"
 
 library(tidyverse)
 library(REST)
@@ -17,10 +17,11 @@ library(gridExtra)
 library(gtable)
 library(lubridate)
 library(ggplot2)
+library(ggrepel)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -101,15 +102,14 @@ Landkreise %>% filter(Bundesland == B) %>% ggplot() +
           , color = "black"
           , face = "bold.italic"
         ) ) +
-  labs(  title= paste('Landkreise nach Bundesland bis Meldedatum', untilday)
+  labs(  title= paste('Landkreise', B,'bis Meldedatum:', untilday)
        , subtitle = "Änderung Fallzahlen pro 100.000 Einwohner"
        , x = paste( 'Fälle von', z4, 'bis', z3, 'pro 100.000' )
        , y = paste( 'Fälle von', z2, 'bis', z1, 'pro 100.000' )
        , caption = citation )
 
-ggsave(  paste('png/Landkreis-Tendenz-',B, '.png', sep='')
+ggsave(  paste('png/LK/Tendenz-',B, '.png', sep='')
        , device = 'png'
-       , type = "cairo-png"
        , bg = "white"
        , width = 29.7 * 2
        , height = 21 * 2
@@ -122,7 +122,7 @@ Bundesland %>% ggplot() +
   geom_abline( intercept = 0, slope = 1, color ='red' ) +
   geom_abline( intercept = 0, slope = 0.75, color ='green' ) +
   geom_point( aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000, colour = Bundesland), size= 18, alpha = 0.5) +
-  geom_text( aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000, label = Abk), vjust=0.5, hjust=0.5, size= 6) +
+  geom_text_repel( aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000, label = Abk),size= 6) +
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_fill_viridis(discrete = T) +
@@ -150,15 +150,14 @@ Bundesland %>% ggplot() +
             , color = "black"
             , face = "bold.italic"
           )) +
-  labs(  title= paste('Veränderung der Corona-Fallzahlen der Bundesländer bis Meldedatum', untilday)
+  labs(  title= paste('Veränderung der Corona-Fallzahlen bis Meldedatum', untilday)
          , subtitle = paste('Fallzahlen pro 100.000 Einwohner pro 7-Tageszeitraum') 
          , x = paste( 'Fälle von', z4, 'bis', z3, 'pro 100.000' )
          , y = paste( 'Fälle von', z2, 'bis', z1, 'pro 100.000' )
          , caption = citation 
          , colour = 'Bundesland')
 
-ggsave(  paste('png/BundeslandTendenz', '.png', sep='')
-         , type = "cairo-png"
+ggsave(  paste('png/Bund_Tendenz', '.png', sep='')
          , bg = "white"
          , width = 29.7 * 2
          , height = 21 * 2

@@ -356,8 +356,8 @@ for (j in c(7)) {
   for (i in c(20,41)) {
     for (b in Bundesland[,1]) { 
       
-      png( paste( "png/Prognose"
-                  , "_Alter_"
+      png( paste( "png/Prognosen/"
+                  , "Alter_"
                   , Bundesland[b,2]
                   , "_"
                   , as.character(ThisDay)

@@ -19,7 +19,7 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -96,7 +96,6 @@ daten1 %>% ggplot() +
 ggsave(  filename = paste( 'png/', region, '.png', sep = '' )
          , path = WD
          , device = 'png'
-         #, type = "cairo-png"
          , bg = "white"
          , width = 29.7
          , height = 21

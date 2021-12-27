@@ -20,7 +20,7 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -95,7 +95,6 @@ Schutz %>%
          , caption = citation ) -> p
 
 ggsave(  paste('png/ImpfDSchutzEntw.png', sep='')
-         , type = "cairo-png"
          , bg = "white"
          , width = 29.7
          , height = 21

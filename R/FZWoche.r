@@ -20,7 +20,7 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -105,7 +105,6 @@ weekly %>% ggplot(
   theme(plot.subtitle=element_text(size=36, hjust=0.5, face="italic", color="black")) -> pp
 
 ggsave(  paste(fPrefix,'_Alter.png', sep = '')
-         , type = "cairo-png"
          , bg = "white"
          , width = 29.7 * 2
          , height = 21 * 2
@@ -146,7 +145,6 @@ weekly %>% ggplot(
   theme(plot.subtitle=element_text(size=24, hjust=0.5, face="italic", color="black")) -> pp2
 
 ggsave( paste(fPrefix,'_AlterScatterplot.png', sep = '')
-         , type = "cairo-png"
          , bg = "white"
          , width = 29.7
          , height = 21
@@ -189,7 +187,6 @@ daten %>% ggplot(
   theme(plot.subtitle=element_text(size=24, hjust=0.5, face="italic", color="black")) -> pp
 
 ggsave(  paste('png/Fallzahlen_Woche.png', sep = '')
-         , type = "cairo-png"
          , bg = "white"
          , width = 29.7
          , height = 21

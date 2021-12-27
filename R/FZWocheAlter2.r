@@ -20,7 +20,7 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -84,7 +84,7 @@ weekly %>% filter(PandemieWoche < max(PandemieWoche) -1) %>% ggplot(
        , caption = citation ) -> pp1
 
 ggsave('png/FZWoche_Fall.png'
-       , type = "cairo-png",  bg = "white"
+,  bg = "white"
        , width = 29.7, height = 21, units = "cm", dpi = 150)
 
 weekly %>% filter(PandemieWoche < max(PandemieWoche) -1) %>% ggplot(
@@ -100,7 +100,7 @@ weekly %>% filter(PandemieWoche < max(PandemieWoche) -1) %>% ggplot(
          , caption = citation ) -> pp2
 
 ggsave('png/FZWoche_Todesfall.png'
-       , type = "cairo-png",  bg = "white"
+,  bg = "white"
        , width = 29.7, height = 21, units = "cm", dpi = 150)
 
 
@@ -108,7 +108,7 @@ ggsave('png/FZWoche_Todesfall.png'
 SQL <- paste('select * from InzidenzAltersgruppe;', sep='')
 inzidenz <- RunSQL(SQL = SQL)
 
-inzidenz %>% filter(PandemieWoche < max(PandemieWoche) -1)%>% ggplot(
+inzidenz %>% filter(PandemieWoche < max(PandemieWoche) -1) %>% ggplot(
   aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlFall/AnzahlBev*100000)) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
@@ -121,7 +121,7 @@ inzidenz %>% filter(PandemieWoche < max(PandemieWoche) -1)%>% ggplot(
          , caption = citation ) -> pp3
 
 ggsave('png/FZWoche_FallInzidenz.png'
-       , type = "cairo-png",  bg = "white"
+,  bg = "white"
        , width = 29.7, height = 21, units = "cm", dpi = 150)
 
 
@@ -138,7 +138,7 @@ inzidenz %>% filter(PandemieWoche < max(PandemieWoche) -1) %>% ggplot(
          , caption = citation ) -> pp4
 
 ggsave('png/FZWoche_TodesfallInzidenz.png'
-       , type = "cairo-png",  bg = "white"
+,  bg = "white"
        , width = 29.7, height = 21, units = "cm", dpi = 150)
 
 
@@ -157,7 +157,7 @@ bev %>% ggplot(
          , caption = citation ) -> pp5
 
 ggsave('png/FZWoche_Bev.png'
-       , type = "cairo-png",  bg = "white"
+,  bg = "white"
        , width = 29.7, height = 21, units = "cm", dpi = 150)
 
 
@@ -176,7 +176,7 @@ fa %>% ggplot(
          , caption = citation ) -> pp6
 
 ggsave('png/FZWoche_FallSum.png'
-       , type = "cairo-png",  bg = "white"
+,  bg = "white"
        , width = 29.7, height = 21, units = "cm", dpi = 150)
 
 
@@ -192,7 +192,7 @@ fa %>% ggplot(
          , caption = citation ) -> pp6
 
 ggsave('png/FZWoche_Todesfall.png'
-       , type = "cairo-png",  bg = "white"
+,  bg = "white"
        , width = 29.7, height = 21, units = "cm", dpi = 150)
 
 
@@ -208,6 +208,6 @@ fa %>% ggplot(
          , caption = citation ) -> pp6
 
 ggsave('png/FZWoche_TodesfallSum2.png'
-       , type = "cairo-png",  bg = "white"
+,  bg = "white"
        , width = 29.7, height = 21, units = "cm", dpi = 150)
 

@@ -19,7 +19,7 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -123,7 +123,7 @@ plot(gg)
 ggsave(  plot = gg
        , filename = paste('png/', MyScriptName,".png", sep="")
        , device = "png"
-       , type = "cairo-png",  bg = "white"
+,  bg = "white"
        , width = 29.7, height = 21, units = "cm", dpi = 150)
 
 summary(warnings())

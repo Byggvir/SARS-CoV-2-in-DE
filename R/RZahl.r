@@ -21,7 +21,7 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 library(extrafont)
 extrafont::loadfonts()
 # Set Working directory to git root
@@ -104,7 +104,7 @@ ggsave( plot = p
           'png/R-Zahl_AG.png'
           , sep = ""
         )
-        , type = "cairo-png",  bg = "white"
+,  bg = "white"
         , width = 29.7, height = 21, units = "cm", dpi = 600
         
 )

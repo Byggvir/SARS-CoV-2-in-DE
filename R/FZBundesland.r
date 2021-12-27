@@ -17,10 +17,11 @@ library(gridExtra)
 library(gtable)
 library(lubridate)
 library(ggplot2)
+library(ggrepel)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -68,7 +69,7 @@ weekly <- RunSQL(SQL = SQL)
 
 scl <- max(weekly$AnzahlFall)/max(weekly$AnzahlTodesfall) 
   
-weekly %>% filter( PandemieWoche < max(PandemieWoche) & PandemieWoche >= 90) %>% ggplot(
+weekly %>% filter( PandemieWoche < max(PandemieWoche)) %>% ggplot(
   aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlFall, colour = "Fälle" ), color = 'blue') +
   geom_line(aes(y = AnzahlTodesfall * scl, colour = "Todesfälle" ), color = 'red') +
@@ -94,7 +95,6 @@ weekly %>% filter( PandemieWoche < max(PandemieWoche) & PandemieWoche >= 90) %>%
        , caption = citation ) -> pp1
 
 ggsave(  'png/FZBundeslaender-Absolut.png'
-       , type = "cairo-png"
        , bg = "white"
        , width = 29.7 * 2
        , height = 21 * 2
@@ -103,7 +103,7 @@ ggsave(  'png/FZBundeslaender-Absolut.png'
 
 scl <- max(weekly$AnzahlFall/weekly$Bev)/max(weekly$AnzahlTodesfall/weekly$Bev) 
 
-weekly %>% filter(PandemieWoche < max(PandemieWoche) & PandemieWoche >= 90) %>% ggplot(
+weekly %>% filter( PandemieWoche < max(PandemieWoche) ) %>% ggplot(
   aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlFall / Bev * 100000, colour = "Fälle" ), color = 'blue') +
   geom_line(aes(y = AnzahlTodesfall / Bev *100000 * scl, colour = "Todesfälle" ), color = 'red') +
@@ -128,10 +128,24 @@ weekly %>% filter(PandemieWoche < max(PandemieWoche) & PandemieWoche >= 90) %>% 
          , colour = "Fälle / Todesfälle"
          , caption = citation ) -> pp1
 
+
+# pp1.animation = pp1 +
+#   transition_time(PandemieWoche) +
+#   # labs(subtitle = "Year: {frame_time}") +
+#   shadow_wake(wake_length = 0.1)
+# 
+# 
+# animate( plot = pp1.animation
+#         , height = 1080
+#         , width = 1920
+#         )
+# 
+# anim_save("/tmp/FZBundeslaender-Inzidenz.gif")
+
 ggsave(  filename = 'png/FZBundeslaender-Inzidenz.png'
+         , plot = pp1
          , path = WD
          , device = 'png'
-         #, type = "cairo-png"
          , bg = "white"
          , width = 29.7 * 2
          , height = 21 * 2

@@ -21,7 +21,7 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -49,6 +49,9 @@ require(data.table)
 source("R/lib/myfunctions.r")
 source("R/lib/sql.r")
 source("R/lib/color_palettes.r")
+
+# Source: Deaths involving COVID-19 by vaccination status, England: deaths occurring between 2 January and 24 September 2021
+# Download: https://www.ons.gov.uk/
 
 citation <- "© 2021 by Thomas Arend\nQuelle: ONS"
 
@@ -120,7 +123,6 @@ daten %>% filter(Agegroup == A) %>% ggplot(
        , caption = citation ) -> p
 
 ggsave(  paste('png/ONS_Tab',t,'_Alter',A,'.png', sep='')
-       , type = "cairo-png"
        , bg = "white"
        , width = 29.7
        , height = 21

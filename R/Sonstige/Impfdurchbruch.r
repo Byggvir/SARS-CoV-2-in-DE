@@ -20,7 +20,7 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -63,11 +63,12 @@ options(
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
-Woche <- "2021-11-22"
+Woche <- '2021-12-06'
+
 ToWoche <- isoweek(as.Date(Woche))
 FromWoche <- ToWoche - 3
 
-SQL <- paste('select * from Impfdurchbruch where Woche = "',Woche,'";', sep='')
+SQL <- paste('select * from Impfdurchbruch where Woche = "', Woche ,'";', sep='')
 impfd <- RunSQL(SQL = SQL)
 
 impfd %>% 
@@ -97,7 +98,6 @@ ggplot(
          , caption = citation ) -> pp1
 
 ggsave(  paste('png/Impfdurchbruch-',ToWoche,'.png', sep='')
-         , type = "cairo-png"
          , bg = "white"
          , width = 29.7
          , height = 21
@@ -135,7 +135,6 @@ impfd %>%
          , caption = citation ) -> pp1
 
 ggsave(  paste('png/Impfdurchbruch-',ToWoche,'-Kum.png', sep='')
-         , type = "cairo-png"
          , bg = "white"
          , width = 29.7
          , height = 21
