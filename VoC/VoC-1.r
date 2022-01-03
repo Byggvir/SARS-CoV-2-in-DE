@@ -14,7 +14,7 @@ library(gridExtra)
 library(viridis)
 library(hrbrthemes)
 library(scales)
-library(Cairo)
+library(ragg)
 # library(extrafont)
 # extrafont::loadfonts()
 
@@ -42,6 +42,7 @@ fPrefix <- "Fallzahlen_Wo_"
 require(data.table)
 
 source("R/lib/myfunctions.r")
+source("R/lib/mytheme.r")
 source("R/lib/sql.r")
 source("R/lib/color_palettes.r")
 
@@ -57,9 +58,9 @@ options(
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
-e <- function (x, a,b) {
+e <- function (x, a= 0,b = 1, s = 0 ) {
   
-  return (exp(a+b*x))
+  return (exp( a + b * ( x - s ) ) )
   
 }
 
@@ -69,32 +70,9 @@ s <- function (y) {
   
 }
 
-sigmoid <- function (x,a=0,b=1) {
+sigmoid <- function (x, a = 0, b = 1, s = 0 ) {
 
-  return ( 1/(1+exp(a+b*x)))
-  
-}
-
-plotsigmoid <- function (a, b, col, xlim, ylim) {
-  
-  par( new=TRUE )
-  
-  curve(  sigmoid(x,a,b)
-          , from=xlim[1]
-          , to=xlim[2]
-          , lty = 2
-          , lwd = 5
-          , xlim = xlim
-          , ylim = ylim
-          , col = col
-          , xlab = ""
-          , ylab = ""
-          , xaxt = "n"
-          , yaxt = "n"
-          , cex.axis = 2
-          , cex.lab = 3
-          , cex.main = 5      
-  )
+  return ( 1/( 1 + exp( a + b * ( x - s ) ) ) )
   
 }
 
@@ -112,115 +90,121 @@ daten <- read_csv(
   )
 )
 
-daten$Kw <- daten$Kw
+daten$Woche <- daten$Kw - daten$Kw[1]
+StartWeek <- daten$Kw[1]
 
 CI <- 0.95
 
-O_ra <- lm(s( Omikron / (Omikron + Delta) ) ~ Kw, data=daten)
-O_ci <- confint(O_ra,level = CI)
+O_ra <- lm( s( Omikron / Summe ) ~ Woche, data=daten)
+O_ci <- confint( O_ra, level = CI )
 
-O_a <- c( O_ci[1,1], O_ra$coefficients[1] , O_ci[1,2])
-O_b <- c( O_ci[2,1], O_ra$coefficients[2] , O_ci[2,2])
+O_a <- c( O_ci[1,1], O_ra$coefficients[1], O_ci[1,2] )
+O_b <- c( O_ci[2,1], O_ra$coefficients[2], O_ci[2,2] )
 
-D_ra <- lm(s( Delta / (Omikron + Delta) ) ~ Kw, data=daten)
+print('Verhältnis Omikron zu Delta')
+print(exp(-O_b))
+
+D_ra <- lm( s( Delta / Summe ) ~ Woche, data=daten)
 D_ci <- confint(D_ra,level = CI)
 
-D_a <- c( D_ci[1,1], D_ra$coefficients[1] , D_ci[1,2])
-D_b <- c( D_ci[2,1], D_ra$coefficients[2] , D_ci[2,2])
+D_a <- c( D_ci[1,1], D_ra$coefficients[1] , D_ci[1,2] )
+D_b <- c( D_ci[2,1], D_ra$coefficients[2] , D_ci[2,2] )
+
+print('Verhältnis Omikron zu Delta')
+print(exp(D_b))
 
 print(summary(O_ra))
-shaderibbon = data.table(
-  x = seq(0,50,length.out=100)
+
+O_shaderibbon = data.table(
+  x = seq(min(daten$Kw),60,length.out=100)
 )
-shaderibbon$ylower <- sapply(shaderibbon$x, FUN = function(x){ sigmoid(x,O_a[1],O_b[1])})
-shaderibbon$yupper <- sapply(shaderibbon$x, FUN = function(x){ sigmoid(x,O_a[3],O_b[3])})
+
+O_shaderibbon$ylower <- sapply( O_shaderibbon$x, FUN = function(x) { sigmoid( x, a = O_a[1], b = O_b[1], s = StartWeek ) } )
+O_shaderibbon$yupper <- sapply( O_shaderibbon$x, FUN = function(x) { sigmoid( x, a = O_a[3], b = O_b[3], s = StartWeek ) } )
+
+D_shaderibbon = data.table(
+  x = seq(min(daten$Kw),60,length.out=100)
+)
+
+D_shaderibbon$ylower <- sapply( D_shaderibbon$x, FUN = function(x) { sigmoid( x, a = D_a[1], b = D_b[1], s = StartWeek ) } )
+D_shaderibbon$yupper <- sapply( D_shaderibbon$x, FUN = function(x) { sigmoid( x, a = D_a[3], b = D_b[3], s = StartWeek ) } )
 
 daten %>% ggplot(
   aes( x = Kw )) +
-  geom_line(aes(y = Omikron / (Omikron + Delta) ), colour = 'black', size = 2) +
-  # geom_line(aes(y = Omikron / (Omikron + Delta) ), color = 'darkgrey', size = 2) +
+  geom_ribbon(  data = O_shaderibbon, aes( x = x, ymin = ylower, ymax = yupper ), color = 'grey',  alpha=0.1 ) +
+  geom_ribbon(  data = D_shaderibbon, aes( x = x, ymin = ylower, ymax = yupper ), color = 'lightblue',  alpha=0.1 ) +
   
-  #  geom_function( fun = sigmoid, args = list( a = a[1], b = b[1] ), color ='yellow', linetype = 'dotted', size = 1 ) +
-  geom_function( fun = sigmoid, args = list( a = O_a[2], b = O_b[2] ), color ='blue', linetype = 'dotted', size = 1 ) +
-  #  geom_function( fun = sigmoid, args = list( a = a[3], b = b[3] ), color ='red', linetype = 'dotted', size = 1  ) +
+  geom_line(aes(y = Omikron / Summe, colour = 'Omikron'), size = 2) +
+  geom_line(aes(y = Delta / Summe , colour = 'Delta'), size = 2) +
   
-  # geom_function( fun = sigmoid, args = list( a = D_a[1], b = D_b[1] ), color ='yellow', linetype = 'dotted', size = 1 ) +
-  # geom_function( fun = sigmoid, args = list( a = D_a[2], b = D_b[2] ), color ='blue', linetype = 'dotted', size = 1 ) +
-  # geom_function( fun = sigmoid, args = list( a = D_a[3], b = D_b[3] ), color ='red', linetype = 'dotted', size = 1 ) +
+  geom_function( fun = sigmoid, args = list( a = O_a[1], b = O_b[1], s = StartWeek ), aes(colour = 'Omikron Untergrenze'), linetype = 'dotted', size = 1 ) +
+  geom_function( fun = sigmoid, args = list( a = O_a[2], b = O_b[2], s = StartWeek ), aes(colour = 'Omikron Mittelwert'), linetype = 'dotted', size = 1 ) +
+  geom_function( fun = sigmoid, args = list( a = O_a[3], b = O_b[3], s = StartWeek ), aes(colour = 'Omikron Obergrenze'), linetype = 'dotted', size = 1 ) +
+
+  geom_function( fun = sigmoid, args = list( a = D_a[1], b = D_b[1], s = StartWeek ), aes(colour = 'Delta Untergrenze'), linetype = 'dotted', size = 1 ) +
+  geom_function( fun = sigmoid, args = list( a = D_a[2], b = D_b[2], s = StartWeek ), aes(colour = 'Delta Mittelwert'), linetype = 'dotted', size = 1 ) +
+  geom_function( fun = sigmoid, args = list( a = D_a[3], b = D_b[3], s = StartWeek ), aes(colour = 'Delta Obergrenze'), linetype = 'dotted', size = 1 ) +
 
   scale_y_continuous(labels = scales::percent) +
   # scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   expand_limits( x = 60 ) +
-  theme_ipsum() +
-  theme(  plot.title = element_text( size=48 )
-          , axis.text.x  = element_text ( color = 'black', size = 24 )
-          , axis.title.x = element_text ( color ='black', size = 24 )
-          , axis.text.y  = element_text ( color = 'black', size = 24 )
-          , axis.title.y = element_text ( color ='black', size = 24 )
-          , strip.text.x = element_text (
-            size = 24
-            , color = "black"
-            , face = "bold.italic"
-          ) ) + 
-  labs(  title = "Anteil Omikron an den VoC"
+  theme_ta() +
+  labs(  title = "Anteil Omikron und Delta an den VoC"
          , subtitle= paste("Deutschland, Stand:", heute)
          , x = "Kalenderwoche"
          , y = "Anteil [%]" 
+         , colour = 'Variante'
          , caption = '' ) -> p1
 
-ra <- lm(log(Omikron/Summe*Faelle ) ~ Kw, data=daten)
-ci <- confint(ra,level = CI)
+ggsave(  filename = 'png/VoC-1a.png'
+         , plot = p1
+         , device = 'png'
+         , bg = "white"
+         , width = 29.7
+         , height = 21
+         , units = "cm"
+         , dpi = 300 )
+
+ra <- lm( log( Omikron/Summe*Faelle ) ~ Woche, data=daten)
+ci <- confint( ra, level = CI )
 
 a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
 b <- c( ci[2,1], ra$coefficients[2] , ci[2,2])
 
-R <- exp(b*4/7)
+R <- exp( b*4/7 )
 
 shaderibbon <- NULL
 shaderibbon = data.table(
-  x = seq(min(daten$Kw),max(daten$Kw),length.out=100)
+  x = seq( min( daten$Kw ), 51, length.out = 100 )
 )
-shaderibbon$ylower <- sapply(shaderibbon$x, FUN = function(x){ e(x,a[1],b[1])})
-shaderibbon$yupper <- sapply(shaderibbon$x, FUN = function(x){ e(x,a[3],b[3])})
+shaderibbon$ylower <- sapply( shaderibbon$x, FUN = function(x){ e( x, a[1], b[1], s = StartWeek ) } )
+shaderibbon$yupper <- sapply( shaderibbon$x, FUN = function(x){ e( x, a[3], b[3], s = StartWeek ) } )
 
 
 daten %>% ggplot(
   aes( x = Kw )) +
-  # geom_ribbon( data = shaderibbon, aes( x=x, ymin = ylower, ymax = yupper), color= 'grey', alpha=0.1) +
-  geom_line(aes(y = Omikron / Summe * Faelle, colour = 'Reale Werte' ), show.legend = TRUE, size = 2) +
-  #geom_function( fun = e, args = list( a = a[2], b = b[1] ), aes(colour= 'Untere Grenze'), linetype = 'dotted', size = 1, show.legend = TRUE) +
-  geom_function( fun = e, args = list( a = a[2], b = b[2] ), aes(colour= 'Mittelwert'), linetype = 'dotted', size = 1, show.legend = TRUE) +
-  #geom_function( fun = e, args = list( a = a[2], b = b[3] ), aes(colour= 'Obere Grenze'), linetype = 'dotted', size = 1 , show.legend = TRUE) +
+#  geom_ribbon( data = shaderibbon, aes( x=x, ymin = ylower, ymax = yupper), color= 'grey', alpha=0.1) +
+  geom_line( aes( y = Omikron / Summe * Faelle, colour = 'Reale Werte' ), show.legend = TRUE, size = 2 ) +
+#  geom_function( fun = e, args = list( a = a[1], b = b[1], s = StartWeek ), aes( colour = 'Omikron Untergrenze' ), linetype = 'dotted', size = 1, show.legend = TRUE) +
+  geom_function( fun = e, args = list( a = a[2], b = b[2], s = StartWeek ), aes( colour = 'Omikron Mittelwert' ), linetype = 'dotted', size = 1, show.legend = TRUE) +
+#  geom_function( fun = e, args = list( a = a[1], b = b[3], s = StartWeek ), aes( colour = 'Omikron Obergrenze' ), linetype = 'dotted', size = 1 , show.legend = TRUE) +
   # scale_y_continuous(labels = scales::percent) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   expand_limits( x = 51 ) +
-  coord_cartesian( ylim = c(0, 10000) ) +
-  theme_ipsum() +
-  theme(  plot.title = element_text( size=48 )
-          , axis.text.x  = element_text ( color = 'black', size = 24 )
-          , axis.title.x = element_text ( color = 'black', size = 24 )
-          , axis.text.y  = element_text ( color = 'black', size = 24 )
-          , axis.title.y = element_text ( color = 'black', size = 24 )
-          , strip.text.x = element_text (
-            size = 24
-            , color = "black"
-            , face = "bold.italic"
-          ) ) + 
+ # coord_cartesian( ylim = c(0, 20000) ) +
+  theme_ta() +
   labs(  title = 'Geschätzte Omikron Fälle'
-         , subtitle= paste('R =' , round(R[2],1), 'CI 95 % [', round(R[1],1),'-', round(R[3],1), ']\nDeutschland, Stand:', heute )
+         , subtitle= paste('R =' , round(R[2],2), 'CI 95 % [', round(R[1],2),'-', round(R[3],2), ']\nDeutschland, Stand:', heute )
          , x = "Kalenderwoche"
          , y = "Anzahl" 
          , caption = citation
          , colour = 'Legende') -> p2
 
-p <- grid.arrange(p1, p2, ncol = 1, nrow = 2)
-
-ggsave(  filename = 'png/VoC.png'
-         , plot = p
+ggsave(  filename = 'png/VoC-1b.png'
+         , plot = p2
          , device = 'png'
-         , type = "cairo-png"
          , bg = "white"
-         , width = 29.7 * 2
-         , height = 21 * 2
+         , width = 29.7
+         , height = 21
          , units = "cm"
          , dpi = 300 )

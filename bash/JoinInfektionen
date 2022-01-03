@@ -14,6 +14,10 @@ reset=`tput sgr0`
 
 CSV="$TEMP/Infektionen.csv"
 
+echo -e "\n\n${blue}+---------"
+echo -e "| ${red}Neuinfektionen"
+echo -e "| ${blue}Zusammenführen der Archivdateien für Infektionen"
+echo -e "${blue}+---------${reset}\n\n"
 
 ( grep -v 'Meldedatum' /data/git/SARS-CoV-2-in-DE/Infektionen/Archiv/2021-*.csv \
    | sed 's#/data/git/SARS-CoV-2-in-DE/Infektionen/Archiv/##; s#_Deutschland_SarsCov2_Infektionen.csv:#,#' \

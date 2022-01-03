@@ -71,7 +71,7 @@ daten$Bez <- WochentageLang[daten$Wochentag+1]
 daten %>%
   ggplot( aes( x = reorder(Bez,Wochentag), y=Differenz ) ) +
   geom_boxplot() +
-  guides(fill = FALSE) +
+  guides( fill = "none" ) +
   stat_summary(fun = mean, geom = "point", shape = 5, size = 4) +
   # geom_line(aes( y = Differenz), size = 1) +
   geom_hline(aes( yintercept = 0), color = 'red', size = 0.2) +

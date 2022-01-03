@@ -159,7 +159,7 @@ Bundesland %>% ggplot() +
 
 ggsave(  paste('png/Bund_Tendenz', '.png', sep='')
          , bg = "white"
-         , width = 29.7 * 2
-         , height = 21 * 2
+         , width = 29.7
+         , height = 21
          , units = "cm"
          , dpi = 300 )

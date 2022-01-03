@@ -6,7 +6,6 @@ select
       A.IdLandkreis div 1000 as IdBundesland
     , B.Bundesland as Bundesland
     , B.Abk as Abk
-    , Altersgruppe
     , sum(A.AnzahlFall) as Anzahlfall
     , D.Anzahl as Bevoelkerung
     , sum(A.AnzahlFall)/D.Anzahl as InfectionRatio

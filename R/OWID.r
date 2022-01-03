@@ -70,9 +70,19 @@ options(
  , max.print = 3000
  )
 
-PWeek <- ( as.integer( Sys.Date() - as.Date( "2019-12-29" ) ) - 1 ) %/% 7 + 1 
+PandemieWoche <- function ( d ) {
+  
+  if ( is.Date( d ) ) {  
+    return( as.integer( d - as.Date( "2019-12-30" ) )  %/% 7 + 1 ) 
+  }
+  else {
+    warning( "Not a date", call. = TRUE)
+  }
+  
+}
 
 today <- Sys.Date()
+PWeek <- PandemieWoche( today )
 heute <- format( today, "%d %b %Y" )
 
 CoronaWaves <- read_ods( path = "data/CoronaWaves2.ods"
@@ -96,28 +106,27 @@ Welle <- function( Location, PWeeks ) {
 
 }
 
-if ( ! exists( "owid" ) ) {
+if ( ! exists( "OWID" ) ) {
  
- owid <- read.csv( file = 'https://covid.ourworldindata.org/data/owid-covid-data.csv' )
- # owid <- read.csv( file = 'data/owid-covid-data.csv' )
+ OWID <- read.csv( file = 'https://covid.ourworldindata.org/data/OWID-covid-data.csv' )
+ # OWID <- read.csv( file = 'data/OWID-covid-data.csv' )
 
 }
 
 locations <- unique( CoronaWaves$location )
 
-owid$date <- as.Date( owid$date )
-owid$Jahr <- year( owid$date )
-owid$Kw <- isoweek( owid$date )
-owid$Pw[year( owid$date ) == 2020] <- isoweek( owid$date[year( owid$date ) == 2020] )
-owid$Pw[year( owid$date ) == 2021 & isoweek( owid$date ) == 53] <- isoweek( owid$date[year( owid$date ) == 2021 & isoweek( owid$date ) == 53] )
-owid$Pw[year( owid$date ) == 2021 & isoweek( owid$date ) < 53] <- isoweek( owid$date[year( owid$date ) == 2021 & isoweek( owid$date ) < 53] ) + 53
-owid$new_tests[is.na( owid$new_tests )] <- 0
+OWID$date <- as.Date( OWID$date )
+OWID$Jahr <- year( OWID$date )
+OWID$Kw <- isoweek( OWID$date )
+OWID$Pw <- PandemieWoche( OWID$date )
+
+OWID$new_tests[is.na( OWID$new_tests )] <- 0
 
 tt <- function () { 
  theme_ta( base_family = 'Helvetica' ) +
  theme(  
-       axis.text.y = element_text ( color = 'blue' )
-     , axis.title.y = element_text ( color = 'blue' )
+       axis.text.y = element_text ( color = 'black' )
+     , axis.title.y = element_text ( color = 'black' )
      , axis.text.y.right = element_text ( color = 'red' )
      , axis.title.y.right = element_text ( color = 'red' )
      )
@@ -125,76 +134,68 @@ tt <- function () {
 
 for ( l in locations ) {
  
- print( l )
+  print( l )
  
- locationdata <- data.table( 
-  Pw = 1:PWeek
-  , new_cases = rep( 0,PWeek )
-  , new_deaths = rep( 0,PWeek )
-  , weekly_hosp_admissions = rep( 0,PWeek )
-  , new_tests = rep( 0,PWeek )
- )
+  locationdata <- data.table( 
+    Pw = 1:PWeek
+    , new_cases = rep( 0,PWeek )
+    , new_deaths = rep( 0,PWeek )
+    , weekly_hosp_admissions = rep( 0,PWeek )
+    , new_tests = rep( 0,PWeek )
+  )
 
- owid %>% filter( location == l ) -> rowid
+  OWID %>% filter( location == l ) -> ROWID
  
- cases <- aggregate( new_cases ~ Pw, data = rowid, sum )
- deaths <- aggregate( new_deaths ~ Pw, data = rowid, sum )
- hosp <- aggregate( weekly_hosp_admissions ~ Pw, data = rowid, sum )
- tests <- aggregate( new_tests ~ Pw, data = rowid, sum )
+  cases <- aggregate( new_cases ~ Pw, data = ROWID, sum )
+  deaths <- aggregate( new_deaths ~ Pw, data = ROWID, sum )
+  hosp <- aggregate( weekly_hosp_admissions ~ Pw, data = ROWID, sum )
+  tests <- aggregate( new_tests ~ Pw, data = ROWID, sum )
+  
+  Offset = 2 # Versatz Infektion - Tod
+  
+  locationdata$new_cases[cases$Pw] <- cases$new_cases
+  locationdata$new_deaths[deaths$Pw - Offset] <- deaths$new_deaths
+  locationdata$weekly_hosp_admissions[hosp$Pw] <- hosp$weekly_hosp_admissions
+  locationdata$new_tests[tests$Pw] <- tests$new_tests
+  locationdata$Welle <- Welle( l,locationdata$Pw )
  
- # b <- 60
- # c <- match(max(cases$new_cases[1:b]),cases$new_cases[1:b])
- # d <- match(max(deaths$new_deaths[1:b]),deaths$new_deaths[1:b])
- # 
- # delta <- deaths$Pw[d] - cases$Pw[c]
- # if ( delta < 0 ) {
- #   delta <- 3
- # }
+  max_cases  <- max( locationdata$new_cases, na.rm = TRUE )
+  max_deaths <- max( locationdata$new_deaths, na.rm = TRUE )
+  max_hosp   <- max( locationdata$weekly_hosp_admissions, na.rm = TRUE )
+  max_tests  <- max( locationdata$new_tests, na.rm = TRUE )
  
- locationdata$new_cases[cases$Pw] <- cases$new_cases
- locationdata$new_deaths[deaths$Pw] <- deaths$new_deaths
- locationdata$weekly_hosp_admissions[hosp$Pw] <- hosp$weekly_hosp_admissions
- locationdata$new_tests[tests$Pw] <- tests$new_tests
- 
- locationdata$Welle <- Welle( l,locationdata$Pw )
- 
- max_cases  <- max( locationdata$new_cases, na.rm = TRUE )
- max_deaths <- max( locationdata$new_deaths, na.rm = TRUE )
- max_hosp   <- max( locationdata$weekly_hosp_admissions, na.rm = TRUE )
- max_tests  <- max( locationdata$new_tests, na.rm = TRUE )
- 
- scl <- max_cases / max_deaths
-
-locationdata %>% filter ( Pw < PWeek ) %>% ggplot() +
-  geom_line( aes( x = Pw, y = new_cases ), color = 'blue' ) +
-  geom_line( aes( x = Pw, y = new_deaths * scl ), color = 'red' ) +
-  scale_y_continuous(  sec.axis = sec_axis( ~./scl, name = "Todesfälle pro Woche", labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) )
+  scl <- max_cases / max_deaths
+  locationdata %>% filter ( Pw < PWeek ) %>% ggplot() +
+    geom_line( aes( x = Pw, y = new_cases ), color = 'black' ) +
+    geom_line( aes( x = Pw, y = new_deaths * scl ), color = 'red' ) +
+    scale_y_continuous(  sec.axis = sec_axis( ~./scl, name = "Todesfälle pro Woche", labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) )
             , labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
- tt() +
- labs(  title = paste( "Fälle & Todesfälle", l )
-     , subtitle = paste( "Stand:", heute )
-     , x = "Pandemiewoche"
-     , y = "Fälle pro Woche" 
-     , colour = "Fälle" ) -> p1
+    tt() +
+    labs(  title = paste( "Fälle & Todesfälle", l )
+       , subtitle = paste( "Stand:", heute )
+       , x = "Pandemiewoche"
+       , y = "Fälle pro Woche" 
+       , colour = "Fälle" ) -> p1
 
-locationdata %>% filter ( Pw < PWeek & new_cases > 0 & new_deaths > 0 ) %>% ggplot( aes( group = Welle ) ) +
-  geom_point( aes( x = new_cases, y = new_deaths, colour = Welle ), size = 6 ) +
-  geom_smooth( aes( x = new_cases,y = new_deaths, colour = Welle ), method = 'lm' ) +
-  geom_text( aes( x = new_cases, y = new_deaths, label = Pw ) ) +
-  scale_x_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
-  scale_y_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
-  tt() +
-  labs(  title = paste( "Todesfälle ~ Fälle" , l )
-         , subtitle = paste( l, " Stand:", heute, "Offset", delta , "Wochen" )
+  locationdata %>% filter ( Pw < PWeek & new_cases > 0 & new_deaths > 0 ) %>% ggplot( aes( group = Welle ) ) +
+    geom_point( aes( x = new_cases, y = new_deaths, colour = Welle ), size = 6 ) +
+    geom_smooth( aes( x = new_cases,y = new_deaths, colour = Welle ), method = 'lm' ) +
+    geom_text( aes( x = new_cases, y = new_deaths, label = Pw ) ) +
+    scale_x_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
+    scale_y_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
+    facet_wrap(vars(Welle)) +
+    tt() +
+    labs(  title = paste( "Todesfälle ~ Fälle" , l )
+         , subtitle = paste( l, " Stand:", heute) #, "Offset", delta , "Wochen" )
          , x = "Fälle pro Woche"
          , y = "Todesfälle pro Woche" 
          , colour = "Wellen" ) -> p2
 
 
-gg <- grid.arrange( p1, p2, ncol = 1 )
+  gg1 <- grid.arrange( p1, p2, ncol = 1 )
 
-ggsave(  filename = paste( 'png/OWID/', l, '-deaths.png', sep = '' )
-         , plot = gg
+  ggsave(  filename = paste( 'png/OWID/', l, '_deaths_', Offset,'.png', sep = '' )
+         , plot = gg1
          , path = WD
          , device = 'png'
          , bg = "white"
@@ -202,40 +203,42 @@ ggsave(  filename = paste( 'png/OWID/', l, '-deaths.png', sep = '' )
          , height = 21 * 2
          , units = "cm"
          , dpi = 300 
-)
+  )
 
-scl <- max_cases / max_hosp
+  scl <- max_cases / max_hosp
 
-locationdata %>% filter ( Pw < PWeek ) %>% ggplot() +
-  geom_line( aes( x = Pw, y = new_cases ), color = 'blue' ) +
-  geom_line( aes( x = Pw, y = weekly_hosp_admissions * scl ), color = 'red' ) +
-  scale_y_continuous(  sec.axis = sec_axis( ~./scl, name = "Hospitalisierte pro Woche", labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) )
+  locationdata %>% filter ( Pw < PWeek ) %>% ggplot() +
+    geom_line( aes( x = Pw, y = new_cases ), color = 'black' ) +
+    geom_line( aes( x = Pw, y = weekly_hosp_admissions * scl ), color = 'red' ) +
+    scale_y_continuous(  sec.axis = sec_axis( ~./scl, name = "Hospitalisierte pro Woche", labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) )
                        , labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
-  tt() +
-  labs(  title = paste( "Fälle & Hospitalisierte", l )
-         , subtitle = paste( "Stand:", heute )
-         , x = "Pandemiewoche"
-         , y = "Fälle pro Woche" 
-         , colour = "Fälle" ) -> p3
+    tt() +
+    labs(  title = paste( "Fälle & Hospitalisierte", l )
+           , subtitle = paste( "Stand:", heute )
+           , x = "Pandemiewoche"
+           , y = "Fälle pro Woche" 
+          , colour = "Fälle" ) -> p3
 
-locationdata %>% filter ( Pw < PWeek & weekly_hosp_admissions > 0  & new_cases > 0) %>% ggplot( aes( group = Welle ) ) +
- geom_point( aes( x = new_cases, y = weekly_hosp_admissions, colour = Welle ), size = 6 ) +
- geom_smooth( aes( x = new_cases, y = weekly_hosp_admissions, colour = Welle ), method = 'lm' ) +
- geom_text( aes( x = new_cases,  y = weekly_hosp_admissions, label = Pw ) ) +
- scale_x_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
- scale_y_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
- tt() +
- labs(  title = paste( "Hospitalisierte ~ Fälle" , l )
-     , subtitle = paste( l, " Stand:", heute )
-     , x = "Fälle pro Woche"
-     , y = "Hospitalisierte pro Woche" 
-     , colour = "Wellen" ) -> p4
+  locationdata %>% filter ( Pw < PWeek & weekly_hosp_admissions > 0  & new_cases > 0) %>% ggplot( aes( group = Welle ) ) +
+    geom_point( aes( x = new_cases, y = weekly_hosp_admissions, colour = Welle ), size = 6 ) +
+    geom_smooth( aes( x = new_cases, y = weekly_hosp_admissions, colour = Welle ), method = 'lm' ) +
+    geom_text( aes( x = new_cases,  y = weekly_hosp_admissions, label = Pw ) ) +
+    scale_x_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
+    scale_y_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
+    facet_wrap(vars(Welle)) +
+    tt() +
+    labs(  title = paste( "Hospitalisierte ~ Fälle" , l )
+         , subtitle = paste( l, " Stand:", heute )
+         , x = "Fälle pro Woche"
+         , y = "Hospitalisierte pro Woche" 
+        , colour = "Wellen" 
+        ) -> p4
 
 
-gg <- grid.arrange( p3,p4, ncol = 1 )
+  gg2 <- grid.arrange( p3, p4 )
 
-ggsave(  filename = paste( 'png/OWID/', l, '.png', sep = '' )
-     , plot = gg
+  ggsave(  filename = paste( 'png/OWID/', l, '_hosp.png', sep = '' )
+     , plot = gg2
      , path = WD
      , device = 'png'
      , bg = "white"
@@ -245,8 +248,54 @@ ggsave(  filename = paste( 'png/OWID/', l, '.png', sep = '' )
      , dpi = 300 
  )
 
- # ra <- lm( weekly_hosp_admissions_per_million ~ new_cases_smoothed_per_million, data = rowid %>% filter( ! is.na( new_cases_smoothed_per_million ) & ! is.na( weekly_hosp_admissions_per_million ) ) ) 
+if ( max_tests > 0 ) {
+  
+scl <- max_cases / max_tests
 
- #print( summary( ra ) )
+locationdata %>% filter ( Pw < PWeek ) %>% ggplot() +
+  geom_line( aes( x = Pw, y = new_cases ), color = 'black' ) +
+  geom_line( aes( x = Pw, y = new_tests * scl ), color = 'red' ) +
+  scale_y_continuous(  sec.axis = sec_axis( ~./scl, name = "Tests pro Woche", labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) )
+                       , labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
+  tt() +
+  labs(  title = paste( "Fälle & Testungen", l )
+         , subtitle = paste( "Stand:", heute )
+         , x = "Pandemiewoche"
+         , y = "Fälle pro Woche"
+         , colour = "Fälle" ) -> p5
 
+locationdata %>% filter ( Pw < PWeek & new_tests > 0  & new_cases > 0) %>% ggplot( aes( group = Welle ) ) +
+  geom_point( aes( x = new_cases, y = new_tests, colour = Welle ), size = 6 ) +
+  geom_smooth( aes( x = new_cases, y = new_tests, colour = Welle ), method = 'lm' ) +
+  geom_text( aes( x = new_cases,  y = new_tests, label = Pw ) ) +
+  scale_x_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
+  scale_y_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
+  facet_wrap(vars(Welle)) +
+  tt() +
+  labs(  title = paste( "Testungen ~ Fälle" , l )
+         , subtitle = paste( l, " Stand:", heute )
+         , x = "Fälle pro Woche"
+         , y = "Testungen pro Woche"
+         , colour = "Wellen" ) -> p6
+
+
+gg3 <- grid.arrange( p5, p6, ncol = 1 )
+
+ggsave(  filename = paste( 'png/OWID/', l, '_tests.png', sep = '' )
+         , plot = gg3
+         , path = WD
+         , device = 'png'
+         , bg = "white"
+         , width = 29.7 * 2
+         , height = 21 * 2
+         , units = "cm"
+         , dpi = 300
+)
+}
+  
+ # for (w in unique(locationdata$Welle)) {
+ #    print (w)
+ #    ra <- lm( weekly_hosp_admissions ~ new_cases, data = locationdata %>% filter( Welle == w ) ) 
+ #    print( summary( ra ) )
+ # }
 }

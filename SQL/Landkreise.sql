@@ -1,5 +1,35 @@
 use RKI;
 
+create or replace view NichtMeldendeLK as
+select 
+    IdLandkreis div 1000 as IdBundesland
+    , Bundesland
+    , count(*) as Anzahl 
+from ( 
+    select 
+        L.IdLandkreis
+        , L.Landkreis
+        , Anzahl
+    from Landkreis as L 
+    left outer join (
+        select 
+            IdLandkreis
+            , sum(AnzahlFall) as Anzahl 
+        from Faelle 
+        where NeuerFall <> 0 
+        group by 
+            IdLandkreis
+        ) as F 
+    on 
+        L.IdLandkreis = F.IdLandkreis 
+) as B 
+join Bundesland as BL 
+on 
+    BL.IdBundesland = B.IdLandkreis div 1000 
+where 
+    Anzahl is NULL 
+group by IdBundesland;
+
 delimiter //
 
 drop procedure if exists LandkreisKw //

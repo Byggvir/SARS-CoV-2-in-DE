@@ -22,7 +22,7 @@ theme_ta <- function (
   subtitle_face = "plain",
   subtitle_margin = 15,
   strip_text_family = base_family,
-  strip_text_size = 12,
+  strip_text_size = 8,
   strip_text_face = "plain",
   caption_family = base_family,
   caption_size = 9,
@@ -38,29 +38,26 @@ theme_ta <- function (
   grid = TRUE,
   axis_col = "#cccccc",
   axis = FALSE,
-  ticks = FALSE) {
+  ticks = FALSE ) {
   
   theme_ipsum(   base_size = base_size
-               , base_family = base_family ) %+replace%
+               , base_family = base_family
+               , plot_title_margin = 20
+               , subtitle_margin = 20
+               , strip_text_size = 8 ) %+replace%
   theme(
-      plot.title = element_text(
-        color = rgb(25, 43, 65, maxColorValue = 255),
-        face = "bold",
-        hjust = 0,
-        size = rel(3),
-        
-      )
-      
-      , legend.position = 'bottom'
+    
+        legend.position = 'bottom'
       , axis.title = element_text(
         size = rel(0.75))
       , axis.text = element_text(
         size = rel(0.75))
+      , axis.text.x = element_text ( angle = 90 )
       , axis.title.y = element_text ( angle = 90 )
       , axis.title.y.right = element_text ( angle = 90 )
       
      , strip.text.x = element_text (
-        size = rel(0.5)
+        size = rel(2)
         , color = "black"
         , face = "bold.italic"
       ),

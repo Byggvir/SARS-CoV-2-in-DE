@@ -57,3 +57,25 @@ join ImpfDOutcome as O
 on B.IdOutcome = O.IdOutcome
 order by Woche, Altersgruppe
 ;
+
+delimiter //
+
+drop procedure if exists UpdateImpfQuote //
+
+create procedure UpdateImpfQuote ( W DATE, Q1 DOUBLE, Q2 DOUBLE, Q3 DOUBLE)
+begin
+    insert into ImpfD values
+        (W, 12, 17, 'Q', 'A', 100, 100)
+        , (W, 12, 17, 'Q', 'G', Q1, Q1)
+        , (W, 12, 17, 'Q', 'U', 100 - Q1, 100 - Q1)
+        , (W, 18, 59, 'Q', 'A', 100, 100)
+        , (W, 18, 59, 'Q', 'G', Q2, Q2)
+        , (W, 18, 59, 'Q', 'U', 100 - Q2, 100 - Q2)
+        , (W, 60, 100, 'Q', 'A', 100, 100)
+        , (W, 60, 100, 'Q', 'G', Q3, Q3)
+        , (W, 60, 100, 'Q', 'U', 100 - Q3, 100 - Q3)
+    ;
+end 
+//
+
+delimiter ;

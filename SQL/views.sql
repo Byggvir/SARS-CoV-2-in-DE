@@ -263,7 +263,7 @@ view HelpSchutz as
         , IdBundesland
         , Zeitraum
 ;
--- Ende Schutz
+-- Ende HelpSchutz
 
 create or replace view Schutz as
 
@@ -299,33 +299,6 @@ create or replace view PrognoseTote as
         F.Altersgruppe = I.Altersgruppe
 ;
 
-create or replace view RollendeCFR as
-
-    select
-        F1.Meldedatum
-        , F1.IdBundesland
-        , F1.Altersgruppe
-        , (F1.AnzahlTodesfallKum -F2.AnzahlTodesfallKum)/(F1.AnzahlFallKum-F2.AnzahlFallKum) as CFR
-        , sqrt((F1.AnzahlTodesfallKum -F2.AnzahlTodesfallKum)/(F1.AnzahlFallKum-F2.AnzahlFallKum) * (1-(F1.AnzahlTodesfallKum -F2.AnzahlTodesfallKum)/(F1.AnzahlFallKum-F2.AnzahlFallKum)) / (F1.AnzahlFallKum-F2.AnzahlFallKum)) as Sigma
-
-    from FaelleBL as F1
-    join FaelleBL as F2
-    on 
-        F1.Meldedatum = adddate(F2.Meldedatum,41)
-        and F1.IdBundesland = F2.IdBundesland
-        and F1.Altersgruppe = F2.Altersgruppe
-;
-
-create or replace view CFR as
-
-    select
-        Meldedatum
-        , IdBundesland
-        , Altersgruppe
-        , (AnzahlTodesfallKum/AnzahlFallKum) as CFR
-        , sqrt(AnzahlTodesfallKum/AnzahlFallKum * (1-AnzahlTodesfallKum/AnzahlFallKum) / AnzahlFallKum) as Sigma
-    from FaelleBL
-;
 
 create or replace view ImpfOverview as
 select 
@@ -352,15 +325,16 @@ group by
 
 create or replace view FaelleProWoche as
     select     
-        ( case when week(Meldedatum,3) = 53 then 2020 else year(Meldedatum) end ) as Jahr
+          year(Meldedatum) as Jahr
         , week(Meldedatum,3) as Kw
         , PandemieWoche(Meldedatum) as PandemieWoche
         , sum(AnzahlFall) as AnzahlFall
         , sum(AnzahlTodesfall) as AnzahlTodesfall
     from Faelle  
     group by 
-        Jahr
-        , PandemieWoche  
+        PandemieWoche
+    order by
+        PandemieWoche
 ;
 
 create or replace view FaelleProRefWoche as
@@ -439,6 +413,39 @@ create or replace view FaelleProWocheAltersgruppe as
     group by 
         PandemieWoche
         , Altersgruppe;
+
+create or replace view FaelleProMonatAltersgruppe as
+    select 
+        Jahr
+        , Monat
+        , F.Altersgruppe
+        , AnzahlFall
+        , AnzahlTodesfall
+        , AnzahlFall / IB.Anzahl * 100000 as 'Fall [1/100k]'
+        , AnzahlTodesfall / IB.Anzahl * 100000 as 'Todesfall [1/100k]'
+        , AnzahlTodesfall / AnzahlFall * 100 as 'CFR [%]'
+        , IB.Anzahl as AnzahlBev
+    from (    
+        select
+            year(Meldedatum) as Jahr
+            , month(Meldedatum) as Monat
+            , Altersgruppe as Altersgruppe
+            , sum(F.AnzahlFall) as AnzahlFall
+            , sum(F.AnzahlTodesfall) as AnzahlTodesfall
+        from Faelle as F
+        where F.Altersgruppe <> 'unbekan'
+        group by 
+            Jahr
+            , Monat
+            , Altersgruppe
+        ) as F
+    join InfektBev as IB
+    on ( F.Altersgruppe = IB.Altersgruppe )
+    order by 
+        Jahr
+        , Monat
+        , F.Altersgruppe
+;
 
 create or replace view FaelleProAltersgruppe as
    select 
@@ -747,3 +754,19 @@ from
     FaelleAG
 group by
     Jahr, Monat;
+
+create or replace view FaelleNeu as
+
+select 
+      'Neue Fälle' as Art
+    , sum(AnzahlFall) as Anzahl 
+from Faelle 
+where NeuerFall  <> 0
+UNION
+select 
+      'Neue Todesfälle' as Art
+    , sum(AnzahlTodesfall) as Anzahl 
+from Faelle 
+where NeuerTodesfall  <> 0
+
+;

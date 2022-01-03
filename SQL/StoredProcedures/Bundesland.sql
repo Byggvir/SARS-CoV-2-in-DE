@@ -68,7 +68,7 @@ select
     , B.EW_insgesamt as EW_insgesamt
     , F1.Woche as Woche
     , F2.Woche as Vorwoche
-    , round(power(F1.Woche/F2.Woche,4/7),2) as R
+    , power(F1.Woche/F2.Woche,4/7) as R
 from b7 as F1 
 join b14 as F2
 on

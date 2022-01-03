@@ -9,6 +9,8 @@
 #
 MyScriptName <-"SouthAfrica"
 
+require(data.table)
+
 library(tidyverse)
 library(REST)
 library(grid)
@@ -43,9 +45,8 @@ WD <- paste(SD[1:(length(SD)-1)],collapse='/')
 setwd(WD)
 
 
-require(data.table)
-
 source("R/lib/myfunctions.r")
+source("R/lib/mytheme.r")
 source("R/lib/sql.r")
 source("R/lib/color_palettes.r")
 
@@ -57,44 +58,41 @@ options(
   , Outdec = "."
   , max.print = 3000
 )
+
 today <- Sys.Date()
-heute <- format(today, "%d %b %Y")
+heute <- format(today, "%d. %B %Y")
 
 SQL <- 'select * from FaelleProTag;'
-daten2 <- RunSQL(SQL)
+RKI <- RunSQL(SQL)
 
-daten1 <- read.csv(file = 'data/owid-covid-data.csv')
-daten1$date <- as.Date(daten1$date)
-daten1 %>% filter( iso_code == 'DEU' ) -> daten1
+if ( ! exists( "OWID" ) ) {
+  
+  OWID <- read.csv( file = 'https://covid.ourworldindata.org/data/OWID-covid-data.csv' )
+  # OWID <- read.csv( file = 'data/OWID-covid-data.csv' )
+  
+}
+OWID$date <- as.Date(OWID$date)
+OWID %>% filter( iso_code == 'DEU' ) -> OWID
 
 SQL <- 'select * from FaelleProTag;'
-daten2 <- RunSQL(SQL)
+RKI <- RunSQL(SQL)
 
-daten1 %>% ggplot() +
-  geom_line(data = daten1 %>% filter(! is.na(new_cases) & date > '2021-10-31'), aes( x=date, y = new_cases), color = 'blue') +
-  geom_line(data = daten2 %>% filter( Meldedatum > '2021-10-31'), aes( x = Meldedatum, y = AnzahlFall), color = 'red') +
-  scale_y_continuous(
-     labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
-  theme_ipsum() +
-  theme(  plot.title = element_text(size=48)
-          , axis.text.y  = element_text ( color = 'blue' )
-          , axis.title.y = element_text ( color ='blue' )
-          , axis.text.y.right = element_text ( color = 'red' )
-          , axis.title.y.right = element_text ( color='red' )
-          , strip.text.x = element_text (
-            size = 24
-            , color = "black"
-            , face = "bold.italic"
-          ) ) +
+OWID %>% ggplot() +
+  geom_line( data = OWID %>% filter(! is.na(new_cases) & date > '2021-10-31'), aes( x = date, y = new_cases, colour = 'OWID' ), show.legend = TRUE ) +
+  geom_line( data = RKI %>% filter( Meldedatum > '2021-10-31'), aes( x = Meldedatum, y = AnzahlFall, colour = 'RKI' ), show.legend =TRUE )+
+  scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  theme_ta() +
+  theme( legend.position = 'bottom' ) +
   labs(  title = "Vergleich Fallzahlen  RKI / OWID"
-         , subtitle = paste(region ," Stand:", heute)
+         , subtitle = paste("Stand:", heute)
          , x = "Datum"
-         , y = "Fälle" 
-         , colour = "Fälle")
+         , y = "Fallzahl" 
+         , colour = "Quelle" ) -> pp
 
 
-ggsave(  filename = paste( 'png/', region, '.png', sep = '' )
+ggsave(  filename = paste( 'png/Vergleich.png', sep = '' )
          , path = WD
+         , plot = pp
          , device = 'png'
          , bg = "white"
          , width = 29.7
