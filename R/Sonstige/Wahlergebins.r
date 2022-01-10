@@ -63,7 +63,7 @@ options(
 today <- Sys.Date() - 1
 heute <- format(today, "%d %b %Y")
 
-stichtag <- '2021-11-13'
+stichtag <- '2021-12-30'
 
 wahl <- read.csv2('data/Wahlergebnis.csv',sep=',')
 
@@ -93,7 +93,7 @@ daten  %>% ggplot() +
   scale_x_continuous(labels = scales::percent) +
   scale_fill_viridis(discrete = T) +
   labs(  title = "SARS-CoV-2: R-Zahl ~ Wahlergebnis AfD"
-         , subtitle= paste("Stand: ", heute, "\nR-Zahl 2021-11-12 / Bundestagswahl 2021", sep ='')
+         , subtitle= paste("Stand: ", heute, '\nR-Zahl ', stichtag, ' / Bundestagswahl 2021', sep ='')
          , x = "Wahlergebnis [%]"
          , y = "R-Zahl" 
          , colour = "Bundesländer"

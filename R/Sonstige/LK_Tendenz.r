@@ -81,7 +81,10 @@ SQL <- paste(
 Landkreise <- RunSQL(SQL = SQL)
 
 for ( B in Bundesland[,2] ) {
-  
+
+max_Inzidenz <- max( c( Landkreise$Woche / Landkreise$EW_insgesamt 
+                      , Landkreise$Vorwoche / Landkreise$EW_insgesamt)) * 100000
+
 Landkreise %>% filter(Bundesland == B) %>% ggplot() +
   stat_ellipse(aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000, size = EW_insgesamt ), type = "t", geom = "polygon", alpha = 0.1 ) +
   geom_abline( intercept = 0, slope = 1, color ='red' ) +
@@ -94,6 +97,8 @@ Landkreise %>% filter(Bundesland == B) %>% ggplot() +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_fill_viridis(discrete = T) +
   expand_limits( x = 0 , y = 0 ) +
+  expand_limits( x = max_Inzidenz, y = max_Inzidenz ) +
+  coord_fixed() +
   theme_ipsum() +
   theme(  plot.title = element_text( size = 24 )
           , legend.position="right"
@@ -111,18 +116,19 @@ Landkreise %>% filter(Bundesland == B) %>% ggplot() +
 ggsave(  paste('png/LK/Tendenz-',B, '.png', sep='')
        , device = 'png'
        , bg = "white"
-       , width = 29.7 * 2
-       , height = 21 * 2
+       , width = 29.7
+       , height = 21
        , units = "cm"
        , dpi = 300 )
 }
+
 
 Bundesland %>% ggplot() +
   stat_ellipse(aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000 ), type = "t", geom = "polygon", alpha = 0.1 ) +
   geom_abline( intercept = 0, slope = 1, color ='red' ) +
   geom_abline( intercept = 0, slope = 0.75, color ='green' ) +
   geom_point( aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000, colour = Bundesland), size= 18, alpha = 0.5) +
-  geom_text_repel( aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000, label = Abk),size= 6) +
+  geom_text_repel( aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000, label = Abk), size = 6, max.overlaps = 100 ) +
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_fill_viridis(discrete = T) +

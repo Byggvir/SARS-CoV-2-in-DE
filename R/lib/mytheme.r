@@ -56,7 +56,12 @@ theme_ta <- function (
       , axis.title.y = element_text ( angle = 90 )
       , axis.title.y.right = element_text ( angle = 90 )
       
-     , strip.text.x = element_text (
+      , plot.caption = element_text (
+        size = rel(0.2)
+        , color = "black"
+        , face = "bold.italic"
+      )
+      , strip.text.x = element_text (
         size = rel(2)
         , color = "black"
         , face = "bold.italic"

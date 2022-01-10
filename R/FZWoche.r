@@ -155,7 +155,7 @@ SQL <- ' select * from FaelleProWoche;'
 daten <- RunSQL(SQL = SQL)
 
 
-daten %>% ggplot(
+daten %>% filter( PandemieWoche > 74  ) %>% ggplot(
   aes( x = PandemieWoche, y = AnzahlFall)) +
   geom_bar(position="dodge", stat="identity") +
   geom_text(aes(label=AnzahlFall), size=2.5, position=position_dodge(width=0.9), hjust=0,vjust=0.5, angle= 90) +
@@ -163,7 +163,7 @@ daten %>% ggplot(
   scale_fill_viridis(discrete = T) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   labs(  title = "Corona-Fälle nach Woche des Meldedatums"
-         , subtitle = paste ("Deutschland, Stand:", heute, sep ='')
+         , subtitle = paste ("Deutschland, Stand:", heute, sep =' ')
          , x = "PandemieWoche"
          , y = "Fälle" 
          , colour = "Fälle"

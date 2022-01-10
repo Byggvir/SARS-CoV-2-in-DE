@@ -1,0 +1,63 @@
+#!/bin/bash
+
+( cat <<EOF
+
+use RKI;
+
+drop table if exists Entwicklung;
+
+create table Entwicklung (
+    Bestandsdatum DATE
+    , Meldedatum DATE
+    , AnzahlFall BIGINT
+    , AnzahlTodesfall BIGINT
+    , primary key ( Bestandsdatum, Meldedatum )
+);
+
+EOF
+) | mysql --user=rscript --password=rscript 
+
+
+for F in 202*.csv
+
+do 
+    B=${F:0:10}
+    echo $B
+    cat $F \
+    | awk -F ',' -e 'BEGIN {B="'$B'"} {print(B "," $4 "," $10 "," $11 );}' \
+    > /tmp/temp.csv
+
+    (
+    cat << EOF
+    use RKI;
+    
+    create temporary table TEntwicklung (
+        Bestandsdatum DATE
+        , Meldedatum DATE
+        , AnzahlFall BIGINT
+        , AnzahlTodesfall BIGINT
+        , index ( Bestandsdatum, Meldedatum )
+    )
+    ;
+
+    LOAD DATA LOCAL INFILE '/tmp/temp.csv' 
+    INTO TABLE TEntwicklung
+    FIELDS TERMINATED BY ',' 
+    IGNORE 1 ROWS;
+    
+    insert into Entwicklung 
+    select 
+        Bestandsdatum
+        , Meldedatum
+        , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
+    from
+        TEntwicklung
+    group by
+        Bestandsdatum
+        , Meldedatum
+    ;
+EOF
+) | mysql --user=rscript --password=rscript 
+
+done

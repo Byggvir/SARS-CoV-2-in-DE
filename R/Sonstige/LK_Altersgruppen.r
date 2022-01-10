@@ -89,6 +89,9 @@ SQL <- paste(
 Altersgruppen <- RunSQL(SQL = SQL)
 
 for ( B in Bundesland[,2]) {
+
+M <- Altersgruppen %>% filter(Bundesland == B)
+xylimit <- limbounds(c(M$Vorwoche/M$EW_insgesamt ,M$Woche/M$EW_insgesamt)) * 100000
   
 Altersgruppen %>% filter(Bundesland == B) %>% ggplot() +
 #  stat_ellipse(aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000), color= 'darkgrey', type = "t", geom = "polygon", alpha = 0.1 ) +
@@ -101,6 +104,7 @@ Altersgruppen %>% filter(Bundesland == B) %>% ggplot() +
   geom_text_repel( aes( x = Vorwoche / EW_insgesamt * 100000, y = Woche / EW_insgesamt * 100000, label = Altersgruppe), vjust=0, hjust=1) + 
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  coord_fixed ( xlim = xylimit, ylim = xylimit ) +
   scale_fill_viridis(discrete = T) +
 #  facet_wrap(vars(Bundesland)) +
   expand_limits( x = 0 , y = 0 ) +
@@ -121,8 +125,8 @@ Altersgruppen %>% filter(Bundesland == B) %>% ggplot() +
 ggsave(  paste('png/LK/Altersgruppen-Tendenz-',B,'.png', sep='')
        , device = 'png'
        , bg = "white"
-       , width = 29.7
-       , height = 21
-       , units = "cm"
-       , dpi = 300 )
+       , width = 1920 * 2
+       , height = 1080 * 2
+       , units = "px"
+       )
 }

@@ -61,7 +61,7 @@ options(
 today <- Sys.Date()
 heute <- format(today, "%F")
 
-Stichtag <- '2021-11-29'
+Stichtag <- '2021-12-29'
 
 citation <- paste('© 2021 by Thomas Arend, Stand: ',heute,'\nQuelle: Robert Koch-Institut (2021)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153',sep='')
 

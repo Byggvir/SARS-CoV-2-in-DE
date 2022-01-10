@@ -190,7 +190,7 @@ view ImpfQuoteBL as
     on I.IdLandkreis div 1000 = S.IdBundesland 
     where I.ImpfSchutz = 2
         and S.Stichtag = "2020-12-31"
-        and Impfdatum <= "2021-11-29"
+        and Impfdatum <= "2021-12-29"
     group by I.IdLandkreis div 1000
 ;
 
@@ -484,6 +484,16 @@ create or replace view FaelleProMonat as
     group by 
         Jahr
         , Monat
+;
+
+create or replace view FaelleProJahr as
+    select     
+        year(Meldedatum) as Jahr
+        , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
+    from Faelle  
+    group by 
+        Jahr
 ;
 
 create or replace view FaelleProRefMonat as

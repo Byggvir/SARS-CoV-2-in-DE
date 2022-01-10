@@ -114,7 +114,10 @@ Bundesland <- RunSQL(SQL = SQL)
 
 for ( B in 1:16) {
   
-Landkreise %>% filter(IdBundesland == B) %>% ggplot() +
+  L <- Landkreise %>% filter(IdBundesland == B )
+  max_Inzidenz <- max(c(L$Anzahl/L$EW_insgesamt,L$AnzahlVorwoche/L$EW_insgesamt)) * 100000
+  
+  L %>% ggplot() +
   stat_ellipse(aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000), type = "t", geom = "polygon", alpha = 0.1 ) +
   geom_abline(intercept = 0,slope = 1, color ='red') +
   geom_point( aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000, colour=Landkreis), size = 2) +
@@ -126,7 +129,7 @@ Landkreise %>% filter(IdBundesland == B) %>% ggplot() +
 
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_fill_viridis(discrete = T) +
-  expand_limits( x = 0 , y = 0 ) +
+  coord_fixed( xlim = limbounds(c(0,max_Inzidenz)), ylim = limbounds(c(0,max_Inzidenz))) +
   facet_wrap(vars(Pw)) +
   theme_ipsum() +
   theme(  plot.title = element_text(size=24)

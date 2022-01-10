@@ -8,6 +8,7 @@ library(REST)
 library(gtable)
 library(lubridate)
 library(ggplot2)
+library(ggtext)
 library(grid)
 library(gridExtra)
 # library(ggpubr)
@@ -92,10 +93,11 @@ daten <- read_csv(
 
 daten$Woche <- daten$Kw - daten$Kw[1]
 StartWeek <- daten$Kw[1]
+UntilWeek <- 60
 
 CI <- 0.95
 
-O_ra <- lm( s( Omikron / Summe ) ~ Woche, data=daten)
+O_ra <- lm( s( Omikron / (Omikron + Delta) ) ~ Woche, data=daten)
 O_ci <- confint( O_ra, level = CI )
 
 O_a <- c( O_ci[1,1], O_ra$coefficients[1], O_ci[1,2] )
@@ -104,7 +106,7 @@ O_b <- c( O_ci[2,1], O_ra$coefficients[2], O_ci[2,2] )
 print('Verhältnis Omikron zu Delta')
 print(exp(-O_b))
 
-D_ra <- lm( s( Delta / Summe ) ~ Woche, data=daten)
+D_ra <- lm( s( Delta / (Omikron + Delta) ) ~ Woche, data=daten)
 D_ci <- confint(D_ra,level = CI)
 
 D_a <- c( D_ci[1,1], D_ra$coefficients[1] , D_ci[1,2] )
@@ -113,22 +115,27 @@ D_b <- c( D_ci[2,1], D_ra$coefficients[2] , D_ci[2,2] )
 print('Verhältnis Omikron zu Delta')
 print(exp(D_b))
 
-print(summary(O_ra))
+# print(summary(O_ra))
 
 O_shaderibbon = data.table(
-  x = seq(min(daten$Kw),60,length.out=100)
+  x = seq(StartWeek,UntilWeek,length.out=(UntilWeek-StartWeek)*7)
 )
 
 O_shaderibbon$ylower <- sapply( O_shaderibbon$x, FUN = function(x) { sigmoid( x, a = O_a[1], b = O_b[1], s = StartWeek ) } )
 O_shaderibbon$yupper <- sapply( O_shaderibbon$x, FUN = function(x) { sigmoid( x, a = O_a[3], b = O_b[3], s = StartWeek ) } )
 
 D_shaderibbon = data.table(
-  x = seq(min(daten$Kw),60,length.out=100)
+  x = seq(StartWeek,UntilWeek,length.out=(UntilWeek-StartWeek)*7)
 )
 
 D_shaderibbon$ylower <- sapply( D_shaderibbon$x, FUN = function(x) { sigmoid( x, a = D_a[1], b = D_b[1], s = StartWeek ) } )
 D_shaderibbon$yupper <- sapply( D_shaderibbon$x, FUN = function(x) { sigmoid( x, a = D_a[3], b = D_b[3], s = StartWeek ) } )
 
+xticklabels <- 
+  c(  paste('2021',StartWeek:52,sep= '/')
+    , paste('2022',1:(UntilWeek-52),sep= '/')
+    )
+  
 daten %>% ggplot(
   aes( x = Kw )) +
   geom_ribbon(  data = O_shaderibbon, aes( x = x, ymin = ylower, ymax = yupper ), color = 'grey',  alpha=0.1 ) +
@@ -144,7 +151,21 @@ daten %>% ggplot(
   geom_function( fun = sigmoid, args = list( a = D_a[1], b = D_b[1], s = StartWeek ), aes(colour = 'Delta Untergrenze'), linetype = 'dotted', size = 1 ) +
   geom_function( fun = sigmoid, args = list( a = D_a[2], b = D_b[2], s = StartWeek ), aes(colour = 'Delta Mittelwert'), linetype = 'dotted', size = 1 ) +
   geom_function( fun = sigmoid, args = list( a = D_a[3], b = D_b[3], s = StartWeek ), aes(colour = 'Delta Obergrenze'), linetype = 'dotted', size = 1 ) +
-
+  geom_richtext( aes( 
+                  x = StartWeek
+                , y = 0.5 
+                , label = paste( 'R-Wert Omikron : Delta = \n'
+                              
+                    , round(exp(D_b[2]),1)
+                    , '['
+                    , round(exp(D_b[3]),1)
+                    , '-'
+                    , round(exp(D_b[1]),1)
+                    , ']'
+                    )
+                )
+                , hjust = 0) +
+  scale_x_continuous(breaks = seq(min(daten$Kw), 60, by = 1), labels = xticklabels ) +
   scale_y_continuous(labels = scales::percent) +
   # scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   expand_limits( x = 60 ) +
