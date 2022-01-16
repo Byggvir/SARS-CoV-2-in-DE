@@ -35,7 +35,7 @@ if (rstudioapi::isAvailable()){
 } else {
   
   #  When executing on command line 
-  SD = (function() return( if(length(sys.parents())==1) getwd() else dirname(sys.frame(1)$ofile) ))()
+  SD = (function() return( if(length(sys.parents()) == 1) getwd() else dirname(sys.frame(1)$ofile) ))()
   SD <- unlist(str_split(SD,'/'))
   
 }
@@ -43,8 +43,6 @@ if (rstudioapi::isAvailable()){
 WD <- paste(SD[1:(length(SD)-2)],collapse='/')
 
 setwd(WD)
-
-fPrefix <- "Ausprobieren_"
 
 require(data.table)
 
@@ -128,7 +126,7 @@ for ( B in 1:16) {
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
 
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
-  scale_fill_viridis(discrete = T) +
+  scale_fill_viridis(discrete = TRUE ) +
   coord_fixed( xlim = limbounds(c(0,max_Inzidenz)), ylim = limbounds(c(0,max_Inzidenz))) +
   facet_wrap(vars(Pw)) +
   theme_ipsum() +
@@ -152,3 +150,4 @@ ggsave(  paste('png/LK/PandemieWoche-',BL[B+1,2],'.png', sep='')
        , units = "cm"
        , dpi = 300 )
 }
+

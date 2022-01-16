@@ -105,7 +105,7 @@ Altersgruppen %>% filter(Bundesland == B) %>% ggplot() +
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   coord_fixed ( xlim = xylimit, ylim = xylimit ) +
-  scale_fill_viridis(discrete = T) +
+  scale_fill_viridis(discrete = TRUE) +
 #  facet_wrap(vars(Bundesland)) +
   expand_limits( x = 0 , y = 0 ) +
   theme_ipsum() +

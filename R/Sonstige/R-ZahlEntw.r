@@ -63,8 +63,8 @@ options(
 today <- Sys.Date() - 1
 heute <- format(today, "%d %b %Y")
 
-Jahr <- 2021
-Monat <- 12
+Jahr <- 2022
+Monat <- 1
 
 SQL <- '
 select 
@@ -88,18 +88,7 @@ daten %>% filter ( year(Datum) == Jahr & month(Datum) == Monat & BerechnetAm <= 
                                 "Obergrenze" = "steelblue")) +
   scale_fill_viridis(discrete = T) +
   facet_wrap(vars(Datum)) +
-  theme_ipsum() +
-  theme(      plot.title=element_text(size=48, hjust=0.5, face="italic", color="black")
-            , plot.subtitle=element_text(size=36, hjust=0.5, face="italic", color="black")
-            , axis.text.x  = element_text ( color = 'black', size = 12, angle = 90)
-            , axis.title.x = element_text ( color='black', size = 12)
-            , axis.text.y  = element_text ( color = 'black', size = 12)
-            , axis.title.y = element_text ( color='black', size = 12)
-            , strip.text.x = element_text (
-              size = 24
-              , color = "black"
-              , face = "bold.italic"
-            ) ) + 
+  theme_ta() +
   labs(  title = "Entwicklung des berechneten R-Wertes für ausgewählte Tage"
        , subtitle= "Stand: 21.12.2021"
        , x = "Datum"
@@ -108,8 +97,9 @@ daten %>% filter ( year(Datum) == Jahr & month(Datum) == Monat & BerechnetAm <= 
        , caption = citation ) -> p
 
 ggsave(  paste('png/R_Entwicklung', Monat, '.png', sep='')
+       , device = 'png'
        , bg = "white"
-       , width = 29.7 * 2
-       , height = 21 * 2
-       , units = "cm"
-       , dpi = 300 )
+       , width = 3840 * 3
+       , height = 2160 * 3
+       , units = "px"
+       )

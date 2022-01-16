@@ -742,6 +742,33 @@ from
 group by
     Meldedatum;
 
+create or replace view FaelleBLSum as
+select 
+    B.IdBundesland as IdBundesland
+    , B.Bundesland as Bundesland
+    , F.Altersgruppe as Altersgruppe
+    , F.Geschlecht as Geschlecht
+    , sum(AnzahlFall) as AnzahlFall
+    , sum(AnzahlTodesfall) as AnzahlTodesfall
+    , E.Anzahl as Einwohner
+from Faelle as F
+
+join Bundesland as B
+on B.IdBundesland = F.IdLandkreis div 1000
+
+join DESTATIS.StdBev6BL as E
+on 
+    B.IdBundesland = E.IdBundesland
+    and F.Geschlecht = E.Geschlecht
+    and F.Altersgruppe = E.Altersgruppe
+where 
+  E.Stichtag = "2020-12-31"
+group by
+ B.IdBundesland
+ , F.Geschlecht
+ , F.Altersgruppe
+;
+
 create or replace view FaelleAGProMonat as
 select 
     year(Meldedatum) as Jahr

@@ -15,7 +15,7 @@ library( ggpubr )
 library( viridis )
 library( hrbrthemes )
 library( scales )
-library( Cairo )
+library( ragg )
 library( htmltab )
 library( readODS )
 library( XML )
@@ -38,8 +38,7 @@ if ( rstudioapi::isAvailable() ){
   
 }
 
-WD <- paste( SD[1:( length( SD )-1 )],collapse='/' )
-
+WD <- paste( SD[1:( length( SD ) - 1 )],collapse='/' )
 setwd( WD )
 
 source( "R/lib/myfunctions.r" )
@@ -113,7 +112,7 @@ RKI_Omikron$KumAnzahl <- cumsum(RKI_Omikron$Anzahl )
 print( RKI_Omikron )
 
 Anfang <- 46
-BisWoche <- max(RKI_Omikron$Omikronwoche) - 1
+BisWoche <- max(RKI_Omikron$Omikronwoche) - 2
 
 xticklabels <- 
   c(  paste('2021',Anfang:52,sep= '/')

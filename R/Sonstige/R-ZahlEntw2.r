@@ -77,18 +77,7 @@ daten %>%
   geom_hline(aes( yintercept = 0), color = 'red', size = 0.2) +
   scale_fill_viridis(discrete = T) +
   # facet_wrap(vars(reorder(Bez,Wochentag))) +
-  theme_ipsum() +
-  theme(      plot.title=element_text(size=24, hjust=0.5, face="italic", color="black")
-            , plot.subtitle=element_text(size=18, hjust=0.5, face="italic", color="black")
-            , axis.text.x  = element_text ( color = 'black', size = 12, angle = 90)
-            , axis.title.x = element_text ( color='black', size = 12)
-            , axis.text.y  = element_text ( color = 'black', size = 12)
-            , axis.title.y = element_text ( color='black', size = 12)
-            , strip.text.x = element_text (
-              size = 18
-              , color = "black"
-              , face = "italic"
-            ) ) + 
+  theme_ta() +
   labs(  title = "Differenz des R-Wert zum 14 Tage später gemeldeten Wert"
        , subtitle= paste( "R(t) - R(t+14) / Stand:", heute )
        , x = "Datum"
@@ -98,7 +87,8 @@ daten %>%
 
 ggsave(  paste('png/R_EntwicklungDiff', 3, '.png', sep='')
        , bg = "white"
-       , width = 29.7
-       , height = 21
-       , units = "cm"
-       , dpi = 300 )
+       , device = 'png'
+       , width = 3180
+       , height = 2160
+       , units = "px"
+       )

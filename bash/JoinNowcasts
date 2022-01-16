@@ -21,7 +21,7 @@ echo -e "${blue}+---------${reset}\n\n"
 
 
 ( echo 'BerechnetAm,Datum,PS_7_Tage_R_Wert,UG_PI_7_Tage_R_Wert,OG_PI_7_Tage_R_Wert'
-  grep '^2021-*' /data/git/SARS-CoV-2-in-DE/Nowcasting/Archiv/Nowcast_R_2021*.csv \
+  grep '^202[0-9]-*' /data/git/SARS-CoV-2-in-DE/Nowcasting/Archiv/Nowcast_R_202*.csv \
   | sed '/,,,/d;/,\.,\.,\./d; s#^.*Nowcast_R_##;s#\.csv:#,#;s#,\.#,0.#g' \
   | awk -F ',' '{ if ($12 != "") { print($1 "," $2 "," $12 "," $13 "," $14) } else { print($1 "," $2 "," $9 "," $10 "," $11) } }' \
 ) > "$CSV"

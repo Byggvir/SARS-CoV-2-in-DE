@@ -181,10 +181,10 @@ ggsave(  filename = 'png/VoC-1a.png'
          , plot = p1
          , device = 'png'
          , bg = "white"
-         , width = 29.7
-         , height = 21
-         , units = "cm"
-         , dpi = 300 )
+         , width = 1920 * 2
+         , height = 1080 * 2
+         , units = "px"
+)
 
 ra <- lm( log( Omikron/Summe*Faelle ) ~ Woche, data=daten)
 ci <- confint( ra, level = CI )
@@ -225,7 +225,7 @@ ggsave(  filename = 'png/VoC-1b.png'
          , plot = p2
          , device = 'png'
          , bg = "white"
-         , width = 29.7
-         , height = 21
-         , units = "cm"
-         , dpi = 300 )
+         , width = 1920 * 2
+         , height = 1080 * 2
+         , units = "px"
+)
