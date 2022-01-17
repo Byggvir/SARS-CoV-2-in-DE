@@ -62,7 +62,7 @@ options(
 today <- Sys.Date() - 1
 heute <- format(today, "%d %b %Y")
 
-PWoche <- ( as.integer(today - as.Date('2019-12-29')) - 4 ) %/% 7 + 1
+PWoche <- ( as.integer(today - as.Date('2019-12-29')) - 4 ) %/% 7  # + 1
 
 SQL <- 'select * from Bundesland order by IdBundesland;'
 BL <- RunSQL(SQL)
@@ -116,21 +116,23 @@ for ( B in 1:16) {
   max_Inzidenz <- max(c(L$Anzahl/L$EW_insgesamt,L$AnzahlVorwoche/L$EW_insgesamt)) * 100000
   
   L %>% ggplot() +
-  stat_ellipse(aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000), type = "t", geom = "polygon", alpha = 0.1 ) +
-  geom_abline(intercept = 0,slope = 1, color ='red') +
-  geom_point( aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000, colour=Landkreis), size = 2) +
-  geom_point( data = Bundesland %>% filter(IdBundesland == B)
-                , aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000)
+  stat_ellipse( aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000), type = "t", geom = "polygon", alpha = 0.1 ) +
+  geom_abline( intercept = 0, slope = 1, color = 'red' ) +
+  geom_point( aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000, colour=Landkreis), size = 2 ) +
+  geom_point( data = Bundesland %>% filter( IdBundesland == B )
+                , aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000 )
                 , shape = 3, stroke = 2, fill = "blue", color = "darkblue", alpha = 0.5, size = 5 ) +
     
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
-
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
-  scale_fill_viridis(discrete = TRUE ) +
-  coord_fixed( xlim = limbounds(c(0,max_Inzidenz)), ylim = limbounds(c(0,max_Inzidenz))) +
-  facet_wrap(vars(Pw)) +
+  scale_fill_viridis( discrete = TRUE ) +
+
+  coord_fixed( xlim = limbounds( c( 0, max_Inzidenz ) ), ylim = limbounds( c( 0, max_Inzidenz ) ) ) +
+  
+  facet_wrap(vars( Pw )) +
+  
   theme_ipsum() +
-  theme(  plot.title = element_text(size=24)
+  theme(  plot.title = element_text( size = 24 )
           , legend.position="none"
          , strip.text.x = element_text (
           size = 12
