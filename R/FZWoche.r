@@ -58,7 +58,7 @@ source("R/lib/myfunctions.r")
 source("R/lib/sql.r")
 source("R/lib/color_palettes.r")
 
-citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
+citation <- "© 2022 by Thomas Arend\nQuelle: Robert Koch-Institut (2022)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
 
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
@@ -105,12 +105,12 @@ weekly %>% ggplot(
   theme(plot.subtitle=element_text(size=36, hjust=0.5, face="italic", color="black")) -> pp
 
 ggsave(  paste(fPrefix,'_Alter.png', sep = '')
+         , device = 'png'
          , bg = "white"
-         , width = 29.7 * 2
-         , height = 21 * 2
-         , units = "cm"
-         , dpi = 300 )
-
+         , width = 1920 * 2
+         , height = 1080 * 2
+         , units = "px"
+)
 
 weekly %>% ggplot(
   aes( x = AnzahlFall, y = AnzahlTodesfall ) 
@@ -145,15 +145,14 @@ weekly %>% ggplot(
   theme(plot.subtitle=element_text(size=24, hjust=0.5, face="italic", color="black")) -> pp2
 
 ggsave( paste(fPrefix,'_AlterScatterplot.png', sep = '')
-         , bg = "white"
-         , width = 29.7
-         , height = 21
-         , units = "cm"
-         , dpi = 300 )
-
+        , device = 'png'
+        , bg = "white"
+        , width = 1920 * 2
+        , height = 1080 * 2
+        , units = "px"
+)
 SQL <- ' select * from FaelleProWoche;'
 daten <- RunSQL(SQL = SQL)
-
 
 daten %>% filter( PandemieWoche > 74  ) %>% ggplot(
   aes( x = PandemieWoche, y = AnzahlFall)) +
@@ -163,7 +162,7 @@ daten %>% filter( PandemieWoche > 74  ) %>% ggplot(
   scale_fill_viridis(discrete = T) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   labs(  title = "Corona-Fälle nach Woche des Meldedatums"
-         , subtitle = paste ("Deutschland, Stand:", heute, sep =' ')
+         , subtitle = paste ("Deutschland, Stand:", heute, sep ='')
          , x = "PandemieWoche"
          , y = "Fälle" 
          , colour = "Fälle"
@@ -187,8 +186,9 @@ daten %>% filter( PandemieWoche > 74  ) %>% ggplot(
   theme(plot.subtitle=element_text(size=24, hjust=0.5, face="italic", color="black")) -> pp
 
 ggsave(  paste('png/Fallzahlen_Woche.png', sep = '')
+         , device = 'png'
          , bg = "white"
-         , width = 29.7
-         , height = 21
-         , units = "cm"
-         , dpi = 300 )
+         , width = 1920 * 2
+         , height = 1080 * 2
+         , units = "px"
+)

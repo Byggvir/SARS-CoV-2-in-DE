@@ -246,6 +246,8 @@ BEGIN
     
     CREATE TABLE FaelleLandkreisPw
     ( IdLandkreis INT 
+    , Jahr INT
+    , Kw INT
     , Pw INT 
     , AnzahlFall BIGINT(20)
     , AnzahlTodesfall BIGINT(20)
@@ -253,6 +255,8 @@ BEGIN
     (
     SELECT
         IdLandkreis as IdLandkreis
+        , year(Meldedatum) as Jahr
+        , week(Meldedatum,3) as Kw
         , PandemieWoche(Meldedatum) as Pw
         , sum(AnzahlFall) as AnzahlFall
         , sum(AnzahlTodesfall) as AnzahlTodesfall

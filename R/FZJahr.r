@@ -58,7 +58,7 @@ options(
   , max.print = 3000
 )
 
-citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
+citation <- "© 2022 by Thomas Arend\nQuelle: Robert Koch-Institut (2022)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
 
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
@@ -73,10 +73,10 @@ bar <- data.table (
   
 )
 
-bar %>% filter( Jahr < 2022 ) %>% ggplot(
+bar %>% ggplot(
   aes( x = Jahr, y = Anzahl, colour = Outcome, fill = Outcome ) ) +
   geom_bar( position = "dodge", stat = "identity") +
-  geom_text( aes( label = Anzahl ), size = 2.5, position = position_dodge( width = 0.9 ), vjust = -0.25 ) +
+  geom_text( aes( label = Anzahl ), size = 5, position = position_dodge( width = 0.9 ), vjust = -0.25 ) +
 #  scale_fill_viridis( discrete = T ) +
   scale_x_continuous(  breaks = 2020:2021 , labels = 2020:2021 ) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +

@@ -14,6 +14,14 @@ end
 
 //
 
+create or replace 
+function PandemieWocheDatum ( Pw INT ) returns DATE
+begin
+      return adddate("2019-12-30", (Pw - 1) * 7);
+end
+
+//
+
 create or replace
 function sigma_rel ( n INT, k INT) returns DOUBLE
 

@@ -1,0 +1,121 @@
+#!/bin/bash
+
+DEBUG=OFF
+
+# Color for output
+
+red=`tput setaf 1`
+green=`tput setaf 2`
+blue=`tput setaf 4`
+reset=`tput sgr0`
+
+HEUTE=$(date +%F)
+SPATH=$(dirname "$0")
+if [ "$SPATH" = "." ] 
+then
+  GIT=$(dirname "$PWD")
+else
+  GIT=$(dirname "$SPATH")
+fi
+echo G=$GIT 
+
+
+SEDDIR="bash/sed"
+echo SEDDIR=$SEDDIR
+AWKDIR="bash/awk"
+echo AWKDIR=$AWKDIR
+
+[ "$DEBUG" = "ON" ] && TEMP="/tmp/rki" || TEMP="/tmp/rki-${HEUTE}"
+[ ! -d  "${TEMP}" ] && mkdir "${TEMP}"
+
+CSV="$TEMP/Infektionen.csv"
+
+echo $CSV
+
+echo -e "\n\n${blue}+---------"
+echo -e "| ${red}Neuinfektionen"
+echo -e "| ${blue}Zusammenführen der Archivdateien für Infektionen"
+echo -e "${blue}+---------${reset}\n\n"
+
+function importneu {
+
+( grep -v 'Meldedatum' /data/git/SARS-CoV-2-in-DE/Infektionen/Archiv/$1_Deutschland_SarsCov2_Infektionen.csv \
+   | awk -F ',' -f "${AWKDIR}/JoinNeufaelle.awk" -e 'BEGIN { BDAT = '\"$1\"'; }' \
+) > "$CSV"
+
+#
+# DROP TABLE IF EXISTS NeuInfektionen;
+#
+
+(
+cat <<EOF
+use RKI;
+
+create table if not exists NeuFaelle
+    ( 
+      Bestandsdatum DATE
+    , Meldedatum DATE
+    , Altersgruppe CHAR(8)
+    , Geschlecht CHAR (1)
+    , Art CHAR(1)
+    , Anzahl BIGINT(20)
+    , primary key ( 
+            Bestandsdatum
+            , Meldedatum
+            , Altersgruppe
+            , Geschlecht
+            , Art
+            )
+    )
+;
+
+drop table if exists NeuInfektionen ;
+
+create temporary table NeuInfektionen
+    ( 
+      Bestandsdatum DATE
+    , Meldedatum DATE
+    , Altersgruppe CHAR(8)
+    , Geschlecht CHAR (1)
+    , Art CHAR (1)
+    , Anzahl BIGINT(20)
+    )
+;
+
+LOAD DATA LOCAL INFILE '${TEMP}/Infektionen.csv' 
+    INTO TABLE NeuInfektionen 
+    FIELDS TERMINATED BY ',' 
+    IGNORE 0 ROWS;
+
+insert into NeuFaelle 
+select 
+    Bestandsdatum
+    , Meldedatum
+    , Altersgruppe
+    , Geschlecht
+    , Art
+    , sum(Anzahl) as Anzahl
+from NeuInfektionen
+group by
+    Bestandsdatum
+    , Meldedatum
+    , Altersgruppe
+    , Geschlecht
+    , Art
+;
+
+EOF
+
+) |  mysql --user=rscript --password=rscript
+
+}
+
+pushd $GIT
+
+for F in /data/git/SARS-CoV-2-in-DE/Infektionen/Archiv/20*.csv
+do
+    echo $F
+    importneu $(echo $F | sed 's#.*/##; s#_.*##')
+done
+
+popd

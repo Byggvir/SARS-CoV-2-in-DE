@@ -9,31 +9,49 @@
 # E-Mail: thomas@arend-rhb.de
 #
 
-MyScriptName <-"RKI"
+MyScriptName <-"FZTag"
 
-require(data.table)
 library(tidyverse)
 library(REST)
+library(grid)
+library(gridExtra)
+library(gtable)
+library(lubridate)
+library(ggplot2)
+library(ggrepel)
+library(viridis)
+library(hrbrthemes)
+library(scales)
+library(ragg)
+# library(extrafont)
+# extrafont::loadfonts()
 
 # Set Working directory to git root
 
 if (rstudioapi::isAvailable()){
   
-  # When called in RStudio
+  # When executed in RStudio
   SD <- unlist(str_split(dirname(rstudioapi::getSourceEditorContext()$path),'/'))
   
 } else {
   
-  #  When called from command line 
+  #  When executing on command line 
   SD = (function() return( if(length(sys.parents())==1) getwd() else dirname(sys.frame(1)$ofile) ))()
   SD <- unlist(str_split(SD,'/'))
   
 }
 
 WD <- paste(SD[1:(length(SD)-1)],collapse='/')
+
 setwd(WD)
 
-PNG <- "png/Fallzahlen_Tag_Bund"
+fPrefix <- "Ausprobieren_"
+
+require(data.table)
+
+source("R/lib/myfunctions.r")
+source("R/lib/mytheme.r")
+source("R/lib/sql.r")
 
 # Reads the cumulative cases and death from rki.de
 # The Excel file is in a very poor format. Therefore we have to adjust the data.
@@ -50,109 +68,60 @@ options(
   , Outdec="."
   , max.print = 3000
   )
+citation <- "© 2022 by Thomas Arend\nQuelle: Robert Koch-Institut (2022)\nGitHub SARS-CoV-2 Infektionen"
 
-#  Funktion zum Zeichnen des Diagrammes
+SQL <- 'select * from FaelleProTag'
+daten <- RunSQL( SQL )
 
-diagram <- function (
-  SQL
-  , main = "CoViD-19 DE: Tägliche vom RKI gemeldete Fälle bis"
-  , N = 1
-) {
+daten$Meldedatum <- as.Date(daten$Meldedatum)
 
-  # Holen der Daten aus der Datenbank
-  
-  daily <- RunSQL(SQL = SQL, prepare = 'set @i:=0;')
+daten %>%  filter ( Meldedatum > "2021-08-31" ) %>%  ggplot( aes( x = Meldedatum, y = AnzahlFall )) +
+  geom_bar(position="dodge", stat="identity") +
+  scale_x_date ( breaks = '1 month') + 
+  scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  scale_fill_viridis(discrete = TRUE) +
+  theme_ta() +
+  theme(  plot.title = element_text( size = 24 )
+          , legend.position="right"
+          , axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
+          , strip.text.x = element_text (
+            size = 12
+            , color = "black"
+            , face = "bold.italic"
+          ) ) +  labs(  title = paste('Fälle pro Tag')
+         , subtitle = "Meldedatum Gesundheitsamt"
+         , x = paste( 'Datum' )
+         , y = paste( 'Anzahl Fälle' )
+         , caption = citation ) -> p1
 
-  m <- length(daily[,1])
+daten %>% filter ( Meldedatum > "2021-08-31" ) %>% ggplot( aes( x = Meldedatum, y = AnzahlTodesfall )) +
+  geom_bar(position="dodge", stat="identity") +
+  scale_x_date ( breaks = '1 month') + 
+  scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  scale_fill_viridis(discrete = TRUE) +
+  theme_ta() +
+  theme(  plot.title = element_text( size = 24 )
+          , legend.position="right"
+          , axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
+          , strip.text.x = element_text (
+            size = 12
+            , color = "black"
+            , face = "bold.italic"
+          ) ) +
+  labs(  title = paste('Todesfälle pro Tag')
+         , subtitle = "Meldedatum Gesundheitsamt"
+         , x = paste( 'Datum' )
+         , y = paste( 'Anzahl Fälle' )
+         , caption = citation ) -> p2
 
-  png(  
-    paste( PNG, N, '.png', sep="" )
-    , width=3840
-    , height=2160
-  )
+P <- grid.arrange( p1, p2 , ncol = 2)
 
-  par(mfcol=c(2,1))
-
-  colors <-c( "red", "yellow", "green", "blue", "black" )
-
-  today <- Sys.Date()
-  heute <- format(today, "%d %b %Y")
-  startdate <- as.Date("2020-02-24")
-  reported <- daily$Date[m]
-
-
-  barplot(
-           as.numeric(daily$AnzahlFall[1:m]) # [fromto]
-         , ylim= limbounds(daily$AnzahlFall[1:m])
-         , main = "" 
-         , sub = ""
-         , xlab = ""
-         , col=c(rep("lightblue",6),"red")
-         , ylab="Anzahl"
-         #, names.arg = Tage # [fromto]
-         , las = 2
-         
-  )
-
-  title ( 
-    main = paste( main, "Fälle bis", reported) 
-    , line = -3
-    , cex.main = 8
-  )
-
-  
-  title ( 
-    sub = paste("Created:", heute )
-    , line= 3
-    , cex.sub = 4
-  )
-
-  title ( 
-    xlab = paste("Datum" )
-    , line= 1
-    , cex.lab = 4
-  )
-
-  grid()
-
-  barplot( as.numeric(daily$AnzahlTodesfall[1:m]) # [fromto]
-         , ylim = limbounds(as.numeric(daily$AnzahlTodesfall[1:m]))
-         , main = ""
-         , sub = ""
-         , xlab=""
-         , col=c(rep("lightblue",6),"red") 
-         , ylab="Anzahl"
-         #, names.arg = Tage # [fromto]
-         , las = 2
-  )
-
-  title ( 
-    main = paste( main, "Todesfälle bis", reported) 
-    , line = -3
-    , cex.main  = 8
-  )
-
-  title ( 
-    sub = paste("Created:", heute )
-    , line= 3
-    , cex.sub = 4
-  )
-  title ( 
-    xlab = paste("Datum" )
-    , line= 1
-    , cex.lab = 4
-  )
-  grid()
-
-  copyright()
-
-  dev.off()
-
-  return (daily)
-
-}
-
-daily <- diagram( 
-  SQL = 'select Meldedatum as Meldedatum, sum(AnzahlFall) as AnzahlFall, sum(AnzahlTodesfall) as AnzahlTodesfall from Faelle where Meldedatum >="2020-02-24" group by Meldedatum;'
-  , main = "CoViD-19 DE: Tägliche beim Gesundheitsamt gemeldete"
-  , N = "B" )
+ggsave(  paste( 
+           file = 'png/', MyScriptName, '.png', sep='')
+         , plot = P
+         , device = 'png'
+         , bg = "white"
+         , width = 1920 * 2
+         , height = 1080 * 2
+         , units = "px"
+)

@@ -9,7 +9,9 @@ BEGIN
     DROP TABLE IF EXISTS FaelleBundeslandPw;
     
     CREATE TABLE FaelleBundeslandPw
-    ( IdBundesland INT 
+    ( IdBundesland INT
+    , Jahr INT
+    , Kw INT
     , Pw INT 
     , AnzahlFall BIGINT(20)
     , AnzahlTodesfall BIGINT(20)
@@ -17,6 +19,9 @@ BEGIN
     (
     SELECT
         IdLandkreis div 1000 as IdBundesland
+        , year(Meldedatum) as Jahr
+        , week(Meldedatum,3) as Kw
+
         , PandemieWoche(Meldedatum) as Pw
         , sum(AnzahlFall) as AnzahlFall
         , sum(AnzahlTodesfall) as AnzahlTodesfall
@@ -46,6 +51,15 @@ create temporary table b7 (
         and F.Meldedatum > adddate(MD, -7) 
     group by 
         F.IdLandkreis div 1000
+    union
+    select 
+        0 as IdBundesland
+        , sum(F.AnzahlFall) as Woche
+    from Faelle as F 
+    where 
+        F.Meldedatum <= MD 
+        and F.Meldedatum > adddate(MD, -7) 
+    
     );
     
 drop table if exists b14;
@@ -59,6 +73,14 @@ create temporary table b14 (
         and F.Meldedatum > adddate(MD, -14) 
     group by 
         F.IdLandkreis div 1000
+    union
+    select 
+        0 as IdBundesland
+        , sum(F.AnzahlFall) as Woche
+    from Faelle as F
+    where 
+        F.Meldedatum <= adddate(MD, - 7) 
+        and F.Meldedatum > adddate(MD, -14) 
     );
         
 select 
@@ -77,6 +99,9 @@ join
     Bundesland as B
 on
     F1.IdBundesland = B.IdBundesland
+order by
+ F1.IdBundesland
+
 ;
 
 END

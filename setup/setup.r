@@ -14,4 +14,6 @@ install.packages("stringr")
 install.packages("tidyverse")
 install.packages("utils")
 install.packages("ggfortify")
+install.packages("ggsci")
+install.packages("RSpectra")
 

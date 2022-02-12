@@ -157,3 +157,200 @@ create or replace view CFR as
     from FaelleBL
 ;
 
+create or replace view CFRWoche as 
+    
+    select 
+          DATE_ADD(Meldedatum, INTERVAL(-WEEKDAY(Meldedatum)) DAY) as Datum  
+        , year(Meldedatum) as Jahr
+        , week(Meldedatum,3) as Kw
+        , PandemieWoche(Meldedatum) as Pw
+        , Altersgruppe
+        , Geschlecht
+        , FORMAT(sum(AnzahlTodesfall)/sum(AnzahlFall),6) as CFR
+    from Faelle 
+    where 
+        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+    group by 
+        Pw
+        , Altersgruppe
+        , Geschlecht
+    union
+    select 
+          DATE_ADD(Meldedatum, INTERVAL(-WEEKDAY(Meldedatum)) DAY) as Datum  
+        , year(Meldedatum) as Jahr
+        , week(Meldedatum,3) as Kw
+        , PandemieWoche(Meldedatum) as Pw
+        , 'Alle' as Altersgruppe
+        , Geschlecht
+        , FORMAT(sum(AnzahlTodesfall)/sum(AnzahlFall),6) as CFR
+    from Faelle 
+    where 
+        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+    group by 
+        Pw
+        , Geschlecht
+    union
+    select 
+          DATE_ADD(Meldedatum, INTERVAL(-WEEKDAY(Meldedatum)) DAY) as Datum  
+        , year(Meldedatum) as Jahr
+        , week(Meldedatum,3) as Kw
+        , PandemieWoche(Meldedatum) as Pw
+        , Altersgruppe
+        , 'B' as Geschlecht
+        , FORMAT(sum(AnzahlTodesfall)/sum(AnzahlFall),6) as CFR
+    from Faelle 
+    where 
+        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+    group by 
+        Pw
+        , Altersgruppe
+    union
+    select 
+          DATE_ADD(Meldedatum, INTERVAL(-WEEKDAY(Meldedatum)) DAY) as Datum  
+        , year(Meldedatum) as Jahr
+        , week(Meldedatum,3) as Kw
+        , PandemieWoche(Meldedatum) as Pw
+        , 'Alle' as Altersgruppe
+        , 'B' as Geschlecht
+        , FORMAT(sum(AnzahlTodesfall)/sum(AnzahlFall),6) as CFR
+    from Faelle 
+    where 
+        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+    group by 
+        Pw ;
+
+create or replace view CFRMonat as 
+
+    select
+        date(concat(year(Meldedatum),'-',month(Meldedatum),',',1)) as Datum
+        , year(Meldedatum) as Jahr
+        , month(Meldedatum) as Monat
+        , Altersgruppe
+        , Geschlecht
+        , FORMAT(sum(AnzahlTodesfall)/sum(AnzahlFall),6) as CFR
+    from Faelle 
+    where 
+        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+    group by 
+        Jahr
+        , Monat
+        , Altersgruppe
+        , Geschlecht
+    union
+    select 
+        date(concat(year(Meldedatum),'-',month(Meldedatum),',',1)) as Datum
+        , year(Meldedatum) as Jahr
+        , month(Meldedatum) as Monat
+        , 'Alle' as Altersgruppe
+        , Geschlecht
+        , FORMAT(sum(AnzahlTodesfall)/sum(AnzahlFall),6) as CFR
+    from Faelle 
+    where 
+        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+    group by 
+        Jahr
+        , Monat
+        , Geschlecht
+    union
+    select 
+        date(concat(year(Meldedatum),'-',month(Meldedatum),',',1)) as Datum
+        , year(Meldedatum) as Jahr
+        , month(Meldedatum) as Monat
+        , Altersgruppe
+        , 'B' as Geschlecht
+        , FORMAT(sum(AnzahlTodesfall)/sum(AnzahlFall),6) as CFR
+    from Faelle 
+    where 
+        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+    group by 
+        Jahr
+        , Monat
+        , Altersgruppe
+    union
+    select 
+        date(concat(year(Meldedatum),'-',month(Meldedatum),',',1)) as Datum
+        , year(Meldedatum) as Jahr
+        , month(Meldedatum) as Monat
+        , 'Alle' as Altersgruppe
+        , 'B' as Geschlecht
+        , FORMAT(sum(AnzahlTodesfall)/sum(AnzahlFall),6) as CFR
+    from Faelle 
+    where 
+        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+    group by 
+        Jahr
+        , Monat
+    ;
+
+
+create or replace view CFRMonatBL as 
+
+    select
+        date(concat(year(Meldedatum),'-',month(Meldedatum),',',1)) as Datum
+        , year(Meldedatum) as Jahr
+        , month(Meldedatum) as Monat
+        , IdLandkreis div 1000 as IdBundesland
+        , Altersgruppe
+        , Geschlecht
+        , sum(AnzahlTodesfall)/sum(AnzahlFall) as CFR
+    from Faelle 
+    where 
+        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+    group by 
+        Jahr
+        , Monat
+        , IdBundesland
+        , Altersgruppe
+        , Geschlecht
+    union
+    select 
+        date(concat(year(Meldedatum),'-',month(Meldedatum),',',1)) as Datum
+        , year(Meldedatum) as Jahr
+        , month(Meldedatum) as Monat
+        , IdLandkreis div 1000 as IdBundesland
+        , 'Alle' as Altersgruppe
+        , Geschlecht
+        , sum(AnzahlTodesfall)/sum(AnzahlFall) as CFR
+    from Faelle 
+    where 
+        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+    group by 
+        Jahr
+        , Monat
+        , IdBundesland
+        , Geschlecht
+    union
+    select 
+        date(concat(year(Meldedatum),'-',month(Meldedatum),',',1)) as Datum
+        , year(Meldedatum) as Jahr
+        , month(Meldedatum) as Monat
+        , IdLandkreis div 1000 as IdBundesland
+        , Altersgruppe
+        , 'B' as Geschlecht
+        , sum(AnzahlTodesfall)/sum(AnzahlFall) as CFR
+    from Faelle 
+    where 
+        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+    group by 
+        Jahr
+        , Monat
+        , IdBundesland
+        , Altersgruppe
+        
+    union
+    select 
+        date(concat(year(Meldedatum),'-',month(Meldedatum),',',1)) as Datum
+        , year(Meldedatum) as Jahr
+        , month(Meldedatum) as Monat
+        , IdLandkreis div 1000 as IdBundesland
+        , 'Alle' as Altersgruppe
+        , 'B' as Geschlecht
+        , sum(AnzahlTodesfall)/sum(AnzahlFall)  as CFR
+    from Faelle 
+    where 
+        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+    group by 
+        Jahr
+        , Monat
+        , IdBundesland
+    ;

@@ -63,7 +63,7 @@ heute <- format(today, "%F")
 
 Stichtag <- '2021-12-29'
 
-citation <- paste('© 2021 by Thomas Arend, Stand: ',heute,'\nQuelle: Robert Koch-Institut (2021)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153',sep='')
+citation <- paste('© 2022 by Thomas Arend, Stand: ',heute,'\nQuelle: Robert Koch-Institut (2022)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153',sep='')
 
 SQL <- paste( 'select * from ImpfQuoteBL as Q join RZahl as R on R.IdBundesland = Q.IdBundesland where Altersgruppe = "A0+" and Datum = "'
               , Stichtag

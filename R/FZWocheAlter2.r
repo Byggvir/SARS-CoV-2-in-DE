@@ -56,7 +56,7 @@ source("R/lib/myfunctions.r")
 source("R/lib/sql.r")
 source("R/lib/color_palettes.r")
 
-citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
+citation <- "© 2022 by Thomas Arend\nQuelle: Robert Koch-Institut (2022)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
 
 options( 
     digits = 7
@@ -69,26 +69,38 @@ today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
 SQL <- paste('select * from FaelleProWocheAltersgruppe;', sep='')
-weekly <- RunSQL(SQL = SQL)
 
-weekly %>% filter(PandemieWoche < max(PandemieWoche) -1) %>% ggplot(
+if ( ! exists("weekly") ) {
+  weekly <- RunSQL(SQL = SQL)
+}
+
+scl <- max(weekly$AnzahlFall) / max(weekly$AnzahlTodesfall)
+
+weekly %>% filter(PandemieWoche < max(PandemieWoche) - 1 ) %>% ggplot(
   aes( x = PandemieWoche )) +
-  geom_line(aes(y = AnzahlFall)) +
-  scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  geom_line(aes(y = AnzahlFall, colour = 'Fall')) +
+  geom_line(aes(y = AnzahlTodesfall * scl, colour = 'Todesfall' ) ) +
+  scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE)
+                      , sec.axis = sec_axis( ~./scl, name = "Todesfälle", labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) )  +
   facet_wrap(vars(Altersgruppe)) +
   theme_ipsum() +
   labs(  title = "Wöchentliche Fälle nach Altersgruppe"
        , subtitle= paste("Deutschland, Stand:", heute)
        , x = "Pandemiewoche"
        , y = "Fälle" 
+       , colour= 'Legende'
        , caption = citation ) -> pp1
 
 ggsave('png/FZWoche_Fall.png'
-,  bg = "white"
-       , width = 29.7, height = 21, units = "cm", dpi = 150)
+       , device = 'png'
+       , bg = "white"
+       , width = 1920 * 2
+       , height = 1080 * 2
+       , units = "px"
+)
 
-weekly %>% filter(PandemieWoche < max(PandemieWoche) -1) %>% ggplot(
-  aes( x = PandemieWoche )) +
+weekly %>% filter( PandemieWoche < max( PandemieWoche ) -1 ) %>% ggplot(
+  aes( x = PandemieWoche ) ) +
   geom_line(aes(y = AnzahlTodesfall)) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   facet_wrap(vars(Altersgruppe)) +
@@ -100,29 +112,42 @@ weekly %>% filter(PandemieWoche < max(PandemieWoche) -1) %>% ggplot(
          , caption = citation ) -> pp2
 
 ggsave('png/FZWoche_Todesfall.png'
-,  bg = "white"
-       , width = 29.7, height = 21, units = "cm", dpi = 150)
-
+       , device = 'png'
+       , bg = "white"
+       , width = 1920 * 2
+       , height = 1080 * 2
+       , units = "px"
+)
 
 
 SQL <- paste('select * from InzidenzAltersgruppe;', sep='')
 inzidenz <- RunSQL(SQL = SQL)
 
-inzidenz %>% filter(PandemieWoche < max(PandemieWoche) -1) %>% ggplot(
-  aes( x = PandemieWoche )) +
-  geom_line(aes(y = AnzahlFall/AnzahlBev*100000)) +
-  scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+idz <-  inzidenz %>% filter ( PandemieWoche < max( PandemieWoche ) - 1 )
+scl <- max(idz$AnzahlFall / idz$AnzahlBev * 100000) / max( idz$AnzahlTodesfall / idz$AnzahlBev*100000)
+
+idz %>% ggplot(
+  aes( x = PandemieWoche ) ) +
+  geom_line(aes(y = AnzahlFall / AnzahlBev * 100000, colour = 'Fall')) +
+  geom_line(aes(y = AnzahlTodesfall * scl / AnzahlBev * 100000, colour = 'Todesfall' ) ) +
+  scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE)
+                      , sec.axis = sec_axis( ~./scl, name = "Todesfälle pro 100.000", labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) )  +
   facet_wrap(vars(Altersgruppe)) +
   theme_ipsum() +
   labs(  title = "Wöchentliche Fälle nach Altersgruppe"
          , subtitle= paste("Deutschland, Stand:", heute)
          , x = "Pandemiewoche"
          , y = "Fälle pro 100.000"
+         , colour = 'Legende'
          , caption = citation ) -> pp3
 
 ggsave('png/FZWoche_FallInzidenz.png'
-,  bg = "white"
-       , width = 29.7, height = 21, units = "cm", dpi = 150)
+       , device = 'png'
+       , bg = "white"
+       , width = 1920 * 2
+       , height = 1080 * 2
+       , units = "px"
+)
 
 
 inzidenz %>% filter(PandemieWoche < max(PandemieWoche) -1) %>% ggplot(
@@ -157,9 +182,12 @@ bev %>% ggplot(
          , caption = citation ) -> pp5
 
 ggsave('png/FZWoche_Bev.png'
-,  bg = "white"
-       , width = 29.7, height = 21, units = "cm", dpi = 150)
-
+       , device = 'png'
+       , bg = "white"
+       , width = 1920 * 2
+       , height = 1080 * 2
+       , units = "px"
+)
 
 SQL <- paste('select * from FaelleProAltersgruppe;', sep='')
 fa <- RunSQL(SQL = SQL)
@@ -192,9 +220,12 @@ fa %>% ggplot(
          , caption = citation ) -> pp6
 
 ggsave('png/FZWoche_Todesfall.png'
-,  bg = "white"
-       , width = 29.7, height = 21, units = "cm", dpi = 150)
-
+       , device = 'png'
+       , bg = "white"
+       , width = 1920 * 2
+       , height = 1080 * 2
+       , units = "px"
+)
 
 fa %>% ggplot(
   aes( x = Altersgruppe, y = AnzahlTodesfall )) +
@@ -208,6 +239,10 @@ fa %>% ggplot(
          , caption = citation ) -> pp6
 
 ggsave('png/FZWoche_TodesfallSum2.png'
-,  bg = "white"
-       , width = 29.7, height = 21, units = "cm", dpi = 150)
+       , device = 'png'
+       , bg = "white"
+       , width = 1920 * 2
+       , height = 1080 * 2
+       , units = "px"
+)
 

@@ -52,7 +52,7 @@ source("R/lib/myfunctions.r")
 source("R/lib/sql.r")
 source("R/lib/color_palettes.r")
 
-citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
+citation <- "© 2022 by Thomas Arend\nQuelle: Robert Koch-Institut (2022)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
 
 options( 
     digits = 7

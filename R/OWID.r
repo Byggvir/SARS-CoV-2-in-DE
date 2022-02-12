@@ -59,9 +59,8 @@ setwd( WD )
 source( "R/lib/myfunctions.r" )
 source( "R/lib/mytheme.r" )
 source( "R/lib/sql.r" )
-source( "R/lib/color_palettes.r" )
 
-citation <- "© 2021 by Thomas Arend\nQuelle: Our World in Data"
+citation <- "© 2022 by Thomas Arend\nQuelle: Our World in Data"
 
 options( 
  digits = 7
@@ -89,20 +88,20 @@ CoronaWaves <- read_ods( path = "data/CoronaWaves2.ods"
              , sheet = 1 )
 
 Welle <- function( Location, PWeeks ) {
- 
+
  CoronaWaves %>% filter( location == Location ) -> WaveWeeks
- 
+  
  m <- max( PWeeks )
  
  WaveWeeks$EndWeek[WaveWeeks$EndWeek>m] <- m
- 
+
  for ( i in 1:nrow( WaveWeeks ) ) {
  
   PWeeks[WaveWeeks$StartWeek[i]:WaveWeeks$EndWeek[i]] <- i
  
  }
- 
- return ( factor( PWeeks, labels = paste( 'Welle', 1:nrow( WaveWeeks ), 'PandemieWoche', WaveWeeks$StartWeek, 'bis', WaveWeeks$EndWeek ) ) )
+
+  return ( factor( PWeeks, labels = paste( 'Welle', 1:nrow( WaveWeeks ), 'PandemieWoche', WaveWeeks$StartWeek, 'bis', WaveWeeks$EndWeek ) ) )
 
 }
 
@@ -123,17 +122,7 @@ OWID$Pw <- PandemieWoche( OWID$date )
 OWID$weekly_hosp_admissions[is.na( OWID$weekly_hosp_admissions )] <- 0
 OWID$new_tests[is.na( OWID$new_tests )] <- 0
 
-tt <- function () { 
- theme_ta( base_family = 'Helvetica' ) +
- theme(  
-       axis.text.y = element_text ( color = 'black' )
-     , axis.title.y = element_text ( color = 'black' )
-     , axis.text.y.right = element_text ( color = 'red' )
-     , axis.title.y.right = element_text ( color = 'red' )
-     )
-}
-
-Offset = 1 # Versatz Infektion - Tod
+Offset = 2 # Versatz Infektion - Tod
 
 for ( l in locations ) {
  
@@ -159,7 +148,7 @@ for ( l in locations ) {
   locationdata$weekly_hosp_admissions[hosp$Pw] <- hosp$weekly_hosp_admissions
   locationdata$new_tests[tests$Pw] <- tests$new_tests
   locationdata$Welle <- Welle( l,locationdata$Pw )
- 
+
   max_cases  <- max( locationdata$new_cases, na.rm = TRUE )
   max_deaths <- max( locationdata$new_deaths, na.rm = TRUE )
   max_hosp   <- max( locationdata$weekly_hosp_admissions, na.rm = TRUE )
@@ -171,7 +160,14 @@ for ( l in locations ) {
     geom_line( aes( x = Pw, y = new_deaths * scl ), color = 'red' ) +
     scale_y_continuous(  sec.axis = sec_axis( ~./scl, name = "Todesfälle pro Woche", labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) )
             , labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
-    tt() +
+    theme_ta() +
+      theme(  
+        axis.text.y = element_text ( color = 'black' )
+        , axis.title.y = element_text ( color = 'black' )
+        , axis.text.y.right = element_text ( color = 'red' )
+        , axis.title.y.right = element_text ( color = 'red' )
+        
+    ) +
     labs(  title = paste( "Fälle & Todesfälle", l )
        , subtitle = paste( "Stand:", heute )
        , x = "Pandemiewoche"
@@ -185,7 +181,7 @@ for ( l in locations ) {
     scale_x_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
     scale_y_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
     facet_wrap(vars(Welle)) +
-    tt() +
+    theme_ta() +
     labs(  title = paste( "Todesfälle ~ Fälle" , l )
          , subtitle = paste( l, " Stand:", heute) #, "Offset", delta , "Wochen" )
          , x = "Fälle pro Woche"
@@ -214,7 +210,7 @@ if (max_hosp > 0) {
     geom_line( aes( x = Pw, y = weekly_hosp_admissions * scl ), color = 'red' ) +
     scale_y_continuous(  sec.axis = sec_axis( ~./scl, name = "Hospitalisierte pro Woche", labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) )
                        , labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
-    tt() +
+    theme_ta() +
     labs(  title = paste( "Fälle & Hospitalisierte", l )
            , subtitle = paste( "Stand:", heute )
            , x = "Pandemiewoche"
@@ -228,7 +224,7 @@ if (max_hosp > 0) {
     scale_x_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
     scale_y_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
     facet_wrap(vars(Welle)) +
-    tt() +
+    theme_ta() +
     labs(  title = paste( "Hospitalisierte ~ Fälle" , l )
          , subtitle = paste( l, " Stand:", heute )
          , x = "Fälle pro Woche"
@@ -257,11 +253,11 @@ if (max_hosp > 0) {
     geom_line( aes( x = Pw, y = new_deaths * scl ), color = 'red' ) +
     scale_y_continuous(  sec.axis = sec_axis( ~./scl, name = "Todesfälls pro Woche", labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) )
                          , labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
-    tt() +
+    theme_ta() +
     labs(  title = paste( "Hospitalisierte & Todesfälle", l )
            , subtitle = paste( "Stand:", heute )
            , x = "Pandemiewoche"
-           , y = "Fälle pro Woche" 
+           , y = "Hospitalisierte pro Woche" 
            , colour = "Fälle" ) -> p7
   
   locationdata %>% filter ( Pw < PWeek & weekly_hosp_admissions > 0  & new_cases > 0) %>% ggplot( aes( group = Welle ) ) +
@@ -271,7 +267,7 @@ if (max_hosp > 0) {
     scale_x_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
     scale_y_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
     facet_wrap(vars(Welle)) +
-    tt() +
+    theme_ta() +
     labs(  title = paste( "Todesfälle ~ Hospitalisierte" , l )
            , subtitle = paste( l, " Stand:", heute )
            , x = "Hospitalisierte pro Woche"
@@ -304,7 +300,7 @@ locationdata %>% filter ( Pw < PWeek ) %>% ggplot() +
   geom_line( aes( x = Pw, y = new_tests * scl ), color = 'red' ) +
   scale_y_continuous(  sec.axis = sec_axis( ~./scl, name = "Tests pro Woche", labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) )
                        , labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
-  tt() +
+  theme_ta() +
   labs(  title = paste( "Fälle & Testungen", l )
          , subtitle = paste( "Stand:", heute )
          , x = "Pandemiewoche"
@@ -318,7 +314,7 @@ locationdata %>% filter ( Pw < PWeek & new_tests > 0  & new_cases > 0) %>% ggplo
   scale_x_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
   scale_y_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
   facet_wrap(vars(Welle)) +
-  tt() +
+  theme_ta() +
   labs(  title = paste( "Testungen ~ Fälle" , l )
          , subtitle = paste( l, " Stand:", heute )
          , x = "Fälle pro Woche"

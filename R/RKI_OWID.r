@@ -48,9 +48,8 @@ setwd(WD)
 source("R/lib/myfunctions.r")
 source("R/lib/mytheme.r")
 source("R/lib/sql.r")
-source("R/lib/color_palettes.r")
 
-citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)\nOur World in Data"
+citation <- "© 2022 by Thomas Arend\nQuelle: Robert Koch-Institut (2022)\nOur World in Data"
 
 options( 
   digits = 7

@@ -42,6 +42,7 @@ BEGIN
 drop table if exists a7;
 
 create temporary table a7 (
+    select * from (
     select 
           F.IdLandkreis div 1000 as IdBundesland    
         , F.Altersgruppe as Altersgruppe
@@ -52,11 +53,29 @@ create temporary table a7 (
         and F.Meldedatum > adddate(MD, -7) 
         and F.Altersgruppe <> 'unbekan'
     group by 
-        F.IdLandkreis div 1000, F.Altersgruppe
+        F.IdLandkreis div 1000
+        , F.Altersgruppe
+    
+    UNION
+    select 
+          0 as IdBundesland    
+        , F.Altersgruppe as Altersgruppe
+        , sum(F.AnzahlFall) as Woche
+    from Faelle as F 
+    where 
+            F.Meldedatum <= MD 
+        and F.Meldedatum > adddate(MD, -7) 
+        and F.Altersgruppe <> 'unbekan'
+    group by 
+        F.Altersgruppe
+    ) as A
+    order by
+        IdBundesland, Altersgruppe
     );
     
 drop table if exists a14;
 create temporary table a14 (
+    select * from (
     select
           F.IdLandkreis div 1000 as IdBundesland    
         , F.Altersgruppe as Altersgruppe
@@ -68,6 +87,20 @@ create temporary table a14 (
         and F.Altersgruppe <> 'unbekan'
     group by 
         F.IdLandkreis div 1000, F.Altersgruppe
+    union
+    select
+          0 as IdBundesland    
+        , F.Altersgruppe as Altersgruppe
+        , sum(F.AnzahlFall) as Woche
+    from Faelle as F
+    where 
+        F.Meldedatum <= adddate(MD, - 7) 
+        and F.Meldedatum > adddate(MD, -14)
+        and F.Altersgruppe <> 'unbekan'
+    group by 
+        F.Altersgruppe
+    ) as  A
+    order by IdBundesland, Altersgruppe
     );
         
 select 
@@ -88,6 +121,9 @@ on  F1.IdBundesland = A.IdBundesland
     and F1.Altersgruppe = A.Altersgruppe
 join Bundesland as B
 on F1.IdBundesland = B.IdBundesland
+order by
+    B.IdBundesland
+    , F1.Altersgruppe
 ;
 
 END
@@ -147,6 +183,7 @@ join Bundesland as B
 on F1.IdLandkreis div 1000 = B.IdBundesland
 join Landkreis as L
 on F1.IdLandkreis = L.IdLandkreis
+
 ;
 
 END

@@ -1,25 +1,26 @@
 #!/bin/bash
 
 TMP=Bilder.txt
+PREFIX=$1
 
-# for BILD in Pw-*.png 
+# for BILD in ${PREFIX}*.png 
 # do 
-#      ZIEL=$(basename "$BILD" ".png")
+#     ZIEL=$(basename "$BILD" ".png")
 #     
 #     convert "$BILD" "$ZIEL.jpg"
 # done
 
-rename s#ü#eu# Pw-*.jpg
+rename s#ü#eu# ${PREFIX}*.jpg
 
-for LAND in $(ls -1 Pw-*.jpg | sed 's#Pw-##;s#-0.*##' | sort -u)
+for LAND in $(ls -1 ${PREFIX}-*.jpg | sed 's#'${PREFIX}'-##; s#-2.*##' | sort -u)
 
 do
 
-    ls -1 Pw-${LAND}-0*.jpg \
+    ls -1 ${PREFIX}-${LAND}-*.jpg \
     | sed 's#^#file "# ; s#$#"#' \
     | tr '"' \' \
     > "$TMP"
     rm ${LAND}.mp4
-    ffmpeg -r 5 -f concat -i "$TMP" -vf format=yuv420p ${LAND}.mp4
+    ffmpeg -r 1 -f concat -i "$TMP" -vf format=yuv420p ${LAND}.mp4
 
 done

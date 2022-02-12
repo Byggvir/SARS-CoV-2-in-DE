@@ -61,7 +61,7 @@ source( "R/lib/mytheme.r" )
 source( "R/lib/sql.r" )
 source( "R/lib/color_palettes.r" )
 
-citation <- "© 2021 by Thomas Arend\nQuelle: Our World in Data"
+citation <- "© 2022 by Thomas Arend\nQuelle: Our World in Data"
 
 options( 
  digits = 7

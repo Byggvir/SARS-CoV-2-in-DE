@@ -116,7 +116,7 @@ dev.off()
 p <- ggplot( data, aes( x = reorder(Bundesland, -Mortality), y = Mortality, fill = Bundesland)) +
   geom_bar( position="dodge", stat="identity") +
   # geom_text( aes( label = paste( Mortality, '\n(', Rang, ')', sep='')), size=3, position=position_dodge(width=0.9), vjust=0) +
-  geom_text( aes( label = Mortality ), size = 4, position=position_dodge(width=0.9), vjust=0) +
+  geom_text( aes( label = Mortality ), size = 3, position=position_dodge(width=0.9), vjust=0) +
   scale_fill_viridis( discrete = T ) +
   ggtitle("Corona: Standardisierte Todesfälle pro 100.000 Einwohner") +
   theme_ipsum() +

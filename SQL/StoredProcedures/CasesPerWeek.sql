@@ -35,34 +35,7 @@ END
 
 DROP PROCEDURE IF EXISTS CasesPerWeek //
 
-CREATE PROCEDURE CasesPerWeek ()
-BEGIN
-
-   SELECT 
-      PandemieWoche(Meldedatum) AS Kw
-    , sum(AnzahlFall) AS AnzahlFall
-    , sum(AnzahlTodesfall) AS AnzahlTodesfall
-    FROM Faelle
-    WHERE PandemieWoche(Meldedatum) > 8
-    GROUP BY Kw ;
-end
-//
-
 DROP PROCEDURE IF EXISTS CasesPerWeekAgeGroup //
-
-CREATE PROCEDURE CasesPerWeekAgeGroup (AgeGroup CHAR(8))
-BEGIN
-
-   SELECT 
-      PandemieWoche(Meldedatum) AS Kw
-    , sum(AnzahlFall) AS AnzahlFall
-    , sum(AnzahlTodesfall) AS AnzahlTodesfall
-    FROM Faelle
-    WHERE PandemieWoche(Meldedatum) > 8
-    and Altersgruppe = AgeGroup
-    GROUP BY Kw ;
-end
-//
 
 DROP PROCEDURE IF EXISTS CasesPerWeekAgeGroupBL //
 
@@ -100,23 +73,6 @@ end
 
 DROP PROCEDURE IF EXISTS CasesPerWeekBL21 //
 
-CREATE PROCEDURE CasesPerWeekBL21 (IdBL INT)
-BEGIN
-
-   SELECT 
-      IdLandkreis div 1000 AS BL
-    , week(Meldedatum,3) AS Kw
-    , sum(AnzahlFall) AS AnzahlFall
-    , sum(AnzahlTodesfall) AS AnzahlTodesfall
-    FROM Faelle
-    WHERE IdLandkreis div 1000 = IdBL
-    and Meldedatum > "2021-01-03"
-    and week(Meldedatum,3)
-    GROUP BY IdBL, Kw ;
-end
-//
-
-
 DROP PROCEDURE IF EXISTS CasesPerWeekBLWE //
 
 CREATE PROCEDURE CasesPerWeekBLWE (West BOOL)
@@ -135,34 +91,6 @@ END
 //
 
 DROP PROCEDURE IF EXISTS CasesPerWeekWE //
-
-CREATE PROCEDURE CasesPerWeekWE ()
-BEGIN
-
-    SELECT 
-        PandemieWoche(Meldedatum) AS Kw
-        , BLWestEast(IdLandkreis div 1000) AS Bundesland
-        , sum(AnzahlFall) AS AnzahlFall
-        , sum(AnzahlTodesfall) AS AnzahlTodesfall
-        , round(sum(AnzahlTodesfall) / sum(AnzahlFall)*100,1) AS CFR
-    FROM Faelle
-    WHERE PandemieWoche(Meldedatum) > 9
-    GROUP BY BLWestEast(IdLandkreis div 1000), Kw
---     UNION
---     SELECT 
---         PandemieWoche(Meldedatum) AS Kw
---         , 'Bund' AS Bundesland
---         , sum(AnzahlFall) AS Cases
---         , sum(AnzahlTodesfall) AS Deaths
---         , round(sum(AnzahlTodesfall) / sum(AnzahlFall)*100,1) AS CFR
---     FROM Faelle
---     WHERE PandemieWoche(Meldedatum) > 9
---     GROUP BY Kw
-    
-    
-  ;
-END
-//
 
 DROP PROCEDURE IF EXISTS MinMaxCasesPerWeek //
 
@@ -266,4 +194,19 @@ BEGIN
     ;
 end
 //
+
 delimiter ;
+
+create or replace view CasesPerWeekWE as
+
+    SELECT 
+        PandemieWoche(Meldedatum) AS Kw
+        , BLWestEast(IdLandkreis div 1000) AS Bundesland
+        , sum(AnzahlFall) AS AnzahlFall
+        , sum(AnzahlTodesfall) AS AnzahlTodesfall
+        , round(sum(AnzahlTodesfall) / sum(AnzahlFall)*100,1) AS CFR
+    FROM Faelle
+    GROUP BY BLWestEast(IdLandkreis div 1000), Kw
+    
+  ;
+

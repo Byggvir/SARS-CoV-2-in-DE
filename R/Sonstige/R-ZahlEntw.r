@@ -78,7 +78,7 @@ from Nowcasts as A;'
 
 daten <- RunSQL(SQL)
 
-daten %>% filter ( year(Datum) == Jahr & month(Datum) == Monat & BerechnetAm <= "2022-01-15" ) %>% ggplot( aes(x= BerechnetAm)) +
+daten %>% filter ( year(Datum) == Jahr & month(Datum) == Monat & BerechnetAm <= "2022-02-15" ) %>% ggplot( aes(x= BerechnetAm)) +
   geom_line(aes( y = PS_7_Tage_R_Wert, colour ="Punktschätzer"), size = 1) +
   geom_line(aes( y = UG_PI_7_Tage_R_Wert, colour ="Untergrenze"), size = 0.5) +
   geom_line(aes( y = OG_PI_7_Tage_R_Wert, colour ="Obergrenze"), size = 0.5) +

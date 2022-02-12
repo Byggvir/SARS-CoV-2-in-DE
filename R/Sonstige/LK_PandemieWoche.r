@@ -62,7 +62,17 @@ options(
 today <- Sys.Date() - 1
 heute <- format(today, "%d %b %Y")
 
-PWoche <- ( as.integer(today - as.Date('2019-12-29')) - 4 ) %/% 7  # + 1
+WeekLabel <- function (P) {
+  
+  PLabel <- rep('', each = length(P))
+  PLabel[P>105] <- paste(2022,'-W',P[P>105] - 105, sep = '')
+  PLabel[P<=105 & P>53] <- paste(2021,'-W',P[P<=105 & P>53] - 53, sep = '')
+  PLabel[P < 54] <- paste(2020,'-W',P[P<54], sep = '')
+  return(PLabel)
+  
+}
+
+PWoche <- ( as.integer(today - as.Date('2019-12-29')) - 4 ) %/% 7 + 1
 
 SQL <- 'select * from Bundesland order by IdBundesland;'
 BL <- RunSQL(SQL)
@@ -76,7 +86,9 @@ SQL <- paste(
       A.IdLandkreis as IdLandkreis
     , L.Landkreis as Landkreis
     , A.IdLandkreis div 1000 as IdBundesland
-    , A.Pw - 53 as Pw
+    , A.Jahr as Jahr
+    , A.Kw as Kw
+    , A.Pw as Pw
     , A.AnzahlFall as Anzahl
     , B.AnzahlFall as AnzahlVorwoche
     , L.EW_insgesamt from FaelleLandkreisPw as A 
@@ -95,7 +107,9 @@ SQL <- paste(
     select 
       A1.IdBundesland as IdBundesland
     , B.Bundesland as Bundesland
-    , A1.Pw - 53 as Pw
+    , A1.Jahr as Jahr
+    , A1.Kw as Kw
+    , A1.Pw as Pw
     , A1.AnzahlFall as Anzahl
     , A2.AnzahlFall as AnzahlVorwoche
     , B.EW_insgesamt
@@ -110,6 +124,9 @@ SQL <- paste(
 
 Bundesland <- RunSQL(SQL = SQL)
 
+Landkreise$PwLabel <- WeekLabel(Landkreise$Pw)
+Bundesland$PwLabel <- WeekLabel(Bundesland$Pw)
+
 for ( B in 1:16) {
   
   L <- Landkreise %>% filter(IdBundesland == B )
@@ -117,7 +134,9 @@ for ( B in 1:16) {
   
   L %>% ggplot() +
   stat_ellipse( aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000), type = "t", geom = "polygon", alpha = 0.1 ) +
-  geom_abline( intercept = 0, slope = 1, color = 'red' ) +
+    geom_abline( intercept = 0, slope = 1.5, color = 'red' ) +
+    geom_abline( intercept = 0, slope = 1, color = 'yellow' ) +
+    geom_abline( intercept = 0, slope = 0.75, color = 'green' ) +
   geom_point( aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000, colour=Landkreis), size = 2 ) +
   geom_point( data = Bundesland %>% filter( IdBundesland == B )
                 , aes( x = AnzahlVorwoche / EW_insgesamt * 100000, y = Anzahl / EW_insgesamt * 100000 )
@@ -129,7 +148,7 @@ for ( B in 1:16) {
 
   coord_fixed( xlim = limbounds( c( 0, max_Inzidenz ) ), ylim = limbounds( c( 0, max_Inzidenz ) ) ) +
   
-  facet_wrap(vars( Pw )) +
+  facet_wrap( vars(PwLabel) ) +
   
   theme_ipsum() +
   theme(  plot.title = element_text( size = 24 )

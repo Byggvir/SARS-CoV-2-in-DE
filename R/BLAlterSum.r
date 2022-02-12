@@ -49,7 +49,7 @@ source("R/lib/myfunctions.r")
 source("R/lib/mytheme.r")
 source("R/lib/sql.r")
 
-citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
+citation <- "© 2022 by Thomas Arend\nQuelle: Robert Koch-Institut (2022)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
 
 options( 
   digits = 7
@@ -61,7 +61,6 @@ options(
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
-SQL = paste ('call CasesPerWeekWE();', sep ="")
 SQL = 'select * from FaelleBLSum;'
 
 Faelle <- RunSQL(SQL = SQL)
@@ -85,24 +84,6 @@ Faelle %>% filter ( Bundesland == B)   %>% ggplot( aes( x = Altersgruppe, y = An
         , y = "Anteil in der Altersgruppe [%]" 
         , colour = "Geschlecht"
         , caption = citation ) -> p1
-# 
-# Faelle %>% filter ( Bundesland == B)   %>% ggplot( aes( x = Altersgruppe, y = AnzahlTodesfall / Einwohner * 100000, fill = Geschlecht) ) +
-#   geom_bar(position="dodge", stat="identity") +
-#   geom_text(aes(label =  sprintf("%.1f",round(AnzahlTodesfall / Einwohner * 100000,1))), vjust = 0, hjust = c(rep(1,6),rep(0,6))) +
-#     
-#   scale_fill_viridis(discrete = T) +
-#   scale_y_continuous( labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
-#   
-#   theme_ta() +
-#   labs( title = paste( B,"Todesfälle nach Altersgruppe pro 100.000 Einwohner")
-#         , subtitle= paste("Stand: ", heute, sep ='')
-#         , x = "Altersgruppe"
-#         , y = "Anteil in der Altersgruppe [pro 100.000]" 
-#         , colour = "Geschlecht"
-#         , caption = citation ) -> p2
-# 
-
-#gg <- grid.arrange(p1,p2, ncol=2)
 
 ggsave(  plot = p1
        , filename = paste('png/', MyScriptName,'-', B,".png", sep="")

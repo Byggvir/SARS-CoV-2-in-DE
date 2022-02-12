@@ -45,8 +45,6 @@ WD <- paste(SD[1:(length(SD)-1)],collapse='/')
 
 setwd(WD)
 
-fPrefix <- "Fallzahlen_Wo_"
-
 require(data.table)
 
 source("R/lib/myfunctions.r")
@@ -59,7 +57,7 @@ options(
   , max.print = 3000
 )
 
-citation <- "© 2021 by Thomas Arend\nQuellen: Robert Koch-Institut (2021)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153\nQuelle: © Statistisches Bundesamt (Destatis) Sonderauswertung, 2021"
+citation <- "© 2022 by Thomas Arend\nQuellen: Robert Koch-Institut (2022)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153\nQuelle: © Statistisches Bundesamt (Destatis) Sonderauswertung, 2021"
 
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
@@ -70,7 +68,7 @@ Altersgruppen <- RunSQL(SQL = SQL)
 for ( i in 1:nrow(Altersgruppen)) {
   
 SQL <- paste(
-  'select PandemieWoche, F.Jahr, F.Kw, AnzahlTodesfall as CoronaTodesfall, sum(Male)+sum(Female) as Todesfall '
+  'select PandemieWoche, F.Jahr, F.Kw, AnzahlTodesfall as CoronaTodesfall, sum(Gestorbene) as Todesfall '
   , ' from FaelleProWocheAltersgruppe as F join DESTATIS.SterbefaelleWoche as S'
   , ' on F.Jahr = S.Jahr and F.Kw = S.Kw'
   , ' where F.Altersgruppe = "', Altersgruppen[i,1], '"'

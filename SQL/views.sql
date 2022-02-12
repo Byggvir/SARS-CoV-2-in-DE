@@ -168,6 +168,7 @@ view ImpfQuote as
         , I.AlterVon as AlterVon
         , I.AlterBis as AlterBis
         , Kumulativ/B.Anzahl as Quote
+        , B.Anzahl
     from ImpfSummary as I 
     join ImpfBev as B 
     on 
@@ -181,12 +182,12 @@ view ImpfQuoteBL as
           I.IdLandkreis div 1000 as IdBundesland
         , B.Bundesland as Bundesland
         , B.Abk as Abk
-        , sum(I.Anzahl) / S.Anzahl as Quote 
+        , sum(I.Anzahl) / sum(S.Anzahl) as Quote 
     from Impfungen as I 
     join Bundesland as B
     on 
         I.IdLandkreis div 1000 = B.IdBundesland 
-    join DESTATIS.StdBevBL as S 
+    join DESTATIS.StdBev6BL as S 
     on I.IdLandkreis div 1000 = S.IdBundesland 
     where I.ImpfSchutz = 2
         and S.Stichtag = "2020-12-31"

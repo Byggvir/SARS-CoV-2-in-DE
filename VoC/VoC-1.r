@@ -3,6 +3,7 @@
 # Regressionsanalyse
 
 MyScriptName <- 'VoC'
+
 library(tidyverse)
 library(REST)
 library(gtable)
@@ -38,14 +39,11 @@ WD <- paste(SD[1:(length(SD)-1)],collapse='/')
 
 setwd(WD)
 
-fPrefix <- "Fallzahlen_Wo_"
-
 require(data.table)
 
 source("R/lib/myfunctions.r")
 source("R/lib/mytheme.r")
 source("R/lib/sql.r")
-source("R/lib/color_palettes.r")
 
 citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)"
 
@@ -91,7 +89,7 @@ daten <- read_csv(
   )
 )
 
-daten$Woche <- daten$Kw - daten$Kw[1]
+daten$Woche <- 0:(nrow(daten)-1)
 StartWeek <- daten$Kw[1]
 UntilWeek <- 60
 
@@ -135,9 +133,9 @@ xticklabels <-
   c(  paste('2021',StartWeek:52,sep= '/')
     , paste('2022',1:(UntilWeek-52),sep= '/')
     )
-  
+
 daten %>% ggplot(
-  aes( x = Kw )) +
+  aes( x = StartWeek + Woche )) +
   geom_ribbon(  data = O_shaderibbon, aes( x = x, ymin = ylower, ymax = yupper ), color = 'grey',  alpha=0.1 ) +
   geom_ribbon(  data = D_shaderibbon, aes( x = x, ymin = ylower, ymax = yupper ), color = 'lightblue',  alpha=0.1 ) +
   
@@ -165,7 +163,7 @@ daten %>% ggplot(
                     )
                 )
                 , hjust = 0) +
-  scale_x_continuous(breaks = seq(min(daten$Kw), 60, by = 1), labels = xticklabels ) +
+  scale_x_continuous(breaks = seq(StartWeek, UntilWeek, by = 1), labels = xticklabels ) +
   scale_y_continuous(labels = scales::percent) +
   # scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   expand_limits( x = 60 ) +
@@ -203,13 +201,15 @@ shaderibbon$yupper <- sapply( shaderibbon$x, FUN = function(x){ e( x, a[3], b[3]
 
 
 daten %>% ggplot(
-  aes( x = Kw )) +
+  aes( x = StartWeek + Woche )) +
 #  geom_ribbon( data = shaderibbon, aes( x=x, ymin = ylower, ymax = yupper), color= 'grey', alpha=0.1) +
   geom_line( aes( y = Omikron / Summe * Faelle, colour = 'Reale Werte' ), show.legend = TRUE, size = 2 ) +
 #  geom_function( fun = e, args = list( a = a[1], b = b[1], s = StartWeek ), aes( colour = 'Omikron Untergrenze' ), linetype = 'dotted', size = 1, show.legend = TRUE) +
   geom_function( fun = e, args = list( a = a[2], b = b[2], s = StartWeek ), aes( colour = 'Omikron Mittelwert' ), linetype = 'dotted', size = 1, show.legend = TRUE) +
 #  geom_function( fun = e, args = list( a = a[1], b = b[3], s = StartWeek ), aes( colour = 'Omikron Obergrenze' ), linetype = 'dotted', size = 1 , show.legend = TRUE) +
   # scale_y_continuous(labels = scales::percent) +
+  scale_x_continuous(breaks = seq(StartWeek, UntilWeek, by = 1), labels = xticklabels ) +
+  
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   expand_limits( x = 51 ) +
  # coord_cartesian( ylim = c(0, 20000) ) +
