@@ -118,15 +118,14 @@ locations <- unique( CoronaWaves$location )
 OWID$date <- as.Date( OWID$date )
 OWID$Jahr <- year( OWID$date )
 OWID$Kw <- isoweek( OWID$date )
-OWID$Pw[year( OWID$date ) == 2020] <- isoweek( OWID$date[year( OWID$date ) == 2020] )
-OWID$Pw[year( OWID$date ) == 2021 & isoweek( OWID$date ) == 53] <- isoweek( OWID$date[year( OWID$date ) == 2021 & isoweek( OWID$date ) == 53] )
-OWID$Pw[year( OWID$date ) == 2021 & isoweek( OWID$date ) < 53] <- isoweek( OWID$date[year( OWID$date ) == 2021 & isoweek( OWID$date ) < 53] ) + 53
+OWID$Pw <- PandemieWoche(OWID$date)
+
 OWID$new_tests[is.na( OWID$new_tests )] <- 0
 
 CoronaWaves$PeekWeek <- rep( 0, nrow( CoronaWaves ) )
 
 for ( i in 1:nrow( CoronaWaves ) ) {
- 
+
   cases <- aggregate( new_cases ~ Pw, data = OWID %>% filter( location == CoronaWaves$location[i] & Pw >=  CoronaWaves$StartWeek[i] & CoronaWaves$EndWeek[i] >= Pw), sum )
   deaths <- aggregate( new_deaths ~ Pw, data = OWID %>% filter( location == CoronaWaves$location[i] & Pw >=  CoronaWaves$StartWeek[i] & CoronaWaves$EndWeek[i] >= Pw), sum )
   c <- match( max( cases$new_cases ), cases$new_cases )

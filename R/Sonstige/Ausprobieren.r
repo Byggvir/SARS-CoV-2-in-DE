@@ -8,7 +8,7 @@
 # E-Mail: thomas@arend-rhb.de
 #
 
-MyScriptName <-"FZBundesland"
+MyScriptName <-"Ausprobieren"
 
 library(tidyverse)
 library(REST)

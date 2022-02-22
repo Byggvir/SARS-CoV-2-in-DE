@@ -64,14 +64,14 @@ today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
 SQL <- ' select * from FaelleProWocheAltersgruppe;'
-weekly <- RunSQL(SQL = SQL)
+FZWoche <- RunSQL(SQL = SQL)
 
-m <- length(weekly[,1])
-reported <- weekly$Kw[m]
+m <- length(FZWoche[,1])
+reported <- FZWoche$Kw[m]
 
-scl <- max(weekly$AnzahlFall)/max(weekly$AnzahlTodesfall) 
+scl <- max(FZWoche$AnzahlFall)/max(FZWoche$AnzahlTodesfall) 
 
-weekly %>% ggplot(
+FZWoche %>% ggplot(
   aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlFall, colour = "Fälle" ), color = 'blue') +
   geom_line(aes(y = AnzahlTodesfall * scl, colour = "Todesfälle" ), color = 'red') +
@@ -112,13 +112,13 @@ ggsave(  paste(fPrefix,'_Alter.png', sep = '')
          , units = "px"
 )
 
-weekly %>% ggplot(
+FZWoche %>% ggplot(
   aes( x = AnzahlFall, y = AnzahlTodesfall ) 
   ) +
   geom_point(aes(x = AnzahlFall,y = AnzahlTodesfall, colour = Altersgruppe ) ) +
   scale_x_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
-  geom_smooth( data = weekly %>% filter(Altersgruppe >= "A35-A59"), method = "lm", formula = y ~ x, aes(colour = Altersgruppe)) +
+  geom_smooth( data = FZWoche %>% filter(Altersgruppe >= "A35-A59"), method = "lm", formula = y ~ x, aes(colour = Altersgruppe)) +
   facet_wrap(vars(Jahr)) +
   labs(  title = "SARS-CoV-2 Todesfälle ~ Fälle nach Kalenderwoche"
          , subtitle = paste ("Deutschland, Stand:", heute, sep ='')
@@ -152,9 +152,9 @@ ggsave( paste(fPrefix,'_AlterScatterplot.png', sep = '')
         , units = "px"
 )
 SQL <- ' select * from FaelleProWoche;'
-daten <- RunSQL(SQL = SQL)
+FZWoche_2 <- RunSQL(SQL = SQL)
 
-daten %>% filter( PandemieWoche > 74  ) %>% ggplot(
+FZWoche_2 %>% filter( PandemieWoche > 74  ) %>% ggplot(
   aes( x = PandemieWoche, y = AnzahlFall)) +
   geom_bar(position="dodge", stat="identity") +
   geom_text(aes(label=AnzahlFall), size=2.5, position=position_dodge(width=0.9), hjust=0,vjust=0.5, angle= 90) +

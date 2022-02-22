@@ -38,13 +38,11 @@ source("R/lib/sql.r")
 today <- Sys.Date()
 heute <- format(today, "%Y-%m-%d")
 
-par ( mar = c(10,10,10,10)
-      , mfcol = c(2,1)
-      )
-
 png( paste( "png/", MyScriptName, heute, ".png", sep = "")
     , width = 1920
-    , height = 1080)
+    , height = 1080 
+    )
+
 par ( mar = c(10,10,10,10)
       , mfcol = c(3,1)
 )

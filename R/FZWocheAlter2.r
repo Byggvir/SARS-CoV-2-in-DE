@@ -74,9 +74,11 @@ if ( ! exists("weekly") ) {
   weekly <- RunSQL(SQL = SQL)
 }
 
-scl <- max(weekly$AnzahlFall) / max(weekly$AnzahlTodesfall)
+wa <- weekly # %>% filter ( Altersgruppe == 'A80+')
 
-weekly %>% filter(PandemieWoche < max(PandemieWoche) - 1 ) %>% ggplot(
+scl <- ceiling(max(wa$AnzahlFall) / max(wa$AnzahlTodesfall))
+
+wa %>% filter(PandemieWoche < max(PandemieWoche) - 1 ) %>% ggplot(
   aes( x = PandemieWoche )) +
   geom_line(aes(y = AnzahlFall, colour = 'Fall')) +
   geom_line(aes(y = AnzahlTodesfall * scl, colour = 'Todesfall' ) ) +

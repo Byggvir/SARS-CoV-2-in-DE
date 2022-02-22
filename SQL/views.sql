@@ -768,6 +768,27 @@ group by
  B.IdBundesland
  , F.Geschlecht
  , F.Altersgruppe
+union
+select 
+    0 as IdBundesland
+    , 'Deutschland' as Bundesland
+    , F.Altersgruppe as Altersgruppe
+    , F.Geschlecht as Geschlecht
+    , sum(AnzahlFall) as AnzahlFall
+    , sum(AnzahlTodesfall) as AnzahlTodesfall
+    , E.Anzahl as Einwohner
+from Faelle as F
+
+join DESTATIS.StdBev6 as E
+on 
+    F.Geschlecht = E.Geschlecht
+    and F.Altersgruppe = E.Altersgruppe
+where 
+  E.Stichtag = "2020-12-31"
+group by
+F.Geschlecht
+ , F.Altersgruppe
+
 ;
 
 create or replace view FaelleAGProMonat as

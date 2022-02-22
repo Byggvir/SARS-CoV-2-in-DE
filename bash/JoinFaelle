@@ -10,6 +10,7 @@ blue=`tput setaf 4`
 reset=`tput sgr0`
 
 HEUTE=$(date +%F)
+GESTERN=$(date --date='yesterday' +%F)
 SPATH=$(dirname "$0")
 if [ "$SPATH" = "." ] 
 then
@@ -112,7 +113,7 @@ EOF
 
 pushd $GIT
 
-for F in /data/git/SARS-CoV-2-in-DE/Infektionen/Archiv/20*.csv
+for F in /data/git/SARS-CoV-2-in-DE/Infektionen/Archiv/$GESTERN*.csv
 do
     echo $F
     importneu $(echo $F | sed 's#.*/##; s#_.*##')

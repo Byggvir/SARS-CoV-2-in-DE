@@ -68,7 +68,7 @@ mbreaks2 <-seq( 0, max(CFRWoche$Pw), 5)
 for (A in AG) {
   
 
-CFRWoche %>% filter( Altersgruppe == A & Pw > 102 ) %>% ggplot( ) +
+CFRWoche %>% filter( Altersgruppe == A ) %>% ggplot( ) +
   geom_line( aes( x = Datum, y = CFR, colour = Geschlecht )) +
 #  facet_wrap ( vars(Altersgruppe) ) +
   expand_limits( y = 0 ) +

@@ -8,8 +8,9 @@
 # E-Mail: thomas@arend-rhb.de
 #
 
-options(OutDec=',')
 MyScriptName <- "CFRMonat"
+
+options(OutDec=',')
 
 require(data.table)
 library(tidyverse)
@@ -55,6 +56,7 @@ CFRMonat <- RunSQL('select * from CFRMonat where Datum > "2020-02-01";')
 CFRMonat$Geschlecht[CFRMonat$Geschlecht == 'M'] <- 'Männer'
 CFRMonat$Geschlecht[CFRMonat$Geschlecht == 'W'] <- 'Frauen'
 CFRMonat$Geschlecht[CFRMonat$Geschlecht == 'B'] <- 'Beide'
+CFRMonat$CFR <- as.numeric(CFRMonat$CFR)
 
 AG <- unique(CFRMonat$Altersgruppe)
 
@@ -71,7 +73,7 @@ CFRMonat %>% filter( Altersgruppe == A ) %>% ggplot( ) +
   theme_ta() +
   labs(   title = paste( 'Deutschland CFR der Altersgruppe', A )
           , subtitle= paste( 'Anteil Todesfälle an Fällen eines Monats. Stand:', heute )
-          , x = 'Monatsbeginn'
+          , x = 'Monat'
           , y = 'CFR in [%]' 
           , colour = 'Legende' 
 

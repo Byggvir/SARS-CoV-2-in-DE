@@ -1,0 +1,71 @@
+#!/bin/bash
+
+DEBUG=OFF
+
+# Color for output
+
+red=`tput setaf 1`
+green=`tput setaf 2`
+blue=`tput setaf 4`
+reset=`tput sgr0`
+
+SEDDIR="$(dirname $0)/sed"
+AWKDIR="$(dirname $0)/awk"
+
+# List of download URL
+
+URL="https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Fallzahlen_Gesamtuebersicht.xlsx?__blob=publicationFile"
+
+[ "$DEBUG" = "ON" ] && TEMP="/tmp/rki" || TEMP="/tmp/rki-$(date '+%F')"
+[ ! -d  "${TEMP}" ] && mkdir "${TEMP}"
+
+echo -e "\n\n${blue}+---------"
+echo -e "| ${red}Tempoary file in: $TEMP"
+echo -e "${blue}+---------${reset}\n\n"
+
+DEST="$TEMP/Meldungen.xlsx"
+CSV="$TEMP/Meldungen"
+SQL="$TEMP/Meldungen.sql"
+
+function download {
+
+    # Download der Tabellen
+
+    echo 'Download kumulative Tabelle'
+    [ ! -e "$DEST" ] && curl --output "$DEST" --url "$URL"
+
+    ssconvert -S --export-type=Gnumeric_stf:stf_csv "$DEST" "${CSV}%n.csv"
+    
+    cat "${CSV}0.csv" | sed '1d; s#/#-#g' | awk -F ',' '{print ( $1 "," $3 "," $5 ) }' > "${CSV}I.csv"
+
+( cat <<EOF
+USE RKI;
+
+DROP TABLE IF EXISTS Meldungen;
+CREATE TABLE IF NOT EXISTS Meldungen (
+    Meldedatum DATE
+    , AnzahlFall INT
+    , AnzahlTodesfall INT
+    , PRIMARY KEY(Meldedatum)
+    
+);
+
+LOAD DATA LOCAL INFILE '${CSV}I.csv' 
+    INTO TABLE Meldungen 
+    FIELDS TERMINATED BY ',' 
+    IGNORE 0 ROWS;
+
+
+EOF
+
+
+) > "$SQL"
+
+}
+
+rm "$SQL"
+touch "$SQL"
+
+download
+
+mysql --user=rscript --password=rscript < "$SQL"
