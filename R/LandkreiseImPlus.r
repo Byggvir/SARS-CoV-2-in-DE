@@ -17,7 +17,7 @@ options(OutDec=',')
 MyScriptName <- "LandkreiseImPlus.r"
 
 require(data.table)
-library(REST)
+#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)

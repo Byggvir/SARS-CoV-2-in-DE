@@ -22,20 +22,22 @@ echo G=$GIT
 
 
 SEDDIR="bash/sed"
-echo SEDDIR=$SEDDIR
+#echo SEDDIR=$SEDDIR
 AWKDIR="bash/awk"
-echo AWKDIR=$AWKDIR
+#echo AWKDIR=$AWKDIR
 
 [ "$DEBUG" = "ON" ] && TEMP="/tmp/rki" || TEMP="/tmp/rki-${HEUTE}"
 [ ! -d  "${TEMP}" ] && mkdir "${TEMP}"
 
 CSV="$TEMP/Infektionen.csv"
 
-echo $CSV
+# echo $CSV
 
 echo -e "\n\n${blue}+---------"
 echo -e "| ${red}Neuinfektionen"
-echo -e "| ${blue}Zusammenführen der Archivdateien für Infektionen"
+echo -e "|"
+echo -e "| ${blue}Zusammenführen der Archivdateien für Infektionen in eine Datenbank"
+echo -e "|"
 echo -e "${blue}+---------${reset}\n\n"
 
 function importneu {
@@ -88,6 +90,8 @@ LOAD DATA LOCAL INFILE '${TEMP}/Infektionen.csv'
     FIELDS TERMINATED BY ',' 
     IGNORE 0 ROWS;
 
+delete from NeuFaelle where Bestandsdatum = "$1" ;
+
 insert into NeuFaelle 
 select 
     Bestandsdatum
@@ -105,6 +109,8 @@ group by
     , Art
 ;
 
+drop table if exists NeuInfektionen ;
+
 EOF
 
 ) |  mysql --user=rscript --password=rscript
@@ -113,10 +119,16 @@ EOF
 
 pushd $GIT
 
-for F in /data/git/SARS-CoV-2-in-DE/Infektionen/Archiv/$GESTERN*.csv
+for F in /data/git/SARS-CoV-2-in-DE/Infektionen/Archiv/$1*.csv
 do
-    echo $F
+    echo -e "\n\n${blue}+---------"
+    echo -e "|"
+    echo -e "| ${red}$F"
+    echo -e "|"
+    echo -e "${blue}+---------${reset}\n\n"
+
     importneu $(echo $F | sed 's#.*/##; s#_.*##')
+
 done
 
 popd

@@ -1,9 +1,9 @@
 #!/usr/bin/env Rscript
 #
 #
-# Script: RKI.r
+# Script: LK_Altersgruppen.r
 #
-# Stand: 2020-10-21
+# Stand: 2022-03-01
 # (c) 2020 by Thomas Arend, Rheinbach
 # E-Mail: thomas@arend-rhb.de
 #
@@ -11,7 +11,6 @@
 MyScriptName <-"LK_Altersgruppen"
 
 library(tidyverse)
-library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -22,8 +21,6 @@ library(viridis)
 library(hrbrthemes)
 library(scales)
 library(ragg)
-# library(extrafont)
-# extrafont::loadfonts()
 
 # Set Working directory to git root
 
@@ -65,7 +62,7 @@ if (length(args) == 0) {
 
 FromDay <- as.Date("2022-01-18")
 
-citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)\nGitHub SARS-CoV-2 Infektionen"
+citation <- "© 2022 by Thomas Arend\nQuelle: Robert Koch-Institut (2022)\nGitHub SARS-CoV-2 Infektionen"
 
 options( 
     digits = 7
@@ -73,6 +70,9 @@ options(
   , Outdec = "."
   , max.print = 3000
   )
+
+outdir <- 'png/Altersgruppen/'
+dir.create( outdir , showWarnings = FALSE, recursive = FALSE, mode = "0777")
 
 maxlimit <- rep(0,each=17)
 
@@ -142,7 +142,7 @@ Altersgruppen %>% filter(IdBundesland == BL[i,1]) %>% ggplot() +
        , y = paste( 'Fälle von', z2, 'bis', z1, 'pro 100.000' )
        , caption = citation )
 
-ggsave(  paste('png/LK/Altersgruppen-Tendenz-', BL[i,2],'-',u,'.png', sep='')
+ggsave(  paste( outdir, BL[i,2],'-',u,'.png', sep='')
        , device = 'png'
        , bg = "white"
        , width = 1920 * 2

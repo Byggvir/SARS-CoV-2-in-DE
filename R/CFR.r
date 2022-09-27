@@ -13,7 +13,7 @@ MyScriptName <- "CFR"
 
 require(data.table)
 library(tidyverse)
-library(REST)
+#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -113,15 +113,26 @@ grid.draw(table)
 
 dev.off()
 
-p <- ggplot(data, aes( x = reorder( Bundesland, -CFR), y = CFR, fill = Bundesland )) +
+data %>% ggplot( aes( x = reorder( Bundesland, -CFR), y = CFR, fill = Bundesland ) ) +
   geom_bar(position="dodge", stat="identity") +
-  geom_text( aes( label = paste( CFR,' (', Rang, ')', sep='')), size=3, position=position_dodge(width=0.9), vjust=-0.25) +
-  scale_fill_viridis(discrete = T) +
-  ggtitle("Corona: Rohe CFR") +
+  geom_text( aes( label=paste(CFR, ' (', Rang, ')', sep=''))
+            , size=5
+            , color = 'white'
+            , position=position_dodge( width = 0.9 )
+            , vjust= 0.5
+            , hjust = 1
+            , angle = 90 ) +
+  
+  scale_fill_viridis(discrete = TRUE) +
+  labs(  title = "Corona: Rohe CFR"
+         , subtitle = paste ("Deutschland, Stand:", heute, sep =' ')
+         , x = "Bundesländer"
+         , y = "CFR [%]"
+         , colour = "Bundesland"
+         , caption = citation ) +
+  
   theme_ipsum() +
-  theme( axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 12 )) +
-  xlab("Bundesländer") +
-  ylab("CFR in [%]")
+  theme( axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 12 )) -> p
 
 ggsave( plot = p, 
         file = paste( 
@@ -132,32 +143,46 @@ ggsave( plot = p,
           , '-2.png'
           , sep = ""
         )
-,  bg = "white"
-        , width = 29.7, height = 21, units = "cm", dpi = 150)
+        , device = 'png'
+        , bg = "white"
+        , width = 1920
+        , height = 1080
+        , units = "px"
+        , dpi = 144
+)
 
 SQL <- 'select B.Bundesland as Bundesland,Altersgruppe,sum(AnzahlTodesfall)/sum(AnzahlFall) * 100 as CFR from Faelle as F join Bundesland as B on B.IdBundesland = F.IdLandkreis div 1000 group by IdBundesland, Altersgruppe;'
 data <- RunSQL(SQL)
 
-data  %>% filter (Altersgruppe == 'A80+') %>% 
-  ggplot( aes( x  = reorder( Bundesland, -CFR ), y = CFR, fill = Bundesland)) +
-  geom_bar( position = "dodge", stat = "identity") +
-  geom_text( aes(label = paste( CFR, sep= '') ), size = 3, position = position_dodge( width=0.9 ), vjust = -0.25) +
-  # facet_wrap( vars( Altersgruppe )) +
-  scale_fill_viridis( discrete = T ) +
-  ggtitle("Corona: Rohe CFR") +
-  theme_ipsum() +
-  theme( axis.text.x = element_text( angle = 45, vjust = 1, hjust = 1, size = 12 )) +
-  xlab("Bundesländer") +
-  ylab("CFR in [%]") -> p
-  
-  ggsave( plot = p, 
-          file = paste( 
-            "png/"
-            ,  heute
-            , '-'
-            , MyScriptName
-            , '-3.png'
-            , sep = ""
-          )
-,  bg = "white"
-          , width = 29.7, height = 21, units = "cm", dpi = 150)
+# data  %>% filter (Altersgruppe == 'A80+') %>% 
+#   ggplot( aes( x  = reorder( Bundesland, -CFR ), y = CFR, fill = Bundesland)) +
+#   geom_bar( position = "dodge", stat = "identity") +
+#   geom_text( aes(label = paste( CFR, sep= '') ), size = 3, position = position_dodge( width=0.9 ), vjust = -0.25) +
+#   # facet_wrap( vars( Altersgruppe )) +
+#   scale_fill_viridis( discrete = T ) +
+#   labs(  title = "Corona: Standardisierte rohe CFR"
+#          , subtitle = paste ("Deutschland, Stand:", heute, sep =' ')
+#          , x = "Bundesländer"
+#          , y = "CFR in [%]"
+#          , colour = "Bundesland"
+#          , caption = citation ) +
+#   theme_ipsum() +
+#   theme( axis.text.x = element_text( angle = 45, vjust = 1, hjust = 1, size = 12 )) -> p
+#   
+#   ggsave( plot = p, 
+#           file = paste( 
+#             "png/"
+#             ,  heute
+#             , '-'
+#             , MyScriptName
+#             , '-3.png'
+#             , sep = ""
+#           )
+#           , device = 'png'
+#           , bg = "white"
+#           , width = 1920
+#           , height = 1080
+#           , units = "px"
+#           , dpi = 144
+#   )
+#   

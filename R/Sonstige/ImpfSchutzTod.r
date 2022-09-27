@@ -10,7 +10,7 @@
 
 MyScriptName <-"ImpfSchutz"
 
-library(REST)
+#library(REST)
 library(tidyverse)
 
 # Set Working directory to git root

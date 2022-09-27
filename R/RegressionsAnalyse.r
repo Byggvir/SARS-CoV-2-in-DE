@@ -9,7 +9,7 @@
 #
 
 require(data.table)
-library(REST)
+#library(REST)
 library(gridExtra)
 library(grid)
 library(lubridate)
@@ -149,7 +149,7 @@ where
   ci <- confint(ra,level = CI)
   
   a <- c( ci[1,1], ra$coefficients[1] , ci[1,2])
-  b <-  c( ci[2,1], ra$coefficients[2] , ci[2,2])
+  b <- c( ci[2,1], ra$coefficients[2] , ci[2,2])
   
   report <- data.frame (
      Datum = ThisDate

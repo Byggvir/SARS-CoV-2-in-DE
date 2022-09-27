@@ -6,7 +6,7 @@ RunSQL <- function (
   SQL = 'select * from Faelle;'
   , prepare= c("set @i := 1;")) {
   
-  rmariadb.settingsfile <- "/data/git/SARS-CoV-2-in-DE/SQL/rki.cnf"
+  rmariadb.settingsfile <- "SQL/rki.cnf"
   
   rmariadb.db <- "RKI"
   

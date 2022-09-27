@@ -2,6 +2,36 @@ use RKI;
 
 delimiter //
 
+drop function if exists SigmaRel ;
+
+create function SigmaRel ( k BIGINT, n BIGINT )
+returns DOUBLE
+begin
+  
+  if n > 0 then
+    return (sqrt(k*(n-k)/n)/n) ;
+  else
+    return (0);
+  end if;
+  
+end
+//
+
+drop function if exists savediv ;
+
+create function savediv ( a BIGINT, b BIGINT )
+returns DOUBLE
+begin
+  
+  if b > 0 then
+    return (a/b) ;
+  else
+    return (0);
+  end if;
+  
+end
+//
+
 drop procedure if exists CFRBundeslandStdBev //
 
 create procedure CFRBundeslandStdBev ()
@@ -9,11 +39,8 @@ begin
 
 set @bev := (Select sum(Anzahl) from DESTATIS.StdBev6 where Stichtag = "2020-12-31");
 
-set @i:=0;
-
 select 
-    @i:=@i+1 as Rang
-    , Z.Bundesland
+      Z.Bundesland
     , round(Z.Deaths / Z.Cases*100,2) as CFR
 from (
 select 
@@ -56,7 +83,7 @@ on
     and A.Altersgruppe = B.Altersgruppe 
 where
     S.Stichtag = "2020-12-31"
-group by A.IdLandkreis div 1000,A.Geschlecht,A.Altersgruppe 
+group by A.IdLandkreis div 1000, A.Geschlecht, A.Altersgruppe 
 ) as R
 group by 
     R.IdBundesland
@@ -93,9 +120,10 @@ from (
     on 
         F.IdLandkreis div 1000 = B.IdBundesland
     group by F.IdLandkreis div 1000
+    order by 
+    CFR desc
     ) as O 
-order by 
-    CFR desc;
+;
 end
 //
 
@@ -218,54 +246,57 @@ create or replace view CFRWoche as
         Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
     group by 
         Pw ;
-
+    
 create or replace view CFRMonat as 
 
     select
         date(concat(year(Meldedatum),'-',month(Meldedatum),',',1)) as Datum
         , year(Meldedatum) as Jahr
         , month(Meldedatum) as Monat
-        , Altersgruppe
-        , Geschlecht
-        , FORMAT(sum(AnzahlTodesfall)/sum(AnzahlFall),6) as CFR
-    from Faelle 
+        , F.Altersgruppe
+        , F.Geschlecht
+        , savediv(sum(AnzahlTodesfall),sum(AnzahlFall)) as CFR
+        , SigmaRel(sum(AnzahlTodesfall),sum(AnzahlFall)) as SigmaRel
+    from Faelle as F
     where 
-        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+        F.Geschlecht <> 'u' and F.Altersgruppe <> 'unbekan'
     group by 
         Jahr
         , Monat
-        , Altersgruppe
-        , Geschlecht
+        , F.Altersgruppe
+        , F.Geschlecht
     union
     select 
         date(concat(year(Meldedatum),'-',month(Meldedatum),',',1)) as Datum
         , year(Meldedatum) as Jahr
         , month(Meldedatum) as Monat
         , 'Alle' as Altersgruppe
-        , Geschlecht
-        , FORMAT(sum(AnzahlTodesfall)/sum(AnzahlFall),6) as CFR
-    from Faelle 
+        , F.Geschlecht
+        , savediv(sum(AnzahlTodesfall),sum(AnzahlFall)) as CFR
+        , SigmaRel(sum(AnzahlTodesfall),sum(AnzahlFall)) as SigmaRel
+    from Faelle as F
     where 
-        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+        F.Geschlecht <> 'u' and F.Altersgruppe <> 'unbekan'
     group by 
         Jahr
         , Monat
-        , Geschlecht
+        , F.Geschlecht
     union
     select 
         date(concat(year(Meldedatum),'-',month(Meldedatum),',',1)) as Datum
         , year(Meldedatum) as Jahr
         , month(Meldedatum) as Monat
-        , Altersgruppe
+        , F.Altersgruppe
         , 'B' as Geschlecht
-        , FORMAT(sum(AnzahlTodesfall)/sum(AnzahlFall),6) as CFR
-    from Faelle 
+        , savediv(sum(AnzahlTodesfall),sum(AnzahlFall)) as CFR
+        , SigmaRel(sum(AnzahlTodesfall),sum(AnzahlFall)) as SigmaRel
+    from Faelle as F
     where 
-        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+        F.Geschlecht <> 'u' and F.Altersgruppe <> 'unbekan'
     group by 
         Jahr
         , Monat
-        , Altersgruppe
+        , F.Altersgruppe
     union
     select 
         date(concat(year(Meldedatum),'-',month(Meldedatum),',',1)) as Datum
@@ -273,10 +304,11 @@ create or replace view CFRMonat as
         , month(Meldedatum) as Monat
         , 'Alle' as Altersgruppe
         , 'B' as Geschlecht
-        , FORMAT(sum(AnzahlTodesfall)/sum(AnzahlFall),6) as CFR
-    from Faelle 
+        , savediv(sum(AnzahlTodesfall),sum(AnzahlFall)) as CFR
+        , SigmaRel(sum(AnzahlTodesfall),sum(AnzahlFall)) as SigmaRel
+    from Faelle as F
     where 
-        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+        F.Geschlecht <> 'u' and F.Altersgruppe <> 'unbekan'
     group by 
         Jahr
         , Monat
@@ -328,7 +360,7 @@ create or replace view CFRMonatBL as
         , Altersgruppe
         , 'B' as Geschlecht
         , sum(AnzahlTodesfall)/sum(AnzahlFall) as CFR
-    from Faelle 
+    from Faelle
     where 
         Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
     group by 
@@ -354,3 +386,42 @@ create or replace view CFRMonatBL as
         , Monat
         , IdBundesland
     ;
+
+create or replace view StdCFRMonat as 
+
+    select
+        Datum 
+        , Jahr
+        , Monat
+        , sum(AnzahlTodesfall)/sum(AnzahlFall) as CFR
+        , sum(AnzahlTodesfall / AnzahlFall * B.Anteil) as StdCFR
+    from (
+    select
+        date(concat(year(Meldedatum),'-',month(Meldedatum),',',1)) as Datum
+        , year(Meldedatum) as Jahr
+        , month(Meldedatum) as Monat
+        , Altersgruppe as Altersgruppe
+        , Geschlecht as Geschlecht
+        , sum(AnzahlFall) as AnzahlFall
+        , sum(AnzahlTodesfall) as AnzahlTodesfall
+    from Faelle
+    where 
+        Geschlecht <> 'u' and Altersgruppe <> 'unbekan'
+    group by 
+        Jahr
+        , Monat
+        , Altersgruppe
+        , Geschlecht
+    ) as C
+    join  DESTATIS.StdBev6 as B
+    on
+        C.Geschlecht = B.Geschlecht
+        and C.Altersgruppe = B.Altersgruppe
+    
+    where 
+        B.Stichtag = '2020-12-31'
+        and C.Geschlecht <> 'u' and C.Altersgruppe <> 'unbekan'
+    group by 
+        Jahr
+        , Monat
+;

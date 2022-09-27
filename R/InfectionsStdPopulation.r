@@ -14,7 +14,6 @@ MyScriptName <- "InfectionsStdPopulation"
 
 require(data.table)
 library(tidyverse)
-library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -53,7 +52,7 @@ heute <- format(today, "%Y%m%d")
 
 data <- RunSQL('call InfectionsBundeslandStdBev();')
 
-data[,3] <- round(data[,3],2)
+data[,5] <- round(data[,5],0)
 
 print(data)
 
@@ -89,7 +88,7 @@ tt <- ttheme_default(
 table <- tableGrob(
   data
   , theme = tt
-  , cols = c("Rang", "Bundesland", "Fälle pro 100k" )
+  , cols = c("Rang", "Id", "Bundesland", "Abk", "Fälle pro 100k" )
   , vp = vp
 )
 
@@ -113,15 +112,26 @@ grid.draw(table)
 
 dev.off()
 
-p <- ggplot(data, aes(x = reorder(Bundesland,-InfectionRatio), y=InfectionRatio, fill=Bundesland)) +
-  geom_bar(position="dodge", stat="identity") +
-  geom_text(aes(label=paste(InfectionRatio, ' (', Rang, ')', sep='')), size=2.5, position=position_dodge(width=0.9), vjust=-0.25) +
-  scale_fill_viridis(discrete = T) +
-  ggtitle("Corona: Standardisierte Fallzahlen pro 100k Einwohner") +
+data %>% ggplot( aes(x = reorder(Bundesland,-InfectionRatio), y=InfectionRatio, fill=Bundesland)) +
+  geom_bar(position="dodge", stat="identity", alpha = 1) +
+  geom_text( aes( label = paste(InfectionRatio, ' (', Rang, ')', sep=''))
+             , size=5
+             , color = 'white'
+             , position=position_dodge( width = 0.9 )
+             , vjust= 0.5
+             , hjust = 1
+             , angle = 90 ) +
+  scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  scale_fill_viridis(discrete = TRUE) +
+  labs(  title = "Corona: Standardisierte Fallzahlen pro 100k Einwohner"
+         , subtitle = paste ("Deutschland, Stand:", heute, sep =' ')
+         , x = "Bundesländer"
+         , y = "Insgesamt gemeldete Fälle pro 100.000"
+         , colour = "Bundesland"
+         , caption = citation ) +
+  
   theme_ipsum() +
-  theme( axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 12 )) +
-  xlab("Bundesländer") +
-  ylab("Insgesamt gemeldete Fälle pro 100.000")
+  theme( axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 12 )) -> p
 
 ggsave( plot = p, 
         file = paste( 
@@ -132,6 +142,11 @@ ggsave( plot = p,
           , "-2.png"
         , sep = ""
         )
-,  bg = "white"
-       , width = 29.7, height = 21, units = "cm", dpi = 150)
+        , device = 'png'
+        , bg = "white"
+        , width = 1920
+        , height = 1080
+        , units = "px"
+        , dpi = 144
+        )
 

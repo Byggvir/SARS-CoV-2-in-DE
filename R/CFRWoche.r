@@ -13,7 +13,7 @@ MyScriptName <- "CFRWoche"
 
 require(data.table)
 library(tidyverse)
-library(REST)
+#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)

@@ -38,7 +38,14 @@ begin
 
 set @i:=0;
 
-select 
+drop table if exists tIR;
+
+create temporary table tIR 
+select *
+from FaelleBundesland
+order by InfectionRatio desc;
+
+select
     @i:=@i+1 as Rang
     , IdBundesland as IdBundesland
     , Bundesland as Bundesland
@@ -46,12 +53,8 @@ select
     , AnzahlFall as Anzahl
     , Bevoelkerung as Bevoelkerung
     , InfectionRatio as InfectionRatio
-from ( select * from FaelleBundesland
-order by AnzahlFall desc
-) as R
-order by
-    InfectionRatio desc
-;
+from tIR;
+drop table if exists tIR;
 
 end
 //

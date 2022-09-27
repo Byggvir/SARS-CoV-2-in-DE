@@ -129,6 +129,43 @@ view ImpfungenProTag as
 
 -- Ende
 
+-----
+-- Zuammenfassen der Impfungen auf Landkreisebene 
+-- vollständig geimpften pro Tag auf Bundesebene
+-----
+
+create or replace
+view ImpfungenProWoche as
+    select * 
+    from (
+    
+    select 
+        PandemieWoche(Impfdatum) as PW
+        , weekyear(Impfdatum) as Jahr
+        , week(Impfdatum,3) as Kw
+        , ImpfSchutz as ImpfSchutz
+        , sum(Anzahl) as Anzahl
+    from Impfungen as I
+    group by
+        Pw
+        , ImpfSchutz
+    union     
+    select 
+        PandemieWoche(Impfdatum) as PW
+        , weekyear(Impfdatum) as Jahr
+        , week(Impfdatum,3) as Kw
+        , 0 as ImpfSchutz
+        , sum(Anzahl) as Anzahl
+    from Impfungen as I
+    group by
+        Pw
+    ) as I
+    order by
+        Pw, ImpfSchutz
+;
+
+-- Ende
+
 ------
 -- Berechnen der kumulativen voll Geimpften auf Bundesebene
 ------

@@ -1,9 +1,9 @@
 #!/usr/bin/env Rscript
 #
 #
-# Script: RKI.r
+# Script: LK_PandemieWoche.r
 #
-# Stand: 2020-10-21
+# Stand: 2022-03-01
 # (c) 2020 by Thomas Arend, Rheinbach
 # E-Mail: thomas@arend-rhb.de
 #
@@ -11,7 +11,7 @@
 MyScriptName <-"LK_PandemieWoche"
 
 library(tidyverse)
-library(REST)
+#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -50,7 +50,10 @@ source("R/lib/myfunctions.r")
 source("R/lib/sql.r")
 source("R/lib/color_palettes.r")
 
-citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021), GitHub SARS-CoV-1 Infektionen"
+outdir <- 'png/Pandemiewoche/'
+dir.create( outdir , showWarnings = FALSE, recursive = FALSE, mode = "0777")
+
+citation <- "© 2022 by Thomas Arend\nQuelle: Robert Koch-Institut (2022), GitHub SARS-CoV-1 Infektionen"
 
 options( 
     digits = 7
@@ -97,7 +100,7 @@ SQL <- paste(
     on A.IdLandkreis = B.IdLandkreis and A.Pw = B.Pw + 1 
     join Landkreis as L
     on A.IdLandkreis = L.IdLandkreis
-    where ', PWoche,' >= A.Pw and A.Pw >= ', PWoche - 5, ';'
+    where ', PWoche,' >= A.Pw and A.Pw >= ', PWoche - 7, ';'
   , sep = ' ')
 
 Landkreise <- RunSQL(SQL = SQL)
@@ -119,7 +122,7 @@ SQL <- paste(
     on A1.IdBundesland = A2.IdBundesland and A1.Pw = A2.Pw + 1 
     join Bundesland as B
     on A1.IdBundesland = B.IdBundesland
-    where ', PWoche,' >= A1.Pw and A1.Pw >=', PWoche - 5,';'
+    where ', PWoche,' >= A1.Pw and A1.Pw >=', PWoche - 7,';'
   , sep = ' ')
 
 Bundesland <- RunSQL(SQL = SQL)
@@ -148,7 +151,7 @@ for ( B in 1:16) {
 
   coord_fixed( xlim = limbounds( c( 0, max_Inzidenz ) ), ylim = limbounds( c( 0, max_Inzidenz ) ) ) +
   
-  facet_wrap( vars(PwLabel) ) +
+  facet_wrap( vars(PwLabel), ncol = 4 ) +
   
   theme_ipsum() +
   theme(  plot.title = element_text( size = 24 )
@@ -164,7 +167,8 @@ for ( B in 1:16) {
        , y = "Fälle Woche pro 100.000"
        , caption = citation )
 
-ggsave(  paste('png/LK/PandemieWoche-',BL[B+1,2],'.png', sep='')
+ggsave(  paste( outdir,BL[B+1,2],'.png', sep='')
+      , device = 'png'
        , bg = "white"
        , width = 29.7
        , height = 21

@@ -59,7 +59,9 @@ echo SEDDIR=$SEDDIR
 AWKDIR="bash/awk"
 echo AWKDIR=$AWKDIR
 
-AKTUELL="Infektionen/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
+#AKTUELL="Infektionen/Aktuell_Deutschland_SarsCov2_Infektionen.csv"
+AKTUELL="Infektionen/Archiv/$(date +%F)_Deutschland_SarsCov2_Infektionen.csv"
+
 IMPFUNGEN="Impfungen/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv"
 
 [ "$DEBUG" = "ON" ] && TEMP="/tmp/rki" || TEMP="/tmp/rki-$(date '+%F')"

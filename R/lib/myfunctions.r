@@ -1,5 +1,6 @@
 Wochentage <- c("Mo","Di","Mi","Do","Fr","Sa","So")
 WochentageLang <- c("Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag")
+Monatsnamen <- c('Januar', 'Februar', 'März','April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November','Dezember')
 
 RZahl <- function (b, SeriellesIntervall = 4) {
   

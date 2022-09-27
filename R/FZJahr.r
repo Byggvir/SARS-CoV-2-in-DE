@@ -11,7 +11,7 @@
 MyScriptName <-"FZJahr_"
 
 library(tidyverse)
-library(REST)
+#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -78,12 +78,12 @@ bar %>% ggplot(
   geom_bar( position = "dodge", stat = "identity") +
   geom_text( aes( label = Anzahl ), size = 5, position = position_dodge( width = 0.9 ), vjust = -0.25 ) +
 #  scale_fill_viridis( discrete = T ) +
-  scale_x_continuous(  breaks = 2020:2021 , labels = 2020:2021 ) +
+  scale_x_continuous(  breaks = 2020:2022 , labels = 2020:2022 ) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
   theme_ta() +
   labs(  title = "Corona-Fälle und Todesfälle nach Jahr des Meldedatums"
          , subtitle = paste ("Deutschland, Stand:", heute, sep ='')
-         , x ="Jahr"
+         , x = "Jahr"
          , y = "Anzahl" 
          , colour = "Outcome"
          , caption = citation ) -> pp

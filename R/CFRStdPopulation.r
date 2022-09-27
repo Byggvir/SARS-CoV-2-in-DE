@@ -16,7 +16,6 @@ MyScriptName <- "CFRStdPopulation"
 require(data.table)
 
 library(tidyverse)
-library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -53,9 +52,13 @@ source("R/lib/sql.r")
 today <- Sys.Date()
 heute <- format(today, "%Y%m%d")
 
+citation <- "© 2022 by Thomas Arend\nQuelle: Robert Koch-Institut (2022)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
+
 data <- RunSQL('call CFRBundeslandStdBev();')
 
-data[,3] <- round(data[,3],2)
+data[,2] <- round(data[,2],2)
+
+data$Rang <- 1:nrow(data)
 
 print(data)
 
@@ -90,9 +93,10 @@ tt <- ttheme_default(
 table <- tableGrob(
   data
   , theme = tt
-  , cols = c("Rang", "Bundesland", "CFR" )
+  , cols = c( "Bundesland", "CFR" , "Rang")
   , vp = vp
 )
+
 title <- textGrob('Standardisierte rohe CFR [%]',gp=gpar(fontsize=50))
 footnote <- textGrob(paste('Stand:', heute), x=0, hjust=0,
                      gp=gpar( fontface="italic"))
@@ -112,15 +116,25 @@ grid.draw(table)
 
 dev.off()
 
-p <- ggplot(data, aes(x = reorder(Bundesland,-CFR), y = CFR, fill = Bundesland)) +
+p <- ggplot(data, aes(x = reorder(Bundesland, - CFR), y = CFR, fill = Bundesland)) +
   geom_bar(position="dodge", stat="identity") +
-  geom_text(aes(label=paste( CFR,' (', Rang, ')', sep='')), size=3, position=position_dodge(width=0.9), vjust=-0.25) +
-  scale_fill_viridis(discrete = T) +
-  ggtitle("Corona: Standardisierte rohe CFR") +
+  geom_text(  aes( label=paste(CFR, ' (', Rang, ')', sep=''))
+            , size=5
+            , color = 'white'
+            , position=position_dodge( width = 0.9 )
+            , vjust= 0.5
+            , hjust = 1
+            , angle = 90 ) +
+  scale_fill_viridis(discrete = TRUE) +
+  labs(  title = "Corona: Standardisierte rohe CFR"
+         , subtitle = paste ("Deutschland, Stand:", heute, sep =' ')
+         , x = "Bundesländer"
+         , y = "CFR [%]"
+         , colour = "Bundesland"
+         , caption = citation ) +
+  
   theme_ipsum() +
-  theme( axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 12 )) +
-  xlab("Bundesländer") +
-  ylab("CFR in [%]")
+  theme( axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 12 ))
 
 ggsave( plot = p, 
         file = paste( 
@@ -130,5 +144,10 @@ ggsave( plot = p,
           , "-2.png"
           , sep = ""
         )
-,  bg = "white"
-        , width = 29.7, height = 21, units = "cm", dpi = 150)
+        , device = 'png'
+        , bg = "white"
+        , width = 1920
+        , height = 1080
+        , units = "px"
+        , dpi = 144
+)

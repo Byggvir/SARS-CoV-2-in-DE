@@ -16,7 +16,7 @@ MyScriptName <- "Fallzahlen"
 
 require(data.table)
 library(tidyverse)
-library(REST)
+#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -26,8 +26,8 @@ library(viridis)
 library(hrbrthemes)
 library(scales)
 library(ragg)
-library(extrafont)
-extrafont::loadfonts()
+#library(extrafont)
+#extrafont::loadfonts()
 
 # Set Working directory to git root
 

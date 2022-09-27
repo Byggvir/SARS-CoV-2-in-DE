@@ -10,7 +10,7 @@
 MyScriptName <-"OstWest"
 
 library(tidyverse)
-library(REST)
+#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -67,7 +67,7 @@ colors <-c( "red", "yellow", "green", "blue", "black" )
 today <- Sys.Date()
 heute <- format(today, "%d %b %Y")
 
-SQL = paste ('call CasesPerWeekWE();', sep ="")
+SQL = paste ('select * from CasesPerWeekWE;', sep ="")
 
 weekly <- RunSQL(SQL = SQL)
 

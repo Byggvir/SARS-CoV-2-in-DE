@@ -11,7 +11,7 @@
 MyScriptName <-"FZBundeslandAlter"
 
 library(tidyverse)
-library(REST)
+#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -66,7 +66,7 @@ heute <- format(today, "%d %b %Y")
 SQL <- 'select * from Bundesland where IdBundesland > 0 order by IdBundesland;'
 Bundesland <- RunSQL(SQL = SQL)
 
-SQL <- 'select * from InzidenzAltersgruppeBL where Altersgruppe <> "unbekan";'
+SQL <- 'select * from InzidenzAltersgruppeBL where Altersgruppe <> "unbekan" and PandemieWoche > 125;'
 if ( ! exists("weeklyAGBL")) {
   weeklyAGBL <- RunSQL(SQL = SQL)
 }

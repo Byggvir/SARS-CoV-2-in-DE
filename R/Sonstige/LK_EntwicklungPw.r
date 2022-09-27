@@ -11,7 +11,7 @@
 MyScriptName <-"LK_PandemieWoche"
 
 library(tidyverse)
-library(REST)
+#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -67,8 +67,8 @@ heute <- format(today, "%d %b %Y")
 SQL <- 'select * from Bundesland order by IdBundesland;'
 BL <- RunSQL(SQL)
 
-#ExecSQL(SQL='call LandkreisePw;')
-#ExecSQL(SQL='call BundeslandPw;')
+ExecSQL(SQL='call LandkreisePw;')
+ExecSQL(SQL='call BundeslandPw;')
 
 SQL <- paste(
     '

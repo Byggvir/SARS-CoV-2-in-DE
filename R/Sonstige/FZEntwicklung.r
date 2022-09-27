@@ -12,7 +12,6 @@
 MyScriptName <-"FZEntwicklung.r"
 
 library(tidyverse)
-library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -23,8 +22,6 @@ library(viridis)
 library(hrbrthemes)
 library(scales)
 library(ragg)
-# library(extrafont)
-# extrafont::loadfonts()
 
 # Set Working directory to git root
 
@@ -70,43 +67,35 @@ B <- RunSQL( SQL = 'select distinct Bestandsdatum from NeuFaelle;')
 SQL <- 'select Bestandsdatum, Meldedatum, Art, sum(Anzahl) as Anzahl from NeuFaelle where Art <> "G" and Meldedatum >= "2021-03-01" group by Bestandsdatum, Meldedatum, Art;'
 
 Bestand <- RunSQL(SQL = SQL)
+Bestand$Art[Bestand$Art == 'F'] <- 'Fall'
+Bestand$Art[Bestand$Art == 'T'] <- 'Todesfall'
 
-scl <- max(Bestand$Anzahl[Bestand$Art == 'T']) / max(Bestand$Anzahl[Bestand$Art == 'F'])
+scl <- max(Bestand$Anzahl[Bestand$Art == 'Todesfall']) / max(Bestand$Anzahl[Bestand$Art == 'Fall'])
 
 for ( D in B$Bestandsdatum ) {
   
   Stand <- format(as.Date(D,origin = "1970-01-01"),"%Y%m%d")
   
-  if ( ! file.exists(paste('png/Entwicklung/',fPrefix, Stand,'.jpg', sep = ''))) {
+  if ( ! file.exists(paste('png/Entwicklung/',fPrefix, Stand,'.png', sep = ''))) {
     
-  # Bestand %>% filter ( Bestandsdatum == D & Art == 'F' ) %>% ggplot() +
-  #   geom_line( aes(x = Meldedatum, y = Anzahl, colour = Art) ) +
-  #   scale_fill_viridis(discrete = TRUE ) +
-  #   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
-  #   expand_limits( x = max(B$Bestandsdatum), y = max(Bestand$Anzahl[Bestand$Art == 'F'])) +
-  #   theme_ta() +
-  #       labs(  title = "Corona-Fälle nach Meldedatum"
-  #            , subtitle = paste ("Deutschland, Stand:", Stand, sep ='')
-  #            , x ="Tag"
-  #            , y = "Fälle" 
-  #            , caption = citation ) -> p1
-    
-    Bestand %>% filter ( Bestandsdatum == D & Art == 'T' ) %>% ggplot() +
-      geom_line( aes(x = Meldedatum, y = Anzahl, colour = Art) ) +
+  Bestand %>% filter ( Bestandsdatum == D ) %>% ggplot() +
+    geom_line( data = Bestand %>% filter ( Bestandsdatum == D & Art == 'Fall' ),
+               aes(x = Meldedatum, y = Anzahl, colour = Art) ) +
+      geom_line( data = Bestand %>% filter ( Bestandsdatum == D & Art == 'Todesfall' ),
+                 aes(x = Meldedatum, y = Anzahl / scl , colour = Art) ) +
       scale_fill_viridis(discrete = TRUE ) +
-      scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
-      expand_limits( x = max(B$Bestandsdatum), y = max(Bestand$Anzahl[Bestand$Art == 'T'])) +
-      theme_ta() +
-      labs(  title = "Corona-Todesfälle nach Meldedatum"
+    scale_y_continuous(  sec.axis = sec_axis( ~.*scl, name = "Todesfälle pro Woche", labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) )
+                           , labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
+    expand_limits( x = max(B$Bestandsdatum), y = max(Bestand$Anzahl[Bestand$Art == 'Fall'])) +
+    theme_ta() +
+        labs(  title = "Corona-Fälle nach Meldedatum"
              , subtitle = paste ("Deutschland, Stand:", Stand, sep ='')
              , x ="Tag"
-             , y = "Fälle" 
-             , caption = citation ) -> p2
-    
-   # g <- grid.arrange( p1, p2, nrow = 1 )
-  
+             , y = "Fälle"
+             , caption = citation ) -> p1
+
    ggsave(  paste('png/Entwicklung/',fPrefix, Stand,'.png', sep = '')
-          , plot = p2
+          , plot = p1
           , bg = "white"
           , device = 'jpg'
           , width = 3840

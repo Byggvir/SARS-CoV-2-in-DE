@@ -11,7 +11,7 @@
 MyScriptName <-"Wahlergebnis"
 
 library(tidyverse)
-library(REST)
+#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)

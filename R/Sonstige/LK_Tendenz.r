@@ -1,9 +1,9 @@
 #!/usr/bin/env Rscript
 #
 #
-# Script: RKI.r
+# Script: LK_Tendenz.r
 #
-# Stand: 2020-10-21
+# Stand: 2022-03-01
 # (c) 2020 by Thomas Arend, Rheinbach
 # E-Mail: thomas@arend-rhb.de
 #
@@ -11,7 +11,6 @@
 MyScriptName <-"LK_Tendenz"
 
 library(tidyverse)
-library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -22,8 +21,6 @@ library(viridis)
 library(hrbrthemes)
 library(scales)
 library(ragg)
-# library(extrafont)
-# extrafont::loadfonts()
 
 # Set Working directory to git root
 
@@ -51,7 +48,10 @@ source("R/lib/myfunctions.r")
 source("R/lib/mytheme.r")
 source("R/lib/sql.r")
 
-citation <- "© 2021 by Thomas Arend\nQuelle: Robert Koch-Institut (2021)\nGitHub SARS-CoV-2 Infektionen"
+outdir <- 'png/Tendenz/'
+dir.create( outdir , showWarnings = FALSE, recursive = FALSE, mode = "0777")
+
+citation <- "© 2022 by Thomas Arend\nQuelle: Robert Koch-Institut (2022)\nGitHub SARS-CoV-2 Infektionen"
 
 options( 
     digits = 7
@@ -59,6 +59,7 @@ options(
   , Outdec = "."
   , max.print = 3000
   )
+
 
 untilday <- Sys.Date() - 4
 # untilday <- as.Date("2021-11-27")
@@ -71,6 +72,7 @@ z4 <- format(untilday-13, "%Y-%m-%d")
 SQL <- paste(
     'call Bundesland714("',untilday,'");'
   , sep = ' ')
+
 Bundesland <- RunSQL(SQL)
 
 SQL <- paste(
@@ -108,8 +110,8 @@ Landkreise %>% filter(Bundesland == B) %>% ggplot() +
        , colour = 'Einwohner'
        , caption = citation )
 
-ggsave(  paste('png/LK/Tendenz-',B, '.jpg', sep='')
-       , device = 'jpg'
+ggsave(  paste( outdir, B, '.jpg', sep='')
+       # , device = 'jpg'
        , bg = "white"
        , width = 3840
        , height = 2160
@@ -141,7 +143,7 @@ Bundesland %>% ggplot() +
          , caption = citation 
          , colour = 'Bundesland')
 
-ggsave(  paste('png/Bund_Tendenz', '.png', sep='')
+ggsave(  paste( outdir, 'Bund', '.png', sep='')
          , bg = 'white'
          , device = 'png'
          , width = 3840

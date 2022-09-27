@@ -15,7 +15,7 @@ MyScriptName <- "MortalityStdPopulation"
 
 require(data.table)
 library(tidyverse)
-library(REST)
+#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -51,13 +51,13 @@ source("R/lib/sql.r")
 
 today <- Sys.Date()
 heute <- format(today, "%Y%m%d")
+citation <- "© 2022 by Thomas Arend\nQuelle: Robert Koch-Institut (2022)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
 
+Mortality <- RunSQL('call MortalityBundeslandStdBev();')
 
-data <- RunSQL('call MortalityBundeslandStdBev();')
+Mortality[,3] <- round(Mortality[,3],2)
 
-data[,3] <- round(data[,3],2)
-
-print(data)
+print(Mortality)
 
 png( paste( 
       "png/"
@@ -88,14 +88,14 @@ tt <- ttheme_default(
 )
 
 table <- tableGrob(
-  data
+  Mortality
   , theme = tt
   , cols = c("Rang", "Bundesland", "Tote pro 100k" )
   , vp = vp
 )
 
 title <- textGrob('Todesfälle Bundesländer',gp=gpar(fontsize=50))
-footnote <- textGrob(paste('Altersstandadisierte Todesfälle pro 1000000 Einwohner. Stand:', heute), x=0, hjust=0,
+footnote <- textGrob(paste('Altersstandadisierte Todesfälle pro 100.000 Einwohner. Stand:', heute), x=0, hjust=0,
                      gp=gpar( fontface="italic"))
 
 padding <- unit(0.5,"line")
@@ -113,29 +113,38 @@ grid.draw(table)
 
 dev.off()
 
-p <- ggplot( data, aes( x = reorder(Bundesland, -Mortality), y = Mortality, fill = Bundesland)) +
+Mortality %>% ggplot( aes( x = reorder(Bundesland, -Mortality), y = Mortality, fill = Bundesland)) +
   geom_bar( position="dodge", stat="identity") +
-  # geom_text( aes( label = paste( Mortality, '\n(', Rang, ')', sep='')), size=3, position=position_dodge(width=0.9), vjust=0) +
-  geom_text( aes( label = Mortality ), size = 3, position=position_dodge(width=0.9), vjust=0) +
-  scale_fill_viridis( discrete = T ) +
-  ggtitle("Corona: Standardisierte Todesfälle pro 100.000 Einwohner") +
+  geom_text( aes( label = Mortality )
+             , size=5
+             , color = 'white'
+             , position=position_dodge( width = 0.9 )
+             , vjust= 0.5
+             , hjust = 1
+             , angle = 90 ) +
+  
+  scale_fill_viridis( discrete = TRUE ) +
+  labs(  title = "Corona: Standardisierte Todesfälle pro 100.000 Einwohner"
+         , subtitle = paste ("Deutschland, Stand:", heute, sep =' ')
+         , x = "Bundesländer"
+         , y = "Standardisierte Todesfälle pro 100.000"
+         , colour = "Bundesland"
+         , caption = citation ) +
   theme_ipsum() +
-  theme( axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 12 )) +
-  xlab("Bundesländer") +
-  ylab("Standardisierte Todesfälle pro 100.000")
+  theme( axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 12 )) -> p
 
-# gg <- grid.arrange(p, ncol=1)
-# 
-# plot(gg)
-
-ggsave( plot = p, 
-        file = paste( 
+ggsave( plot = p
+        , filename = paste( 
           "png/"
           ,  heute
           , "-Mortality-2.png"
           , sep = ""
         )
-,  bg = "white"
-       , width = 29.7, height = 21, units = "cm", dpi = 150)
+        , device = 'png'
+        , bg = "white"
+        , width = 1920
+        , height = 1080
+        , units = "px"
+        , dpi = 144)
 
 # dev.off()

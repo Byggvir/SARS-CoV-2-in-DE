@@ -13,7 +13,7 @@ MyScriptName <- "Infektionsvergleiche"
 
 require(data.table)
 library(tidyverse)
-library(REST)
+#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -47,6 +47,9 @@ setwd(WD)
 source("R/lib/copyright.r")
 source("R/lib/sql.r")
 
+outdir <- 'png/'
+dir.create( outdir , showWarnings = TRUE, recursive = FALSE, mode = "0777")
+
 today <- Sys.Date()
 heute <- format(today, "%Y%m%d")
 
@@ -77,11 +80,14 @@ result %>% ggplot( aes( x = AnzahlFall/Bev * 100, y = AnzahlTodesfall/Bev * 100 
 
   ggsave( plot = p, 
           file = paste( 
-            "png/"
+            outdir
             , MyScriptName
             , '.png'
             , sep = ""
           )
           ,  bg = "white"
-          , width = 29.7, height = 21, units = "cm", dpi = 150)
+          , width = 29.7
+          , height = 21
+          , units = "cm"
+          , dpi = 150)
   

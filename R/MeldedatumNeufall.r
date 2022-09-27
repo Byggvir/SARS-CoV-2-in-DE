@@ -11,7 +11,7 @@ MyScriptName <- "MeldedatumNeufall"
 
 library(tidyverse)
 require(data.table)
-library(REST)
+#library(REST)
 #library(ggplot2)
 
 # Set Working directory to git root

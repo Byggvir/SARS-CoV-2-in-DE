@@ -2,7 +2,17 @@ use RKI;
 
 delimiter //
 
--- Berechnen der Pandemiewaoch. 
+-- Berechnen des Kalenderjahres zur Kalenderwoche 
+--
+create or replace 
+function weekyear ( Datum DATE ) returns INT
+begin
+      return year(adddate(Datum, 3-weekday(Datum)));
+end
+
+//
+
+-- Berechnen der Pandemiewoch. 
 -- Die erste Pandemiewoche ist die 1. Woche 2020, 
 -- auch wenn die ersten Fälle in DEU in Woche 9 und 10 auftraten.
 
