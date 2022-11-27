@@ -15,7 +15,6 @@ MyScriptName <- "MortalityStdPopulation"
 
 require(data.table)
 library(tidyverse)
-#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -114,7 +113,7 @@ grid.draw(table)
 dev.off()
 
 Mortality %>% ggplot( aes( x = reorder(Bundesland, -Mortality), y = Mortality, fill = Bundesland)) +
-  geom_bar( position="dodge", stat="identity") +
+  geom_bar( position = position_dodge(), stat="identity") +
   geom_text( aes( label = Mortality )
              , size=5
              , color = 'white'

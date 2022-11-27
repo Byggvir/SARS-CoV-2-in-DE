@@ -76,7 +76,7 @@ for ( D in B$Bestandsdatum ) {
   
   Stand <- format(as.Date(D,origin = "1970-01-01"),"%Y%m%d")
   
-  if ( ! file.exists(paste('png/Entwicklung/',fPrefix, Stand,'.png', sep = ''))) {
+ # if ( ! file.exists(paste('png/Entwicklung/',fPrefix, Stand,'.png', sep = ''))) {
     
   Bestand %>% filter ( Bestandsdatum == D ) %>% ggplot() +
     geom_line( data = Bestand %>% filter ( Bestandsdatum == D & Art == 'Fall' ),
@@ -86,7 +86,7 @@ for ( D in B$Bestandsdatum ) {
       scale_fill_viridis(discrete = TRUE ) +
     scale_y_continuous(  sec.axis = sec_axis( ~.*scl, name = "Todesfälle pro Woche", labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) )
                            , labels = function ( x ) format( x, big.mark = ".", decimal.mark = ',', scientific = FALSE ) ) +
-    expand_limits( x = max(B$Bestandsdatum), y = max(Bestand$Anzahl[Bestand$Art == 'Fall'])) +
+    expand_limits( x = as.Date('2022-12-31'), y = max(Bestand$Anzahl[Bestand$Art == 'Fall'])) +
     theme_ta() +
         labs(  title = "Corona-Fälle nach Meldedatum"
              , subtitle = paste ("Deutschland, Stand:", Stand, sep ='')
@@ -101,5 +101,5 @@ for ( D in B$Bestandsdatum ) {
           , width = 3840
           , height = 2160 
           , units = "px" )
-  }
+  # }
 }

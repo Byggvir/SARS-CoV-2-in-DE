@@ -16,7 +16,6 @@ options(OutDec=',')
 
 require(data.table)
 library(tidyverse)
-# library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -94,7 +93,7 @@ CFRMonat %>% filter( Altersgruppe == A & Datum >= D) %>% ggplot( ) +
                     )
                ) +
   expand_limits( y = 0 ) +
-  scale_x_date(date_minor_breaks = "3 month") +
+  scale_x_date(date_minor_breaks = "1 month") +
   scale_y_continuous(labels = scales::percent) +
   theme_ipsum() +
   labs(   title = paste( 'Deutschland CFR der Altersgruppe', A )
@@ -131,7 +130,7 @@ StdCFRMonat %>% filter (Datum >= D ) %>% ggplot( ) +
   #  facet_wrap ( vars(Altersgruppe) ) +
   expand_limits( y = 0 ) +
 #  scale_fill_viridis(discrete = TRUE) +
-  scale_x_date(date_minor_breaks = "3 month") +
+  scale_x_date(date_minor_breaks = "1 month") +
   scale_y_continuous(labels = scales::percent) +
   theme_ta() +
   labs(   title = paste( 'Deutschland CFR')

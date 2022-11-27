@@ -59,7 +59,7 @@ create or replace view ImpfBev as
             where 
                 I.AlterVon <= Age 
                 and I.AlterBis >= Age 
-                and Stichtag="2020-12-31" 
+                and Stichtag="2021-12-31" 
             ) as Anzahl 
     from Impfungen as I 
     where AlterVon !=-1
@@ -73,7 +73,7 @@ create or replace view ImpfBev as
             where 
                 Age >= 0 
                 and Age <= 11 
-                and Stichtag="2020-12-31" 
+                and Stichtag="2021-12-31" 
             ) as Anzahl 
     ;
     
@@ -111,7 +111,7 @@ create or replace view InfektBev as
 
 create or replace
 view ImpfungenProTag as
-    select 
+    select
         Impfdatum
         , AlterVon
         , AlterBis
@@ -124,6 +124,27 @@ view ImpfungenProTag as
         , AlterVon
     order by
         Impfdatum
+        , AlterVon
+;
+
+create or replace
+view ImpfungenProTagBL as
+    select
+        I.IdLandkreis div 1000 as IdBundesland
+        , Impfdatum
+        , AlterVon
+        , AlterBis
+        , sum(Anzahl) as Anzahl
+    from Impfungen as I
+    where
+        Impfschutz > 2
+    group by
+        IdBundesland
+        , Impfdatum
+        , AlterVon
+    order by
+        IdBundesland
+        , Impfdatum
         , AlterVon
 ;
 
@@ -192,6 +213,33 @@ view ImpfSummary as
         , I1.AlterVon
 ;
 
+------
+-- Berechnen der kumulativen voll Geimpften auf Bundesebene
+------
+
+create or replace
+view ImpfSummaryBL as
+    select
+        I1.IdBundesland
+        , I1.Impfdatum
+        , I1.AlterVon
+        , I1.AlterBis
+        , sum(I1.Anzahl)
+        , ( select 
+                sum(I2.Anzahl) 
+            from ImpfungenProTag as I2 
+            where I2.Impfdatum <= I1. Impfdatum
+            and I2.AlterVon = I1.AlterVon
+        ) as Kumulativ
+    from ImpfungenProTagBL as I1
+    group by
+        I1.Impfdatum
+        , I1.AlterVon
+    order by
+        I1.Impfdatum
+        , I1.AlterVon
+;
+
 -- Ende ImpfSummary
     
 ------
@@ -215,21 +263,17 @@ view ImpfQuote as
 
 create or replace
 view ImpfQuoteBL as
-    select 
-          I.IdLandkreis div 1000 as IdBundesland
-        , B.Bundesland as Bundesland
-        , B.Abk as Abk
-        , sum(I.Anzahl) / sum(S.Anzahl) as Quote 
-    from Impfungen as I 
-    join Bundesland as B
+    select
+          I.IdBundesland as IdBundesland
+        , I.ImpfDatum as ImpfDatum
+        , I.AlterVon as AlterVon
+        , I.AlterBis as AlterBis
+        , Kumulativ/B.Anzahl as Quote
+        , B.Anzahl
+    from ImpfSummaryBL as I 
+    join ImpfBev as B 
     on 
-        I.IdLandkreis div 1000 = B.IdBundesland 
-    join DESTATIS.StdBev6BL as S 
-    on I.IdLandkreis div 1000 = S.IdBundesland 
-    where I.ImpfSchutz = 2
-        and S.Stichtag = "2020-12-31"
-        and Impfdatum <= "2021-12-29"
-    group by I.IdLandkreis div 1000
+        B.AlterVon = I.AlterVon
 ;
 
 create or replace

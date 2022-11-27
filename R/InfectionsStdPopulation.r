@@ -23,8 +23,8 @@ library(viridis)
 library(hrbrthemes)
 library(scales)
 library(ragg)
-library(extrafont)
-extrafont::loadfonts()
+# library(extrafont)
+# extrafont::loadfonts()
 
 # Set Working directory to git root
 
@@ -49,6 +49,7 @@ source("R/lib/sql.r")
 
 today <- Sys.Date()
 heute <- format(today, "%Y%m%d")
+citation <- "© 2022 by Thomas Arend\nQuelle: Robert Koch-Institut (2022)\nSARS-CoV-2 Infektionen in Deutschland, Berlin\nZenodo. DOI:10.5281/zenodo.4681153"
 
 data <- RunSQL('call InfectionsBundeslandStdBev();')
 
@@ -112,8 +113,12 @@ grid.draw(table)
 
 dev.off()
 
-data %>% ggplot( aes(x = reorder(Bundesland,-InfectionRatio), y=InfectionRatio, fill=Bundesland)) +
-  geom_bar(position="dodge", stat="identity", alpha = 1) +
+
+data %>% ggplot( 
+    aes( x = reorder(Bundesland,-InfectionRatio)
+         , y=InfectionRatio
+         , fill=Bundesland ) ) +
+  geom_bar( position = position_dodge(), stat="identity", alpha = 1 ) +
   geom_text( aes( label = paste(InfectionRatio, ' (', Rang, ')', sep=''))
              , size=5
              , color = 'white'
@@ -129,24 +134,24 @@ data %>% ggplot( aes(x = reorder(Bundesland,-InfectionRatio), y=InfectionRatio, 
          , y = "Insgesamt gemeldete Fälle pro 100.000"
          , colour = "Bundesland"
          , caption = citation ) +
-  
+
   theme_ipsum() +
   theme( axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 12 )) -> p
 
-ggsave( plot = p, 
-        file = paste( 
-          "png/"
+ggsave( plot = p,
+        file = paste(
+          'png/'
           ,  heute
           , '-'
           , MyScriptName
-          , "-2.png"
-        , sep = ""
+          , '-2.png'
+        , sep = ''
         )
         , device = 'png'
-        , bg = "white"
+        , bg = 'white'
         , width = 1920
         , height = 1080
-        , units = "px"
+        , units = 'px'
         , dpi = 144
         )
 

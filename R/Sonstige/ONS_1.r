@@ -1,18 +1,17 @@
 #!/usr/bin/env Rscript
 #
 #
-# Script: RKI.r
+# Script: ONS_1.r
 #
 # Stand: 2020-10-21
 # (c) 2020 by Thomas Arend, Rheinbach
 # E-Mail: thomas@arend-rhb.de
 #
 
-MyScriptName <-"FZBundesland"
+MyScriptName <-"ONS_1"
 
 library(readODS)
 library(tidyverse)
-#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -22,8 +21,6 @@ library(viridis)
 library(hrbrthemes)
 library(scales)
 library(ragg)
-# library(extrafont)
-# extrafont::loadfonts()
 
 # Set Working directory to git root
 
@@ -64,6 +61,9 @@ options(
 
 today <- Sys.Date() - 1
 heute <- format(today, "%d %b %Y")
+
+outdir <- 'png/ONS/'
+dir.create( outdir , showWarnings = FALSE, recursive = FALSE, mode = "0777")
 
 st <- c(
   "for deaths involving COVID-19, per 100,000 people, England, deaths occurring between 2 January 2021 and 24 September 2021"
@@ -122,7 +122,7 @@ daten %>% filter(Agegroup == A) %>% ggplot(
        , colour = 'Vaccination status' 
        , caption = citation ) -> p
 
-ggsave(  paste('png/ONS_Tab',t,'_Alter',A,'.png', sep='')
+ggsave(  filename = paste( outdir, 'ONS_Tab', t, '_Alter', A, '.png', sep='')
        , bg = "white"
        , width = 29.7
        , height = 21

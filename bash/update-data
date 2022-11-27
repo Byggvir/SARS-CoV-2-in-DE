@@ -187,9 +187,9 @@ touch "$SQL"
 
 pushd $GIT
 
-    [ "$PULL" -eq 1 ] && git_pull
-    [ "$UPDATE" -eq 1 ] && ( update_db ; mysql --user=rscript --password=rscript < "$SQL" )
-    [ "$RUN"  -eq 1 ] && run_r
+  [ "$PULL" -eq 1 ] && git_pull
+  [ "$UPDATE" -eq 1 ] && ( update_db ; mysql --user=rscript --password=rscript < "$SQL" )
+  [ "$RUN"  -eq 1 ] && run_r
 
 popd
 

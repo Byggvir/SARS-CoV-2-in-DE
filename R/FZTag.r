@@ -12,7 +12,6 @@
 MyScriptName <-"FZTag"
 
 library(tidyverse)
-#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -64,7 +63,7 @@ FZTag <- RunSQL( SQL )
 
 FZTag$Meldedatum <- as.Date(FZTag$Meldedatum)
 
-FZTag %>%  filter ( Meldedatum > "2021-08-31" ) %>%  ggplot( aes( x = Meldedatum, y = AnzahlFall )) +
+FZTag %>%  filter ( Meldedatum > "2022-06-30" ) %>%  ggplot( aes( x = Meldedatum, y = AnzahlFall )) +
   geom_bar(position="dodge", stat="identity") +
   scale_x_date ( breaks = '1 month') + 
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
@@ -83,7 +82,7 @@ FZTag %>%  filter ( Meldedatum > "2021-08-31" ) %>%  ggplot( aes( x = Meldedatum
          , y = paste( 'Anzahl Fälle' )
          , caption = citation ) -> p1
 
-FZTag %>% filter ( Meldedatum > "2021-08-31" ) %>% ggplot( aes( x = Meldedatum, y = AnzahlTodesfall )) +
+FZTag %>% filter ( Meldedatum > "2022-06-30" )  %>% ggplot( aes( x = Meldedatum, y = AnzahlTodesfall )) +
   geom_bar(position="dodge", stat="identity") +
   scale_x_date ( breaks = '1 month') + 
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +

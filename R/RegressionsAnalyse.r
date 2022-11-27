@@ -9,11 +9,10 @@
 #
 
 require(data.table)
-#library(REST)
 library(gridExtra)
 library(grid)
-library(lubridate)
 library(tidyverse)
+library(lubridate)
 
 # Set Working directory to git root
 
@@ -189,12 +188,18 @@ where
   PrognoseTab <- data.table (
     Date = Tage
     , Day = sTage
-    , WTag = Wochentage[wday(Tage, week_start = 1)]
-    , WTag2 = wday(Tage, week_start = 1)
-    , Kor = Kor[wday(Tage, week_start = 1),3]
-    , assumed = round(exp(a[2] + b[2] * sTage) * Kor[wday(Tage, week_start = 1),3])
-    , lower = round(exp(a[1] + b[1] * sTage) * Kor[wday(Tage, week_start = 1),3])
-    , upper = round(exp(a[3] + b[3] * sTage) * Kor[wday(Tage, week_start = 1),3])
+    , WTag = Wochentage[lubridate::wday(Tage, week_start = 1)]
+    , WTag2 = lubridate::wday(Tage, week_start = 1)
+    , Kor = Kor[lubridate::wday(Tage, week_start = 1),3]
+    , assumed = round(exp(a[2] + b[2] * sTage) * Kor[lubridate::wday(Tage, week_start = 1),3])
+    , lower = round(exp(a[1] + b[1] * sTage) * Kor[lubridate::wday(Tage, week_start = 1),3])
+    , upper = round(exp(a[3] + b[3] * sTage) * Kor[lubridate::wday(Tage, week_start = 1),3])
+    # , WTag = Wochentage[wday(Tage)]
+    # , WTag2 = wday(Tage)
+    # , Kor = Kor[wday(Tage),3]
+    # , assumed = round(exp(a[2] + b[2] * sTage) * Kor[wday(Tage),3])
+    # , lower = round(exp(a[1] + b[1] * sTage) * Kor[wday(Tage),3])
+    # , upper = round(exp(a[3] + b[3] * sTage) * Kor[wday(Tage),3])
   )
   
   # print(PrognoseTab)
@@ -219,8 +224,8 @@ where
   
   xlim = c(data$Meldedatum[1],data$Meldedatum[1]+days(1+DaysBack+DaysAhead))
   ylim <- limbounds(
-    c( exp(a)
-       , exp(a+b*as.numeric(DaysBack+DaysAhead))
+    c( exp(a[2])
+       , exp(a[2]+b[2]*as.numeric(DaysBack+DaysAhead))
     )
   )
 
@@ -252,19 +257,19 @@ where
           , lwd = 3
           , lty = 4
   )
-  lines ( PrognoseTab$Date
-          , PrognoseTab$upper
-          , col = "red"
-          , lwd = 3
-          , lty = 4
-  )
-  lines ( PrognoseTab$Date
-          , PrognoseTab$lower
-          , col = "green"
-          , lwd = 3
-          , lty = 4
-  )
-  
+  # lines ( PrognoseTab$Date
+  #         , PrognoseTab$upper
+  #         , col = "red"
+  #         , lwd = 3
+  #         , lty = 4
+  # )
+  # lines ( PrognoseTab$Date
+  #         , PrognoseTab$lower
+  #         , col = "green"
+  #         , lwd = 3
+  #         , lty = 4
+  # )
+  # 
   zr <- data$Meldedatum >= ThisDate
   
   lines ( data$Meldedatum[zr]
@@ -357,15 +362,22 @@ where
 
   dev.off()
   return(ra)
-  1
+  
 }
 
-# Wann <- as.Date("2020-04-01")
+Wann <- as.Date("2021-10-31")
 
 
   ra2 <- regression_analysis (
-      ThisDate = ThisDay
-    , DaysBack = 27
-    , DaysAhead = 21
-   
+      ThisDate = Wann
+    , DaysBack = 21
+    , DaysAhead = 70
+
   )
+  
+  # ra2 <- regression_analysis (
+  #   ThisDate = ThisDay
+  #   , DaysBack = 27
+  #   , DaysAhead = 21
+  # 
+  # )

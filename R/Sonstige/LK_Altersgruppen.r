@@ -41,13 +41,14 @@ WD <- paste(SD[1:(length(SD)-2)],collapse='/')
 
 setwd(WD)
 
-fPrefix <- "Ausprobieren_"
-
 require(data.table)
 
 source("R/lib/myfunctions.r")
 source("R/lib/mytheme.r")
 source("R/lib/sql.r")
+
+outdir <- 'png/Altersgruppen/'
+dir.create( outdir , showWarnings = FALSE, recursive = FALSE, mode = "0777")
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -70,9 +71,6 @@ options(
   , Outdec = "."
   , max.print = 3000
   )
-
-outdir <- 'png/Altersgruppen/'
-dir.create( outdir , showWarnings = FALSE, recursive = FALSE, mode = "0777")
 
 maxlimit <- rep(0,each=17)
 

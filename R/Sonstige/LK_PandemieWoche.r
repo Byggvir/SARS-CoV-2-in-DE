@@ -11,7 +11,6 @@
 MyScriptName <-"LK_PandemieWoche"
 
 library(tidyverse)
-#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -175,4 +174,3 @@ ggsave(  paste( outdir,BL[B+1,2],'.png', sep='')
        , units = "cm"
        , dpi = 300 )
 }
-

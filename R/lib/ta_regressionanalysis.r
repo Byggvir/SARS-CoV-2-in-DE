@@ -29,7 +29,7 @@ plotregression <- function( a , b, xlim = c(0,1), ylim = c(0,3), linecol = c("gr
   }
 
     
-  for (i in 1:3 ) {
+  for (i in 2:2 ) {
     par (new = TRUE)    
     curve( f(x,a[i],b[i])
            , from = xlim[1]

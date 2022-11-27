@@ -60,7 +60,7 @@ today <- Sys.Date() - 1
 heute <- format(today, "%d %b %Y")
 
 Jahr <- 2022
-Monat <- 1
+Monat <- 9
 
 SQL <- '
 select 
@@ -74,7 +74,7 @@ from Nowcasts as A;'
 
 daten <- RunSQL(SQL)
 
-daten %>% filter ( year(Datum) == Jahr & month(Datum) == Monat & BerechnetAm <= "2022-03-15" ) %>% ggplot( aes(x= BerechnetAm)) +
+daten %>% filter ( year(Datum) == Jahr & month(Datum) == Monat & BerechnetAm <= "2022-10-12" ) %>% ggplot( aes(x= BerechnetAm)) +
   geom_line(aes( y = PS_7_Tage_R_Wert, colour ="Punktschätzer"), size = 1) +
   geom_line(aes( y = UG_PI_7_Tage_R_Wert, colour ="Untergrenze"), size = 0.5) +
   geom_line(aes( y = OG_PI_7_Tage_R_Wert, colour ="Obergrenze"), size = 0.5) +

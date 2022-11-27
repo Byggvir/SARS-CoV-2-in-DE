@@ -11,7 +11,7 @@
 MyScriptName <-"FZMonat_"
 
 library(tidyverse)
-#library(REST)
+
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -69,32 +69,17 @@ daten <- RunSQL(SQL = SQL)
 daten %>% ggplot(
   aes( x = Datum, y = AnzahlFall)) +
   geom_bar(position="dodge", stat="identity") +
-  geom_text(aes(label=AnzahlFall), size=2.5, position=position_dodge(width=0.9), vjust=-0.25) +
-  scale_fill_viridis(discrete = T) +
+  geom_text(aes(label=AnzahlFall), angle = 90, size=2.5, position=position_dodge(width=0.9), vjust= 0.5, hjust = 0) +
+  scale_fill_viridis(discrete = TRUE) +
   scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ) ) +
+  expand_limits( y = max(daten$AnzahlFall*1.2)) +
   labs(  title = "Corona-Fälle nach Monat des Meldedatums"
          , subtitle = paste ("Deutschland, Stand:", heute, sep ='')
          , x ="Monat"
          , y = "Fälle" 
          , colour = "Fälle"
          , caption = citation ) +
-  theme_ipsum() +
-  theme(  axis.text.y  = element_text ( size = 12 )
-          , axis.title.y = element_text ( size = 18 )
-          , axis.text.x = element_text ( size = 12 )
-          , axis.title.x = element_text (size = 12 )
-          , strip.text.x = element_text (
-            size = 24
-            , color = "black"
-            , face = "bold.italic"
-            )
-          , plot.caption = element_text (
-            size = 12
-            , color = "black"
-            , face = "bold.italic" )
-          ) + 
-  theme(plot.title=element_text(size=36, hjust=0.5, face="italic", color="black")) +
-  theme(plot.subtitle=element_text(size=24, hjust=0.5, face="italic", color="black")) -> pp
+  theme_ipsum() -> pp
 
 ggsave(  paste('png/',fPrefix,'.png', sep = '')
          , bg = "white"

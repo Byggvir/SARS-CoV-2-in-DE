@@ -12,7 +12,6 @@ MyScriptName <-"BLAlterSum"
 
 require(data.table)
 library(tidyverse)
-#library(REST)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -73,8 +72,8 @@ for (B in unique(Faelle$Bundesland)) {
 Faelle %>% filter ( Bundesland == B)   %>% ggplot( aes( x = Altersgruppe, y = AnzahlFall / Einwohner , fill = Geschlecht) ) +
   geom_bar(position="dodge", stat="identity") +
   geom_text(aes(label = sprintf( "%.1f", round(AnzahlFall / Einwohner * 100,1))), size = 6, vjust = 0, hjust = c(rep(1,6),rep(0,6))) +
-    
-  scale_fill_viridis(discrete = T) +
+  expand_limits( y = 1 ) +    
+  scale_fill_viridis(discrete = TRUE) +
   scale_y_continuous(labels = scales::percent) +
 
   theme_ta() +
